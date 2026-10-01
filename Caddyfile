@@ -2,6 +2,10 @@
     encode zstd gzip
 
     handle /api/* {
+        # 30 MiB files plus multipart metadata; the API enforces avatar limits.
+        request_body {
+            max_size 32MiB
+        }
         reverse_proxy api:3001
     }
 
