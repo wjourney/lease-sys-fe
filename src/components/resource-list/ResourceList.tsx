@@ -66,21 +66,25 @@ export const ResourceList = observer(function ResourceList({
     width: resource === "materials" ? 145 : 120,
     render: (_: any, row: Row) => (
       <Space size={10}>
-        <Link to={`/${resource}/${row.id}`}>{t("查看")}</Link>
-        {t(
-          resource === "materials" && row.storageKey ? (
-            <a
-              href={`/api/v1/materials/${row.id}/download`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t("下载")}
-            </a>
-          ) : (
-            root.canWrite(resource) && config.fields.length > 0 && (
-              <a onClick={() => setEditor(row)}>{t("编辑")}</a>
-            )
-          ),
+        <Button size="small" onClick={() => navigate(`/${resource}/${row.id}`)}>
+          {t("查看")}
+        </Button>
+        {resource === "materials" && row.storageKey ? (
+          <Button
+            size="small"
+            href={`/api/v1/materials/${row.id}/download`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("下载")}
+          </Button>
+        ) : (
+          root.canWrite(resource) &&
+          config.fields.length > 0 && (
+            <Button size="small" onClick={() => setEditor(row)}>
+              {t("编辑")}
+            </Button>
+          )
         )}
       </Space>
     ),

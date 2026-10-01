@@ -27,6 +27,7 @@ const PAGE_SIZE = 10;
 const UserListPage = observer(function UserListPage() {
   const {
     root,
+    navigate,
     store,
     q,
     setQ,
@@ -93,7 +94,9 @@ const UserListPage = observer(function UserListPage() {
         const alreadyDisabled = row.status === "DISABLED";
         return (
           <div className="flex items-center gap-2">
-            <Link to={`/users/${row.id}`}>{t("查看")}</Link>
+            <Button size="small" onClick={() => navigate(`/users/${row.id}`)}>
+              {t("查看")}
+            </Button>
             {root.user?.role === "SUPER_ADMIN" && (
               <Tooltip
                 title={
@@ -106,7 +109,6 @@ const UserListPage = observer(function UserListPage() {
               >
                 <span>
                   <Button
-                    type="link"
                     danger
                     size="small"
                     disabled={superAdmin || alreadyDisabled}

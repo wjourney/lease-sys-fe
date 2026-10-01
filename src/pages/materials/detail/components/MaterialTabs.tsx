@@ -1,4 +1,4 @@
-import { Card, Table, TabsProps } from "antd";
+import { Button, Card, Table, TabsProps } from "antd";
 import { DetailContextValue } from "../../../../components/resource-detail/DetailContext";
 import { dateText } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
@@ -38,12 +38,13 @@ export function getMaterialTabs(
                 title: t("操作"),
                 render: (_, r) =>
                   r.storageKey ? (
-                    <a
+                    <Button
+                      size="small"
                       target="_blank"
                       href={"/api/v1/materials/" + r.id + "/download"}
                     >
                       {t("下载")}
-                    </a>
+                    </Button>
                   ) : (
                     t("文字资料")
                   ),
