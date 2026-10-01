@@ -21,6 +21,7 @@ import { AccountStatusTag } from "../components/AccountStatusTag";
 import { AccountPasswordModal } from "../components/AccountPasswordModal";
 import { DisableUserModal } from "../detail/components/DisableUserModal";
 import { CreateUserDrawer } from "./components/CreateUserDrawer";
+import { DeleteUserModal } from "./components/DeleteUserModal";
 
 const PAGE_SIZE = 10;
 
@@ -43,6 +44,7 @@ const UserListPage = observer(function UserListPage() {
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<Row>();
   const [accountToDisable, setAccountToDisable] = useState<Row>();
+  const [accountToDelete, setAccountToDelete] = useState<Row>();
   const { message } = App.useApp();
 
   if (!root.canRead("users"))
@@ -88,10 +90,11 @@ const UserListPage = observer(function UserListPage() {
     {
       title: t("操作"),
       key: "actions",
-      width: 160,
+      width: 210,
       render: (_: unknown, row: Row) => {
         const superAdmin = row.role === "SUPER_ADMIN";
         const alreadyDisabled = row.status === "DISABLED";
+        const self = row.id === root.user?.id;
         return (
           <div className="flex items-center gap-2">
             <Button size="small" onClick={() => navigate(`/users/${row.id}`)}>
@@ -115,6 +118,28 @@ const UserListPage = observer(function UserListPage() {
                     onClick={() => setAccountToDisable(row)}
                   >
                     {t("停用")}
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+            {root.canWrite("users") && (
+              <Tooltip
+                title={
+                  superAdmin
+                    ? t("超级管理员账号不能删除")
+                    : self
+                      ? t("不能删除当前登录账号")
+                      : undefined
+                }
+              >
+                <span>
+                  <Button
+                    danger
+                    size="small"
+                    disabled={superAdmin || self}
+                    onClick={() => setAccountToDelete(row)}
+                  >
+                    {t("删除")}
                   </Button>
                 </span>
               </Tooltip>
@@ -245,6 +270,18 @@ const UserListPage = observer(function UserListPage() {
           message.success(t("账号已停用"));
         }}
       />
+      {accountToDelete && (
+        <DeleteUserModal
+          id={accountToDelete.id}
+          name={accountToDelete.name || accountToDelete.username}
+          onClose={() => setAccountToDelete(undefined)}
+          onDeleted={() => {
+            setAccountToDelete(undefined);
+            root.invalidate();
+            message.success(t("账号已删除"));
+          }}
+        />
+      )}
     </>
   );
 });
