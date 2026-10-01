@@ -1,4 +1,5 @@
-import { Button, Modal, Typography } from "antd";
+import { CopyOutlined } from "@ant-design/icons";
+import { App, Button, Modal, Typography } from "antd";
 import { t } from "../../../shared/i18n";
 
 export function AccountPasswordModal({
@@ -16,6 +17,37 @@ export function AccountPasswordModal({
   onClose: () => void;
   reset?: boolean;
 }) {
+  const { message } = App.useApp();
+
+  async function copyCredentials() {
+    try {
+      const credentials = `${t("登录账号")}：${username}\n${t("初始密码")}：${initialPassword}`;
+      let copied = false;
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(credentials);
+          copied = true;
+        } catch {
+          // Some browsers expose Clipboard API but reject it in this context.
+        }
+      }
+      if (!copied) {
+        const input = document.createElement("textarea");
+        input.value = credentials;
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        copied = document.execCommand("copy");
+        input.remove();
+        if (!copied) throw new Error("copy failed");
+      }
+      message.success(t("账号和初始密码已复制"));
+    } catch {
+      message.error(t("复制失败，请分别复制账号和密码"));
+    }
+  }
+
   return (
     <Modal
       open={open}
@@ -23,9 +55,18 @@ export function AccountPasswordModal({
       title={t(reset ? "初始密码已重置" : "账号创建成功")}
       onCancel={onClose}
       footer={
-        <Button type="primary" onClick={onClose}>
-          {t("完成")}
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button
+            icon={<CopyOutlined />}
+            onClick={copyCredentials}
+            disabled={!username || !initialPassword}
+          >
+            {t("复制账号和密码")}
+          </Button>
+          <Button type="primary" onClick={onClose}>
+            {t("完成")}
+          </Button>
+        </div>
       }
       destroyOnClose
     >

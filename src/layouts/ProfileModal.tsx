@@ -311,8 +311,19 @@ export const ProfileModal = observer(function ProfileModal({
                 <Form.Item name="nameEn" label={t("英文名")}>
                   <Input maxLength={3000} />
                 </Form.Item>
-                <Form.Item name="phone" label={t("电话")}>
-                  <Input maxLength={500} />
+                <Form.Item
+                  name="phone"
+                  label={t("电话")}
+                  extra={
+                    current?.username === current?.phone
+                      ? t("手机号是登录账号，暂不支持在资料中修改")
+                      : undefined
+                  }
+                >
+                  <Input
+                    maxLength={500}
+                    disabled={current?.username === current?.phone}
+                  />
                 </Form.Item>
                 <Form.Item
                   name="email"

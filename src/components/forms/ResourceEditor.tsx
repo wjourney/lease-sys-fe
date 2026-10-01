@@ -29,6 +29,15 @@ export const Editor = observer(function Editor({
   const config = configs[resource];
   const fields = config.fields
     .filter((f) => !(row && f.createOnly))
+    .filter(
+      (f) =>
+        !(
+          resource === "users" &&
+          row &&
+          f.key === "phone" &&
+          row.username === row.phone
+        ),
+    )
     .map((f) =>
       resource === "users" &&
       f.key === "role" &&

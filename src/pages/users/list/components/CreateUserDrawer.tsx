@@ -87,6 +87,7 @@ export function CreateUserDrawer({
       const selectedAvatar =
         avatar[0]?.originFileObj ||
         (avatar[0] instanceof File ? avatar[0] : undefined);
+      const loginPhone = values.phone.trim();
       if (avatar.length && !selectedAvatar)
         throw new Error(t("头像文件读取失败，请重新选择"));
       const account =
@@ -94,7 +95,8 @@ export function CreateUserDrawer({
         (
           await api.post<Row>("/users", {
             ...rest,
-            username: `u_${crypto.randomUUID().replaceAll("-", "")}`,
+            phone: loginPhone,
+            username: loginPhone,
             ...(password ? { password } : {}),
             ...(expiresAt
               ? { expiresAt: (expiresAt as Dayjs).format("YYYY-MM-DD") }
@@ -275,9 +277,19 @@ export function CreateUserDrawer({
                     whitespace: true,
                     message: t("请输入手机号码"),
                   },
+                  {
+                    validator: (_, value: string) =>
+                      !value || /^\d{8,20}$/.test(value.trim())
+                        ? Promise.resolve()
+                        : Promise.reject(new Error(t("请输入 8 至 20 位数字手机号"))),
+                  },
                 ]}
               >
-                <Input placeholder={t("请输入手机号码")} />
+                <Input
+                  inputMode="numeric"
+                  maxLength={20}
+                  placeholder={t("请输入手机号码")}
+                />
               </Form.Item>
               <Form.Item
                 name="email"
