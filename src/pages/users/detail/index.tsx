@@ -1,5 +1,5 @@
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Empty, Spin, Tooltip } from "antd";
+import { ArrowLeftOutlined, UserOutlined } from "@ant-design/icons";
+import { Alert, App, Avatar, Button, Empty, Spin, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { createPortal } from "react-dom";
@@ -35,7 +35,6 @@ const UserDetailPage = observer(function UserDetailPage() {
   const self = row?.id === root.user?.id;
   const canWrite = root.canWrite("users");
   const canManageStatus = root.user?.role === "SUPER_ADMIN";
-  const protectedAccount = row?.role === "SUPER_ADMIN";
   const headerHost = document.getElementById("record-detail-header");
 
   async function resetPassword() {
@@ -138,6 +137,18 @@ const UserDetailPage = observer(function UserDetailPage() {
         </div>
         <section className="rounded-lg border border-[#e5eaf0] bg-white p-7 max-[700px]:p-4">
           <dl className="m-0 grid grid-cols-3 gap-x-7 gap-y-6 text-sm max-[1100px]:grid-cols-2 max-[650px]:grid-cols-1">
+            <div className="col-span-full grid grid-cols-[100px_minmax(0,1fr)] items-center gap-3 max-[650px]:grid-cols-[92px_minmax(0,1fr)]">
+              <dt className="whitespace-nowrap text-[#8995a6]">{t("头像")}</dt>
+              <dd className="m-0">
+                <Avatar
+                  size={64}
+                  src={row.avatarUrl}
+                  alt={t("成员头像")}
+                  icon={<UserOutlined />}
+                  className="!bg-[#edf2f8] !text-[#647894]"
+                />
+              </dd>
+            </div>
             {fields.map(({ label, value }) => (
               <div
                 key={label}
@@ -182,18 +193,12 @@ const UserDetailPage = observer(function UserDetailPage() {
             </Tooltip>
             {canManageStatus && row.status === "ACTIVE" ? (
               <Tooltip
-                title={
-                  protectedAccount
-                    ? t("超级管理员账号不能停用")
-                    : self
-                      ? t("不能停用当前登录账号")
-                      : undefined
-                }
+                title={self ? t("不能停用当前登录账号") : undefined}
               >
                 <span>
                   <Button
                     danger
-                    disabled={self || protectedAccount}
+                    disabled={self}
                     onClick={() => setDisableOpen(true)}
                   >
                     {t("停用账号")}

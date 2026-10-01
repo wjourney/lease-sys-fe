@@ -3,6 +3,7 @@ import { Button, Card, Empty, Pagination, Spin, Tag, Typography } from "antd";
 import { observer } from "mobx-react-lite";
 import { NavigateFunction, SetURLSearchParams } from "react-router-dom";
 import { t } from "../../../../shared/i18n";
+import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { BuildingArt } from "../../../../shared/ui";
 import { ListStore } from "../../../../stores/root";
 const { Title } = Typography;
@@ -25,7 +26,10 @@ export const ProjectGrid = observer(function ProjectGrid({
         {store.items.map((row, i) => (
           <Card
             key={row.id}
-            className="project-card overflow-hidden !border-[#e6eaf0] [&_.ant-card-body]:!p-[19px]"
+            className="project-card cursor-pointer overflow-hidden !border-[#e6eaf0] [&_.ant-card-body]:!p-[19px]"
+            onClick={(event) => {
+              if (shouldOpenRow(event)) navigate(`/projects/${row.id}`);
+            }}
             cover={
               row.coverUrl ? (
                 <img

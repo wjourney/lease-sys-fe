@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { useResourceList } from "../../../components/resource-list/useResourceList";
 import { Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
+import { shouldOpenRow } from "../../../shared/row-navigation";
 import { roleLabels } from "../../../shared/resource-config";
 import { AccountStatusTag } from "../components/AccountStatusTag";
 import { AccountPasswordModal } from "../components/AccountPasswordModal";
@@ -92,19 +93,18 @@ const UserListPage = observer(function UserListPage() {
       key: "actions",
       width: 210,
       render: (_: unknown, row: Row) => {
-        const superAdmin = row.role === "SUPER_ADMIN";
         const alreadyDisabled = row.status === "DISABLED";
         const self = row.id === root.user?.id;
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-row-action>
             <Button size="small" onClick={() => navigate(`/users/${row.id}`)}>
               {t("查看")}
             </Button>
             {root.user?.role === "SUPER_ADMIN" && (
               <Tooltip
                 title={
-                  superAdmin
-                    ? t("超级管理员账号不能停用")
+                  self
+                    ? t("不能停用当前登录账号")
                     : alreadyDisabled
                       ? t("账号已停用")
                       : undefined
@@ -114,7 +114,7 @@ const UserListPage = observer(function UserListPage() {
                   <Button
                     danger
                     size="small"
-                    disabled={superAdmin || alreadyDisabled}
+                    disabled={self || alreadyDisabled}
                     onClick={() => setAccountToDisable(row)}
                   >
                     {t("停用")}
@@ -125,18 +125,14 @@ const UserListPage = observer(function UserListPage() {
             {root.canWrite("users") && (
               <Tooltip
                 title={
-                  superAdmin
-                    ? t("超级管理员账号不能删除")
-                    : self
-                      ? t("不能删除当前登录账号")
-                      : undefined
+                  self ? t("不能删除当前登录账号") : undefined
                 }
               >
                 <span>
                   <Button
                     danger
                     size="small"
-                    disabled={superAdmin || self}
+                    disabled={self}
                     onClick={() => setAccountToDelete(row)}
                   >
                     {t("删除")}
@@ -220,6 +216,12 @@ const UserListPage = observer(function UserListPage() {
         </div>
         <Table
           rowKey="id"
+          onRow={(row) => ({
+            className: "cursor-pointer",
+            onClick: (event) => {
+              if (shouldOpenRow(event)) navigate(`/users/${row.id}`);
+            },
+          })}
           columns={columns}
           dataSource={store.items}
           loading={store.loading}

@@ -28,8 +28,36 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-export const errorMessage = (e: any) =>
-  e.response?.data?.message || e.message || "请求失败，请重试";
+export function errorMessage(error: unknown): string {
+  const e = error as {
+    code?: string;
+    message?: string;
+    response?: { status?: number; data?: { message?: unknown } };
+  } | null;
+  if (!e) return "请求失败，请稍后重试";
+  if (
+    ["ECONNABORTED", "ETIMEDOUT"].includes(e.code || "") ||
+    /timeout/i.test(e.message || "")
+  )
+    return "请求超时，请稍后重试";
+  if (e.code === "ERR_NETWORK" || e.message === "Network Error")
+    return "网络连接失败，请检查网络后重试";
+  const status = e.response?.status;
+  if (status === 429) return "操作过于频繁，请稍后重试";
+  if (status && status >= 500) return "服务暂时不可用，请稍后重试";
+  const serverMessage = e.response?.data?.message;
+  if (
+    typeof serverMessage === "string" &&
+    /[\u3400-\u9fff]/u.test(serverMessage)
+  )
+    return serverMessage;
+  if (status === 401 || status === 403) return "当前账号无权执行此操作";
+  if (status === 400 || status === 422) return "提交的信息有误，请检查后重试";
+  if (status === 404) return "请求的内容不存在或已删除";
+  if (typeof e.message === "string" && /[\u3400-\u9fff]/u.test(e.message))
+    return e.message;
+  return "请求失败，请稍后重试";
+}
 export type Row = Record<string, any>;
 export type Page = {
   items: Row[];

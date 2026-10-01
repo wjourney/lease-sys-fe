@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useState } from "react";
 import { amount, options, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { ListStore, useRoot } from "../../../../stores/root";
 
 type Filters = {
@@ -180,7 +181,10 @@ export const ProjectUnits = observer(function ProjectUnits({
             {store.items.map((unit) => (
               <article
                 key={unit.id}
-                className="rounded-[7px] border border-[#dfe6ee] px-[26px] py-[25px]"
+                className="cursor-pointer rounded-[7px] border border-[#dfe6ee] px-[26px] py-[25px]"
+                onClick={(event) => {
+                  if (shouldOpenRow(event)) onViewUnit(unit);
+                }}
               >
                 <h3 className="m-0 text-[20px] font-semibold text-[#26334a]">
                   {t(unit.unitNo)}

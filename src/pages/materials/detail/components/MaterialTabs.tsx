@@ -2,6 +2,7 @@ import { Button, Card, Table, TabsProps } from "antd";
 import { DetailContextValue } from "../../../../components/resource-detail/DetailContext";
 import { dateText } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { shouldOpenRow } from "../../../../shared/row-navigation";
 export function getMaterialTabs(
   ctx: DetailContextValue,
 ): NonNullable<TabsProps["items"]> {
@@ -15,6 +16,12 @@ export function getMaterialTabs(
         <Card>
           <Table
             rowKey="id"
+            onRow={(row) => ({
+              className: "cursor-pointer",
+              onClick: (event) => {
+                if (shouldOpenRow(event)) navigate(`/materials/${row.id}`);
+              },
+            })}
             pagination={false}
             dataSource={versions}
             columns={[

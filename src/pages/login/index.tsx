@@ -1,5 +1,5 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Form, Input, Typography } from "antd";
+import { App, Button, Form, Input, Typography } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,8 +10,8 @@ import { LoginVisual } from "./components/LoginVisual";
 const { Title, Text, Paragraph } = Typography;
 const LoginPage = observer(function LoginPage() {
   const root = useRoot();
+  const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
   async function submit(v: any) {
     setLoading(true);
@@ -21,7 +21,15 @@ const LoginPage = observer(function LoginPage() {
         replace: true,
       });
     } catch (e) {
-      setError(errorMessage(e));
+      const status = (e as { response?: { status?: number } })?.response
+        ?.status;
+      message.error(
+        t(
+          status === 401
+            ? "登录失败，请检查账号、密码或账号状态"
+            : errorMessage(e),
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -36,10 +44,12 @@ const LoginPage = observer(function LoginPage() {
           </span>
           <Title level={2}>{t("欢迎登录")}</Title>
           <Paragraph>{t("使用你的个人账号，进入租赁管理系统。")}</Paragraph>
-          {error && (
-            <Alert message={t(error)} type="error" showIcon className="mb-5" />
-          )}
-          <Form layout="vertical" onFinish={submit} requiredMark={false}>
+          <Form
+            layout="vertical"
+            onFinish={submit}
+            requiredMark={false}
+            className="login-form"
+          >
             <Form.Item
               name="username"
               label={t("登录账号")}

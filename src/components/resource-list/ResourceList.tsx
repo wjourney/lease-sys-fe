@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
+import { shouldOpenRow } from "../../shared/row-navigation";
 import { valueView } from "../../shared/ui";
 import { MaterialEditor } from "../forms/MaterialEditor";
 import { Editor } from "../forms/ResourceEditor";
@@ -19,6 +20,7 @@ export const ResourceList = observer(function ResourceList({
   pageSize = 12,
   renderItems,
   listToolbar,
+  renderRowActions,
   renderCreateEditor,
   renderEditor,
 }: ResourceListProps) {
@@ -63,9 +65,14 @@ export const ResourceList = observer(function ResourceList({
     title: t("操作"),
     key: "actions",
     fixed: "right",
-    width: resource === "materials" ? 145 : 120,
+    width:
+      resource === "sales-companies"
+        ? 210
+        : resource === "materials"
+          ? 145
+          : 120,
     render: (_: any, row: Row) => (
-      <Space size={10}>
+      <Space size={10} data-row-action>
         <Button size="small" onClick={() => navigate(`/${resource}/${row.id}`)}>
           {t("查看")}
         </Button>
@@ -86,6 +93,7 @@ export const ResourceList = observer(function ResourceList({
             </Button>
           )
         )}
+        {renderRowActions?.(row)}
       </Space>
     ),
   });
@@ -157,6 +165,12 @@ export const ResourceList = observer(function ResourceList({
             <Table
               size="middle"
               rowKey="id"
+              onRow={(row) => ({
+                className: "cursor-pointer",
+                onClick: (event) => {
+                  if (shouldOpenRow(event)) navigate(`/${resource}/${row.id}`);
+                },
+              })}
               columns={columns}
               dataSource={store.items.map((x) => ({
                 ...x,

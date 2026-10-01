@@ -1,10 +1,10 @@
 # SUPREME BAY 租赁管理系统 · 前端
 
-按五角色设计 PDF 和已确认的 12 张业务表实现。React + TypeScript + Vite + Ant Design + Tailwind CSS，MobX 管理登录状态、查询缓存及失效，Axios 连接本地 NestJS 服务。`src/style.css` 仅引入 Tailwind；业务样式写在组件的 `className` 中。
+按五角色设计 PDF 和已确认的 12 张业务表实现。React + TypeScript + Vite + Ant Design + Tailwind CSS，MobX 管理登录状态、查询缓存及失效，Axios 通过同源 `/api` 代理连接 NestJS 服务。`src/style.css` 仅引入 Tailwind；业务样式写在组件的 `className` 中。
 
 ## 本地启动
 
-需要 Node.js 22、pnpm 10；先按后端 README 启动数据库与 API。
+需要 Node.js 22、pnpm 10；默认连接服务器 API，无需启动本地数据库或后端。
 
 ```bash
 cd /Users/wenwen/www/learn/lease-sys-fe
@@ -12,19 +12,19 @@ pnpm install
 pnpm dev
 ```
 
-访问 http://127.0.0.1:5173 。Vite 将 `/api` 代理到 `http://127.0.0.1:3001`，无需额外配置。可通过 `VITE_API_PROXY` 改变后端地址。
+访问 http://127.0.0.1:5173 。Vite 将 `/api` 代理到 `https://47.117.136.208`，无需额外配置。可在 `.env.local` 中设置 `VITE_API_PROXY` 覆盖目标地址（命令行环境变量优先），修改后重启开发服务器。
 
-本地后端目录：`/Users/wenwen/www/learn/lease-sys-be`。接口文档：http://127.0.0.1:3001/api/docs 。
+登录、资料上传及预览均通过该代理访问服务器。本地开发使用服务器账号和真实业务数据，提交的修改也会保存到服务器。代理保留 HTTPS 证书校验，将同源开发请求的 Origin 转换为服务器来源，并仅为本机 HTTP 响应移除 Cookie 的 Secure 属性；生产配置不受影响。
 
 ## 初始账号
 
-本地数据库初始化后只创建一个超级管理员账号。示例环境密码为 `ChangeMe123!`，可通过后端 `SEED_PASSWORD` 修改。
+本地开发直接使用服务器上已有的账号和密码。后端新环境初始化时只创建一个超级管理员账号，初始化方式见后端 README。
 
 | 账号  | 角色       |
 | ----- | ---------- |
 | admin | 超级管理员 |
 
-业务数据初始为空，由管理员逐步录入。登录 Cookie 为 HttpOnly，切换账号和修改业务数据会使缓存失效。列表查询缓存 30 秒，字典 5 分钟，财务列表每次重新请求；相同进行中请求复用，过期请求不覆盖新查询。
+登录会话 Cookie 为 HttpOnly，切换账号和修改业务数据会使缓存失效。列表查询缓存 30 秒，字典 5 分钟，财务列表每次重新请求；相同进行中请求复用，过期请求不覆盖新查询。
 
 ## 已实现页面
 
@@ -79,7 +79,7 @@ src/
 
 修改某个页面时先进入对应目录；只有多处共用的布局或行为才提取到 components。请求和状态逻辑放在 hook/store，表单通过字段控件复用，不再维护包含全部页面的大型组件。
 
-`src/shared/api.generated.ts` 由 Swagger 生成，后端变更后运行 `pnpm api:generate`；该自动生成文件不手工拆分。`docs/` 保留已确认的业务方案，实际字段和约束以后端 Prisma schema/SQL 为准。
+`src/shared/api.generated.ts` 由服务器 Swagger 生成，后端变更后运行 `pnpm api:generate`；接口文档为 https://47.117.136.208/api/docs 。该自动生成文件不手工拆分。`docs/` 保留已确认的业务方案，实际字段和约束以后端 Prisma schema/SQL 为准。
 
 ## 检查与测试
 
@@ -89,7 +89,7 @@ pnpm test
 pnpm build
 ```
 
-浏览器测试使用独立测试数据库，不修改本地业务数据库。先在另一个终端启动测试 API：
+浏览器自动化测试显式覆盖 API 代理，使用独立测试数据库，不连接服务器业务 API。先在另一个终端启动测试 API：
 
 ```bash
 cd /Users/wenwen/www/learn/lease-sys-be

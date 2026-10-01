@@ -10,6 +10,7 @@ import {
   options,
 } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { useRoot } from "../../../../stores/root";
 
 export type MaterialSection = "OFFICIAL" | "MARKETING" | "GUIDE";
@@ -120,7 +121,17 @@ export function ProjectMaterialsModal({
                 {shown.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 text-[13px]"
+                    className="flex cursor-pointer flex-wrap items-center justify-between gap-3 py-3 text-[13px]"
+                    onClick={(event) => {
+                      if (!shouldOpenRow(event)) return;
+                      if (item.storageKey)
+                        window.open(
+                          downloadUrl(item.id),
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      else setPreview(item);
+                    }}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="mb-1 break-words font-medium text-[#26334a]">
@@ -133,7 +144,7 @@ export function ProjectMaterialsModal({
                           t("文字资料")}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2" data-row-action>
                       {item.storageKey ? (
                         <Button
                           size="small"

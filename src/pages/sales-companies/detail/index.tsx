@@ -1,11 +1,14 @@
-import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  PictureOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import {
   Alert,
   Button,
   Empty,
   Image,
   Input,
-  Modal,
   Pagination,
   Select,
   Spin,
@@ -26,11 +29,13 @@ import {
   type Row,
 } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
+import { shouldOpenRow } from "../../../shared/row-navigation";
 import { roleLabels } from "../../../shared/resource-config";
 import { useRoot } from "../../../stores/root";
 import { AccountPasswordModal } from "../../users/components/AccountPasswordModal";
 import { AccountStatusTag } from "../../users/components/AccountStatusTag";
 import { CreateUserDrawer } from "../../users/list/components/CreateUserDrawer";
+import { SalesCompanyDrawer } from "../list/components/SalesCompanyDrawer";
 
 const PAGE_SIZE = 10;
 const blank = (value: unknown) =>
@@ -53,8 +58,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     memberCount: number;
     admin?: Row;
   }>();
-  const [photos, setPhotos] = useState<Row[]>([]);
-  const [photoOpen, setPhotoOpen] = useState(false);
+  const [images, setImages] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [members, setMembers] = useState<Page>({
@@ -119,13 +123,20 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     let active = true;
     options("materials", { salesCompanyId: id })
       .then((rows) => {
-        if (active)
-          setPhotos(
-            rows.filter((row) => row.category === "PHOTO" && row.storageKey),
-          );
+        if (!active) return;
+        const available = rows.filter((row) => row.storageKey);
+        const latestLogo = available
+          .filter((row) => row.category === "LOGO")
+          .sort((a, b) =>
+            String(b.createdAt).localeCompare(String(a.createdAt)),
+          )[0];
+        setImages([
+          ...(latestLogo ? [latestLogo] : []),
+          ...available.filter((row) => row.category === "PHOTO"),
+        ]);
       })
       .catch(() => {
-        if (active) setPhotos([]);
+        if (active) setImages([]);
       });
     return () => {
       active = false;
@@ -198,80 +209,62 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       </h1>
     </div>
   );
-  const overview = [
-    {
-      label: "公司 / 会员编号",
-      content: (
-        <>
-          {t(blank(company.name))}
-          {company.nameEn ? ` / ${company.nameEn}` : ""} ·{" "}
-          {t(blank(company.companyNo))}
-        </>
-      ),
-    },
-    {
-      label: "联系人 / 电话 / 邮件",
-      content: (
-        <>
-          {t(blank(company.contactName))} · {maskedPhone(company.phone)} ·{" "}
-          {blank(company.email)}
-        </>
-      ),
-    },
-    {
-      label: "地址 / 服务区域",
-      content: (
-        <>
-          {t(blank(company.address))} · {t(blank(company.serviceArea))}
-        </>
-      ),
-    },
-    {
-      label: "管理员 / 服务期限",
-      content: (
-        <>
-          {summary?.admin
-            ? `${summary.admin.username} / ${t(summary.admin.name)}`
-            : "—"}{" "}
-          · {dateText(company.serviceStartsOn)} {t("至")}{" "}
-          {dateText(company.serviceEndsOn)} · {t("剩余")}{" "}
-          {remainingDays(company.serviceEndsOn)}
-        </>
-      ),
-    },
-    {
-      label: "商业登记 / 届满",
-      content: (
-        <>
-          {t(blank(company.registrationNo))} /{" "}
-          {dateText(company.registrationExpiresOn)}
-          {photos.length > 0 && (
-            <>
-              {" "}
-              ·{" "}
-              <button
-                type="button"
-                className="text-[#1b355d] underline-offset-2 hover:underline"
-                onClick={() => setPhotoOpen(true)}
-              >
-                {t(`公司照片 ${photos.length} 张`)}
-              </button>
-            </>
-          )}
-        </>
-      ),
-    },
-    {
-      label: "账号 / 分行 / 职位",
-      content: (
-        <>
-          {t(
-            `子账号 ${summary?.memberCount ?? 0} · 分行 ${company.branches?.length ?? 0} · 职位 ${company.positions?.length ?? 0}`,
-          )}{" "}
-          · {t("最后修改")} {dateText(company.updatedAt)}
-        </>
-      ),
-    },
+  const featuredImage =
+    images.find((image) => image.category === "PHOTO") || images[0];
+  const otherImages = images.filter((image) => image.id !== featuredImage?.id);
+  const overviewColumns = [
+    [
+      {
+        label: "公司",
+        value: (
+          <>
+            {t(blank(company.name))}
+            {company.nameEn ? ` / ${company.nameEn}` : ""}
+          </>
+        ),
+      },
+      { label: "会员编号", value: blank(company.companyNo) },
+      { label: "联系人", value: t(blank(company.contactName)) },
+      {
+        label: "账号统计",
+        value: t(
+          `子账号 ${summary?.memberCount ?? 0} · 分行 ${company.branches?.length ?? 0} · 职位 ${company.positions?.length ?? 0}`,
+        ),
+      },
+    ],
+    [
+      { label: "电话", value: maskedPhone(company.phone) },
+      { label: "邮箱", value: blank(company.email) },
+      {
+        label: "地址 / 服务区域",
+        value: (
+          <>
+            {t(blank(company.address))} · {t(blank(company.serviceArea))}
+          </>
+        ),
+      },
+      { label: "最后修改", value: dateText(company.updatedAt) },
+    ],
+    [
+      {
+        label: "管理员",
+        value: summary?.admin
+          ? `${t(summary.admin.name)} / ${summary.admin.username}`
+          : "—",
+      },
+      {
+        label: "服务期限",
+        value: (
+          <>
+            {dateText(company.serviceStartsOn)} {t("至")}{" "}
+            {dateText(company.serviceEndsOn)}（{t("剩余")}{" "}
+            {remainingDays(company.serviceEndsOn)}）
+          </>
+        ),
+      },
+      { label: "商业登记", value: blank(company.registrationNo) },
+      { label: "登记届满", value: dateText(company.registrationExpiresOn) },
+    ],
   ];
   const columns = [
     {
@@ -303,7 +296,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       title: t("操作"),
       key: "actions",
       render: (_: unknown, member: Row) => (
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-row-action>
           <Button size="small" onClick={() => navigate(`/users/${member.id}`)}>
             {t("查看")}
           </Button>
@@ -344,24 +337,75 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
             </div>
           </div>
           <section
-            className="rounded-lg border border-[#e1e7ef] bg-white px-5 py-5 max-[700px]:px-4"
+            className="rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
             aria-label={t("公司资料")}
           >
-            <dl className="m-0 grid grid-cols-3 gap-x-7 gap-y-7 text-sm max-[1350px]:grid-cols-2 max-[700px]:grid-cols-1">
-              {overview.map(({ label, content }) => (
-                <div
-                  key={label}
-                  className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] items-start gap-x-3 leading-6 max-[440px]:grid-cols-1"
-                >
-                  <dt className="whitespace-nowrap text-[#8190a4]">
-                    {t(label)}：
-                  </dt>
-                  <dd className="m-0 min-w-0 break-words font-medium text-[#26344a]">
-                    {content}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <div className="grid grid-cols-[152px_minmax(0,1fr)] gap-5 max-[700px]:grid-cols-1 max-[700px]:gap-4">
+              <div className="min-w-0">
+                {featuredImage ? (
+                  <Image.PreviewGroup>
+                    <div className="relative h-[140px] w-[152px]">
+                      <Image
+                        src={`/api/v1/materials/${featuredImage.id}/download`}
+                        alt={
+                          featuredImage.originalName ||
+                          featuredImage.title ||
+                          t("公司图片")
+                        }
+                        width={152}
+                        height={140}
+                        className="rounded-md border border-[#e1e7ef] object-cover"
+                      />
+                      {otherImages.length > 0 && (
+                        <div className="absolute bottom-2 left-2 flex max-w-[136px] gap-1 overflow-x-auto rounded bg-white/80 p-1">
+                          {otherImages.map((image) => (
+                            <Image
+                              key={image.id}
+                              src={`/api/v1/materials/${image.id}/download`}
+                              alt={
+                                image.originalName ||
+                                image.title ||
+                                t("公司图片")
+                              }
+                              width={30}
+                              height={28}
+                              className="rounded border border-[#e1e7ef] object-cover"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Image.PreviewGroup>
+                ) : (
+                  <div className="flex h-[140px] w-[152px] flex-col items-center justify-center gap-2 rounded-md border border-[#e1e7ef] bg-[#f7f8fa] text-xs text-[#9aa6b8]">
+                    <PictureOutlined className="text-3xl" />
+                    {t("暂无公司图片")}
+                  </div>
+                )}
+              </div>
+              <div className="grid min-w-0 grid-cols-3 gap-6 max-[1050px]:grid-cols-1">
+                {overviewColumns.map((column, index) => (
+                  <dl
+                    key={index}
+                    className={`m-0 min-w-0 space-y-2 text-sm leading-6 ${index > 0 ? "border-l border-[#e1e7ef] pl-6 max-[1050px]:border-0 max-[1050px]:pl-0" : ""}`}
+                  >
+                    {column.map(({ label, value }) => (
+                      <div
+                        key={label}
+                        className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] gap-x-3 max-[440px]:grid-cols-1"
+                      >
+                        <dt className="whitespace-nowrap text-[#8190a4]">
+                          {t(label)}：
+                        </dt>
+                        <dd className="m-0 min-w-0 break-words font-medium text-[#26344a]">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ))}
+              </div>
+            </div>
           </section>
           <section
             className="rounded-lg border border-[#e1e7ef] bg-white"
@@ -403,10 +447,12 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                   ]}
                 />
               </div>
-              <Button onClick={reset}>{t("重置")}</Button>
-              <Button type="primary" onClick={search}>
-                {t("查询")}
-              </Button>
+              <div className="ml-auto flex items-center gap-2 max-[650px]:w-full max-[650px]:justify-end">
+                <Button onClick={reset}>{t("重置")}</Button>
+                <Button type="primary" onClick={search}>
+                  {t("查询")}
+                </Button>
+              </div>
             </div>
             {membersError && (
               <Alert
@@ -418,15 +464,21 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
             )}
             <Table
               rowKey="id"
+              onRow={(member) => ({
+                className: "cursor-pointer",
+                onClick: (event) => {
+                  if (shouldOpenRow(event)) navigate(`/users/${member.id}`);
+                },
+              })}
               columns={columns}
               dataSource={members.items}
               loading={membersLoading}
               pagination={false}
               scroll={{ x: 760 }}
               locale={{ emptyText: t("暂无成员账号") }}
-              className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e]"
+              className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-72"
             />
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm text-[#8190a4]">
+            <div className="flex flex-wrap items-center justify-end gap-5 px-5 py-4 text-sm text-[#8190a4]">
               <span>{t(`共 ${members.total} 条`)}</span>
               <Pagination
                 current={page}
@@ -439,30 +491,9 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
           </section>
         </div>
       </Spin>
-      <Modal
-        open={photoOpen}
-        title={t("公司照片")}
-        onCancel={() => setPhotoOpen(false)}
-        footer={null}
-        destroyOnClose
-      >
-        <Image.PreviewGroup>
-          <div className="grid grid-cols-3 gap-3 max-[600px]:grid-cols-2">
-            {photos.map((photo) => (
-              <Image
-                key={photo.id}
-                src={`/api/v1/materials/${photo.id}/download`}
-                alt={photo.originalName || photo.title}
-                className="!h-32 !w-full rounded object-cover"
-              />
-            ))}
-          </div>
-        </Image.PreviewGroup>
-      </Modal>
       {editingCompany && (
-        <Editor
-          resource="sales-companies"
-          row={company}
+        <SalesCompanyDrawer
+          company={company}
           onClose={() => setEditingCompany(false)}
           onSaved={() => setEditingCompany(false)}
         />

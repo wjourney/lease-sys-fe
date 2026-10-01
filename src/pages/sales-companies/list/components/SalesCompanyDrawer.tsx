@@ -12,8 +12,14 @@ import {
 } from "antd";
 import type { UploadFile } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { useRef, useState } from "react";
-import { api, errorMessage, type Row } from "../../../../shared/api";
+import { useEffect, useRef, useState } from "react";
+import {
+  api,
+  errorMessage,
+  options,
+  type Page,
+  type Row,
+} from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { useRoot } from "../../../../stores/root";
 
@@ -72,10 +78,12 @@ function CompanyImageUpload({
   );
 }
 
-export function CreateSalesCompanyDrawer({
+export function SalesCompanyDrawer({
+  company,
   onClose,
   onSaved,
 }: {
+  company?: Row;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -87,7 +95,97 @@ export function CreateSalesCompanyDrawer({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [createdCompany, setCreatedCompany] = useState<Row>();
+  const [adminAccount, setAdminAccount] = useState<Row>();
+  const [imagesLoading, setImagesLoading] = useState(!!company);
+  const existingImageIds = useRef(new Set<string>());
+  const currentRevision = useRef<number>(company?.revision ?? 0);
   const uploaded = useRef(new Set<string>());
+  useEffect(() => {
+    if (!company) return;
+    form.setFieldsValue({
+      name: company.name,
+      nameEn: company.nameEn,
+      contactName: company.contactName,
+      phone: company.phone,
+      email: company.email,
+      address: company.address,
+      serviceArea: String(company.serviceArea || "")
+        .split(" / ")
+        .filter(Boolean),
+      registrationNo: company.registrationNo,
+      registrationExpiresOn: company.registrationExpiresOn
+        ? dayjs(company.registrationExpiresOn)
+        : undefined,
+      serviceStartsOn: company.serviceStartsOn
+        ? dayjs(company.serviceStartsOn)
+        : undefined,
+      serviceEndsOn: company.serviceEndsOn
+        ? dayjs(company.serviceEndsOn)
+        : undefined,
+    });
+    let active = true;
+    if (!root.canRead("materials")) {
+      setImagesLoading(false);
+      return;
+    }
+    options("materials", { salesCompanyId: company.id })
+      .then((rows) => {
+        if (!active) return;
+        const toFile = (row: Row): UploadFile => ({
+          uid: row.id,
+          name: row.originalName || row.title || t("图片"),
+          status: "done",
+          url: `/api/v1/materials/${row.id}/download`,
+        });
+        const existing = rows.filter(
+          (row) => ["LOGO", "PHOTO"].includes(row.category) && row.storageKey,
+        );
+        existingImageIds.current = new Set(existing.map((row) => row.id));
+        setLogo(
+          existing
+            .filter((row) => row.category === "LOGO")
+            .sort((a, b) =>
+              String(b.createdAt).localeCompare(String(a.createdAt)),
+            )
+            .slice(0, 1)
+            .map(toFile),
+        );
+        setPhotos(
+          existing.filter((row) => row.category === "PHOTO").map(toFile),
+        );
+      })
+      .catch((cause) => {
+        if (active) setError(t(`图片加载失败：${errorMessage(cause)}`));
+      })
+      .finally(() => {
+        if (active) setImagesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [company?.id, form]);
+  useEffect(() => {
+    if (!company || !root.canRead("users")) return;
+    let active = true;
+    api
+      .get<Page>("/users", {
+        params: {
+          salesCompanyId: company.id,
+          role: "SALES_COMPANY_ADMIN",
+          page: 1,
+          pageSize: 1,
+        },
+      })
+      .then(({ data }) => {
+        if (active) setAdminAccount(data.items[0]);
+      })
+      .catch(() => {
+        if (active) setAdminAccount(undefined);
+      });
+    return () => {
+      active = false;
+    };
+  }, [company?.id]);
   const serviceEndsOn = Form.useWatch("serviceEndsOn", form) as
     Dayjs | undefined;
   const remainingDays = serviceEndsOn
@@ -111,7 +209,7 @@ export function CreateSalesCompanyDrawer({
             salesCompanyId: companyId,
             category,
             title: file.name,
-            visibility: "INTERNAL",
+            visibility: "SHARED",
           }),
         );
         payload.append("file", file.originFileObj, file.name);
@@ -124,7 +222,7 @@ export function CreateSalesCompanyDrawer({
   async function save(values: Row) {
     setSaving(true);
     setError("");
-    let company = createdCompany;
+    let savedCompany = createdCompany;
     try {
       const serviceStartsOn = (
         values.serviceStartsOn as Dayjs | undefined
@@ -138,34 +236,51 @@ export function CreateSalesCompanyDrawer({
         ]);
         return;
       }
-      company =
-        company ||
-        (
-          await api.post<Row>("/sales-companies", {
-            name: values.name.trim(),
-            nameEn: values.nameEn?.trim() || "",
-            contactName: values.contactName.trim(),
-            phone: values.phone.trim(),
-            email: values.email.trim(),
-            address: values.address?.trim() || "",
-            serviceArea: (values.serviceArea || []).join(" / "),
-            registrationNo: values.registrationNo.trim(),
-            registrationExpiresOn: (
-              values.registrationExpiresOn as Dayjs
-            ).format("YYYY-MM-DD"),
-            serviceStartsOn,
-            serviceEndsOn,
+      const payload = {
+        name: values.name.trim(),
+        nameEn: values.nameEn?.trim() || "",
+        contactName: values.contactName.trim(),
+        phone: values.phone.trim(),
+        email: values.email.trim(),
+        address: values.address?.trim() || "",
+        serviceArea: (values.serviceArea || []).join(" / "),
+        registrationNo: values.registrationNo.trim(),
+        registrationExpiresOn: (values.registrationExpiresOn as Dayjs).format(
+          "YYYY-MM-DD",
+        ),
+        serviceStartsOn,
+        serviceEndsOn,
+      };
+      if (company) {
+        savedCompany = (
+          await api.patch<Row>(`/sales-companies/${company.id}`, {
+            ...payload,
+            revision: currentRevision.current,
           })
         ).data;
-      setCreatedCompany(company);
-      await uploadImages(company.id);
-      message.success(t("销售公司创建成功"));
+        currentRevision.current = savedCompany.revision;
+      } else if (!savedCompany) {
+        savedCompany = (await api.post<Row>("/sales-companies", payload)).data;
+        setCreatedCompany(savedCompany);
+      }
+      await uploadImages(savedCompany!.id);
+      if (company) {
+        const retained = new Set([...logo, ...photos].map((file) => file.uid));
+        for (const id of existingImageIds.current) {
+          if (retained.has(id)) continue;
+          await api.delete(`/materials/${id}`, {
+            data: { reason: t("更新销售公司图片") },
+          });
+          existingImageIds.current.delete(id);
+        }
+      }
+      message.success(t(company ? "销售公司修改成功" : "销售公司创建成功"));
       root.invalidate();
       onSaved();
     } catch (cause) {
       setError(
-        company
-          ? t(`公司已创建，图片上传失败；请重试：${errorMessage(cause)}`)
+        savedCompany
+          ? t(`公司资料已保存，图片处理失败；请重试：${errorMessage(cause)}`)
           : errorMessage(cause),
       );
     } finally {
@@ -177,7 +292,7 @@ export function CreateSalesCompanyDrawer({
     <Drawer
       open
       width="min(880px, 100vw)"
-      title={t("新建销售公司")}
+      title={t(company ? "编辑销售公司" : "新建销售公司")}
       onClose={() => {
         if (!saving) onClose();
       }}
@@ -194,8 +309,18 @@ export function CreateSalesCompanyDrawer({
           <Button onClick={onClose} disabled={saving}>
             {t("取消")}
           </Button>
-          <Button type="primary" loading={saving} onClick={() => form.submit()}>
-            {t(createdCompany ? "继续上传图片" : "创建公司")}
+          <Button
+            type="primary"
+            loading={saving || imagesLoading}
+            onClick={() => form.submit()}
+          >
+            {t(
+              company
+                ? "保存修改"
+                : createdCompany
+                  ? "继续上传图片"
+                  : "创建公司",
+            )}
           </Button>
         </div>
       }
@@ -207,7 +332,7 @@ export function CreateSalesCompanyDrawer({
         form={form}
         layout="vertical"
         onFinish={save}
-        initialValues={{ serviceStartsOn: dayjs() }}
+        initialValues={company ? undefined : { serviceStartsOn: dayjs() }}
         className="[&_.ant-form-item-label]:!pb-1 [&_.ant-form-item-label_label]:!text-xs [&_.ant-form-item-label_label]:!text-[#73819a]"
       >
         <section className="rounded-lg bg-[#f5f6f8] p-4 max-[600px]:p-3">
@@ -340,14 +465,30 @@ export function CreateSalesCompanyDrawer({
             <Form.Item label={t("会员 / 公司编号")} className={fieldClass}>
               <Input
                 disabled
-                value={createdCompany?.companyNo || t("系统自动生成")}
+                value={
+                  company?.companyNo ||
+                  createdCompany?.companyNo ||
+                  t("系统自动生成")
+                }
               />
             </Form.Item>
             <Form.Item label={t("管理员账号")} className={fieldClass}>
-              <Input disabled value={t("创建公司后在账号管理开通")} />
+              <Input
+                disabled
+                value={
+                  adminAccount?.username ||
+                  t(company ? "尚未开通" : "创建公司后在账号管理开通")
+                }
+              />
             </Form.Item>
             <Form.Item label={t("管理员姓名")} className={fieldClass}>
-              <Input disabled value={t("创建公司后在账号管理填写")} />
+              <Input
+                disabled
+                value={
+                  adminAccount?.name ||
+                  t(company ? "尚未填写" : "创建公司后在账号管理填写")
+                }
+              />
             </Form.Item>
             <Form.Item
               name="serviceStartsOn"

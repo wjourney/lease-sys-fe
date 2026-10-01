@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "preview": "vite preview --host 127.0.0.1",
-    "api:generate": "openapi-typescript http://127.0.0.1:3001/api/docs-json -o src/shared/api.generated.ts",
+    "api:generate": "openapi-typescript https://47.117.136.208/api/docs-json -o src/shared/api.generated.ts",
     "format": "prettier --write src tests *.ts",
     "lint": "tsc -b --pretty false"
   },

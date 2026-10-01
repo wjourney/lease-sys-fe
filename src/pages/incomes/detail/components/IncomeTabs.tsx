@@ -2,6 +2,7 @@ import { Button, Card, Space, Table, TabsProps } from "antd";
 import { DetailContextValue } from "../../../../components/resource-detail/DetailContext";
 import { amount, dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { Status } from "../../../../shared/ui";
 export function getIncomeTabs(
   ctx: DetailContextValue,
@@ -17,6 +18,12 @@ export function getIncomeTabs(
         <Card title={t("收款明细")}>
           <Table
             rowKey="id"
+            onRow={(row: Row) => ({
+              className: "cursor-pointer",
+              onClick: (event) => {
+                if (shouldOpenRow(event)) navigate(`/incomes/${row.id}`);
+              },
+            })}
             pagination={false}
             dataSource={receipts}
             columns={[
@@ -42,7 +49,7 @@ export function getIncomeTabs(
               {
                 title: t("操作"),
                 render: (_: any, r: Row) => (
-                  <Space wrap>
+                  <Space wrap data-row-action>
                     {r.status === "PENDING" && root.finance && (
                       <>
                         <Button
