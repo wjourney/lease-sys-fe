@@ -1,5 +1,6 @@
+import { RequestError as Alert } from "../../../components/feedback/RequestError";
 import { ArrowLeftOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, App, Avatar, Button, Empty, Spin, Tooltip } from "antd";
+import { App, Avatar, Button, Empty, Spin, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { createPortal } from "react-dom";

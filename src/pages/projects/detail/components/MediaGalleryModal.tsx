@@ -11,7 +11,8 @@ import { t } from "../../../../shared/i18n";
 
 export type MediaCategory = "LOGO" | "PHOTO" | "VIDEO" | "PROJECT_FILE";
 
-const mediaUrl = (id: string) => `/api/v1/materials/${id}/download`;
+const mediaUrl = (item: Row) =>
+  item.downloadUrl || `/api/v1/materials/${item.id}/download`;
 
 export function MediaGalleryModal({
   category,
@@ -49,7 +50,7 @@ export function MediaGalleryModal({
             <Button
               type="primary"
               icon={<DownloadOutlined aria-hidden />}
-              href={`${mediaUrl(item.id)}?download=1`}
+              href={`${mediaUrl(item)}?download=1`}
             >
               {t("下载")}
             </Button>
@@ -86,7 +87,7 @@ export function MediaGalleryModal({
               {isImage ? (
                 <img
                   key={item.id}
-                  src={mediaUrl(item.id)}
+                  src={mediaUrl(item)}
                   alt={name}
                   className="max-h-full max-w-full object-contain"
                 />
@@ -96,14 +97,14 @@ export function MediaGalleryModal({
                   controls
                   preload="metadata"
                   aria-label={t(name)}
-                  src={mediaUrl(item.id)}
+                  src={mediaUrl(item)}
                   className="max-h-full w-full bg-black"
                 />
               ) : isPdf ? (
                 <iframe
                   key={item.id}
                   title={t(name)}
-                  src={mediaUrl(item.id)}
+                  src={mediaUrl(item)}
                   className="h-full w-full border-0 bg-white"
                 />
               ) : (

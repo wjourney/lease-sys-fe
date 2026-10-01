@@ -1,5 +1,5 @@
+import { RequestError as Alert } from "../feedback/RequestError";
 import {
-  Alert,
   Button,
   DatePicker,
   Drawer,

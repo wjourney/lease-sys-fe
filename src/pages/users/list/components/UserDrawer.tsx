@@ -1,6 +1,6 @@
+import { RequestError as Alert } from "../../../../components/feedback/RequestError";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import {
-  Alert,
   App,
   Avatar,
   Button,

@@ -29,34 +29,44 @@ api.interceptors.response.use(
   },
 );
 export function errorMessage(error: unknown): string {
+  if (typeof error === "string") {
+    if (
+      /^(网络|请求|服务|操作|当前账号|登录状态|提交的信息|内容不存在|该记录|文件过大|请上传|资料已保存|项目资料已保存|单位资料已保存|公司资料已保存|账号已创建)/.test(
+        error,
+      )
+    )
+      return error;
+    return "操作未完成，请稍后再试";
+  }
   const e = error as {
     code?: string;
     message?: string;
     response?: { status?: number; data?: { message?: unknown } };
   } | null;
-  if (!e) return "请求失败，请稍后重试";
+  if (!e) return "操作未完成，请稍后再试";
   if (
     ["ECONNABORTED", "ETIMEDOUT"].includes(e.code || "") ||
     /timeout/i.test(e.message || "")
   )
-    return "请求超时，请稍后重试";
+    return "网络不太稳定，请稍后再试";
   if (e.code === "ERR_NETWORK" || e.message === "Network Error")
     return "网络连接失败，请检查网络后重试";
   const status = e.response?.status;
   if (status === 429) return "操作过于频繁，请稍后重试";
-  if (status && status >= 500) return "服务暂时不可用，请稍后重试";
+  if (status && status >= 500) return "服务暂时不可用，请稍后再试";
   const serverMessage = e.response?.data?.message;
   if (
     typeof serverMessage === "string" &&
-    /[\u3400-\u9fff]/u.test(serverMessage)
+    /已有业务引用|存在业务关联/.test(serverMessage)
   )
-    return serverMessage;
-  if (status === 401 || status === 403) return "当前账号无权执行此操作";
+    return "该记录已关联业务，无法删除。可改为停用。";
+  if (status === 401) return "登录状态已失效，请重新登录";
+  if (status === 403) return "当前账号没有操作权限";
+  if (status === 404) return "内容不存在或已删除，请刷新后重试";
+  if (status === 409) return "内容已被修改，请刷新后重试";
+  if (status === 413) return "文件过大，请选择较小的文件";
   if (status === 400 || status === 422) return "提交的信息有误，请检查后重试";
-  if (status === 404) return "请求的内容不存在或已删除";
-  if (typeof e.message === "string" && /[\u3400-\u9fff]/u.test(e.message))
-    return e.message;
-  return "请求失败，请稍后重试";
+  return "操作未完成，请稍后再试";
 }
 export type Row = Record<string, any>;
 export type Page = {

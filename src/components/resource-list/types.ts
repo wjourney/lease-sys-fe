@@ -8,6 +8,7 @@ export interface ListViewProps {
   page: number;
   setSearch: SetURLSearchParams;
   query: string;
+  onPageChange?: (page: number) => void;
 }
 export interface ResourceListProps {
   resource: string;

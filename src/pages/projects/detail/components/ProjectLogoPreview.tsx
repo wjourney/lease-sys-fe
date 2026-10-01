@@ -1,34 +1,14 @@
 import { PictureOutlined } from "@ant-design/icons";
-import { useEffect, useState } from "react";
-import { options, type Row } from "../../../../shared/api";
+import { useState } from "react";
+import { type Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
-import { useRoot } from "../../../../stores/root";
 import { MediaGalleryModal } from "./MediaGalleryModal";
 
-export function ProjectLogoPreview({ projectId }: { projectId: string }) {
-  const root = useRoot();
-  const [logos, setLogos] = useState<Row[]>([]);
+export function ProjectLogoPreview({ materials }: { materials: Row[] }) {
+  const logos = materials
+    .filter((row) => row.category === "LOGO" && row.storageKey)
+    .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0));
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    setLogos([]);
-    void options("materials", { projectId })
-      .then((rows) => {
-        if (active)
-          setLogos(
-            rows
-              .filter((row) => row.category === "LOGO" && row.storageKey)
-              .sort(
-                (a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0),
-              ),
-          );
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [projectId, root.epoch]);
 
   const primary = logos[0];
   return (
@@ -41,7 +21,9 @@ export function ProjectLogoPreview({ projectId }: { projectId: string }) {
           aria-label={t(`预览项目 Logo，共 ${logos.length} 张`)}
         >
           <img
-            src={`/api/v1/materials/${primary.id}/download`}
+            src={
+              primary.downloadUrl || `/api/v1/materials/${primary.id}/download`
+            }
             alt={t("项目 Logo")}
             className="max-h-full max-w-full object-contain"
           />

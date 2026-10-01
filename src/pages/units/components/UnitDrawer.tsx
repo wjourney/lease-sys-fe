@@ -1,4 +1,5 @@
-import { Alert, App, Button, Drawer, Form, Spin } from "antd";
+import { RequestError as Alert } from "../../../components/feedback/RequestError";
+import { App, Button, Drawer, Form, Spin } from "antd";
 import type { UploadFile } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage, options, Row } from "../../../shared/api";
@@ -59,7 +60,11 @@ export function UnitDrawer({
     Promise.all([
       options("projects"),
       options("settings", { key: "unit_types" }),
-      row ? options("materials", { unitId: row.id }) : Promise.resolve([]),
+      row
+        ? row.materials
+          ? Promise.resolve(row.materials as Row[])
+          : options("materials", { unitId: row.id })
+        : Promise.resolve([]),
     ])
       .then(([projectRows, settings, materials]) => {
         if (!active) return;

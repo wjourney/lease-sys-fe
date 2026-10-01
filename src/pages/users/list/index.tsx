@@ -1,6 +1,6 @@
+import { RequestError as Alert } from "../../../components/feedback/RequestError";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import {
-  Alert,
   App,
   Button,
   Empty,

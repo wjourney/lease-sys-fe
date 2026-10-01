@@ -16,6 +16,15 @@ export const configs: Record<string, Config> = {
   "sales-companies": SalesCompanyConfig,
   users: UserConfig,
   projects: ProjectConfig,
+  units: {
+    title: "单位管理",
+    description: "项目下的单位",
+    fields: [],
+    columns: [
+      { key: "unitNo", label: "单位名称" },
+      { key: "referenceRent", label: "参考月租" },
+    ],
+  },
   orders: OrderConfig,
   incomes: IncomeConfig,
   expenses: ExpenseConfig,

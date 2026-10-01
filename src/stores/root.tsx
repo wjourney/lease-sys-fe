@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { createContext, useContext } from "react";
-import { api, clearLookupCache, Page, Row } from "../shared/api";
+import { api, clearLookupCache, errorMessage, Page, Row } from "../shared/api";
 export class RootStore {
   user: Row | null = null;
   ready = false;
@@ -129,7 +129,7 @@ export class ListStore {
     } catch (e: any) {
       if (seq === this.request)
         runInAction(() => {
-          this.error = e.response?.data?.message || "加载失败";
+          this.error = errorMessage(e);
         });
     } finally {
       if (seq === this.request)

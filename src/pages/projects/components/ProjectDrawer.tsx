@@ -1,4 +1,5 @@
-import { Alert, App, Button, Drawer, Form, Spin } from "antd";
+import { RequestError as Alert } from "../../../components/feedback/RequestError";
+import { App, Button, Drawer, Form, Spin } from "antd";
 import type { UploadFile } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage, options, Row } from "../../../shared/api";
@@ -48,7 +49,10 @@ export function ProjectDrawer({
   useEffect(() => {
     if (!row) return;
     let active = true;
-    options("materials", { projectId: row.id })
+    (row.materials
+      ? Promise.resolve(row.materials as Row[])
+      : options("materials", { projectId: row.id })
+    )
       .then((materials) => {
         if (!active) return;
         const existing = projectUploadsFromMaterials(materials);

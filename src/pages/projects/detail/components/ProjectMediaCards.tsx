@@ -3,37 +3,18 @@ import {
   PictureOutlined,
   PlayCircleOutlined,
 } from "@ant-design/icons";
-import { Alert, Spin } from "antd";
-import { useEffect, useState } from "react";
-import { Row, errorMessage, options } from "../../../../shared/api";
+import { useState } from "react";
+import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
-import { useRoot } from "../../../../stores/root";
 import { MediaCategory, MediaGalleryModal } from "./MediaGalleryModal";
 
-export function ProjectMediaCards({ projectId }: { projectId: string }) {
-  const root = useRoot();
-  const [materials, setMaterials] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+export function ProjectMediaCards({
+  materials: allMaterials,
+}: {
+  materials: Row[];
+}) {
+  const materials = allMaterials.filter((row) => row.storageKey);
   const [open, setOpen] = useState<MediaCategory>();
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    options("materials", { projectId })
-      .then((rows) => {
-        if (active) setMaterials(rows.filter((row) => row.storageKey));
-      })
-      .catch((cause) => {
-        if (active) setError(errorMessage(cause));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [projectId, root.epoch]);
 
   const cards = [
     {
@@ -59,40 +40,35 @@ export function ProjectMediaCards({ projectId }: { projectId: string }) {
 
   return (
     <>
-      {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-3" />
-      )}
-      <Spin spinning={loading}>
-        <div className="grid grid-cols-3 max-[600px]:grid-cols-1">
-          {cards.map((card) => {
-            const count = materials.filter(
-              (item) => item.category === card.key,
-            ).length;
-            return (
-              <button
-                key={card.key}
-                type="button"
-                onClick={() => setOpen(card.key)}
-                className="flex min-h-12 min-w-0 items-center justify-center gap-1 border-r border-[#e1e7ef] px-1 text-[13px] font-medium text-[#1b355d] transition-colors hover:bg-[#f5f8fc] last:border-r-0 focus-visible:outline-2 focus-visible:outline-[#192d4c] max-[600px]:border-r-0 max-[600px]:border-b max-[600px]:last:border-b-0"
-              >
-                <span className="text-[18px]" aria-hidden>
-                  {card.icon}
-                </span>
-                <span className="whitespace-nowrap">{t(card.title)}</span>
-                <span className="shrink-0 whitespace-nowrap text-[11px] font-normal text-[#8290a8]">
-                  {t(
-                    count
-                      ? `${count} ${card.suffix}`
-                      : card.key === "PROJECT_FILE"
-                        ? "暂无文件"
-                        : `0 ${card.suffix}`,
-                  )}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </Spin>
+      <div className="grid grid-cols-3 max-[600px]:grid-cols-1">
+        {cards.map((card) => {
+          const count = materials.filter(
+            (item) => item.category === card.key,
+          ).length;
+          return (
+            <button
+              key={card.key}
+              type="button"
+              onClick={() => setOpen(card.key)}
+              className="flex min-h-12 min-w-0 items-center justify-center gap-1 border-r border-[#e1e7ef] px-1 text-[13px] font-medium text-[#1b355d] transition-colors hover:bg-[#f5f8fc] last:border-r-0 focus-visible:outline-2 focus-visible:outline-[#192d4c] max-[600px]:border-r-0 max-[600px]:border-b max-[600px]:last:border-b-0"
+            >
+              <span className="text-[18px]" aria-hidden>
+                {card.icon}
+              </span>
+              <span className="whitespace-nowrap">{t(card.title)}</span>
+              <span className="shrink-0 whitespace-nowrap text-[11px] font-normal text-[#8290a8]">
+                {t(
+                  count
+                    ? `${count} ${card.suffix}`
+                    : card.key === "PROJECT_FILE"
+                      ? "暂无文件"
+                      : `0 ${card.suffix}`,
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
       <MediaGalleryModal
         category={open}
         title={cards.find((card) => card.key === open)?.title || "项目资料"}

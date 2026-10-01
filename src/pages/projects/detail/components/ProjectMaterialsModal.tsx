@@ -1,14 +1,8 @@
-import { Alert, Button, Empty, Modal, Spin } from "antd";
-import { useEffect, useState } from "react";
+import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { Button, Empty, Modal, Spin } from "antd";
+import { useState } from "react";
 import { MaterialEditor } from "../../../../components/forms/MaterialEditor";
-import {
-  Page,
-  Row,
-  api,
-  dateText,
-  errorMessage,
-  options,
-} from "../../../../shared/api";
+import { Page, Row, api, dateText, errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { useRoot } from "../../../../stores/root";
@@ -27,42 +21,22 @@ function downloadUrl(id: string) {
 
 export function ProjectMaterialsModal({
   projectId,
+  materials,
   section,
   onClose,
 }: {
   projectId: string;
+  materials: Row[];
   section?: MaterialSection;
   onClose: () => void;
 }) {
   const root = useRoot();
-  const [materials, setMaterials] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [editor, setEditor] = useState<Row>();
   const [versionOf, setVersionOf] = useState<string>();
   const [preview, setPreview] = useState<Row>();
   const [versions, setVersions] = useState<Row[]>();
   const [versionsLoading, setVersionsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!section) return;
-    let active = true;
-    setLoading(true);
-    setError("");
-    options("materials", { projectId })
-      .then((rows) => {
-        if (active) setMaterials(rows);
-      })
-      .catch((cause) => {
-        if (active) setError(errorMessage(cause));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [projectId, section, root.epoch]);
 
   const shown = materials.filter((item) =>
     section === "GUIDE"
@@ -112,7 +86,7 @@ export function ProjectMaterialsModal({
         {error && (
           <Alert type="error" showIcon message={t(error)} className="mb-3" />
         )}
-        <Spin spinning={loading}>
+        <Spin spinning={false}>
           <div className="max-h-[60vh] min-h-36 overflow-y-auto rounded-md bg-[#f5f6f8] px-4 py-3">
             {shown.length === 0 ? (
               <Empty description={t("暂无资料")} className="py-6" />
@@ -239,6 +213,7 @@ export function ProjectMaterialsModal({
           onSaved={() => {
             setEditor(undefined);
             setVersionOf(undefined);
+            root.invalidate();
           }}
         />
       )}

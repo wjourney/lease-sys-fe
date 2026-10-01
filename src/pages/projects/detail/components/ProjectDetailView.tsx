@@ -126,7 +126,7 @@ export function ProjectDetailView({
           </div>
           <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-6 pb-5 max-[1100px]:grid-cols-1">
             <div className="flex min-w-0 items-start gap-5 max-[600px]:gap-3">
-              <ProjectLogoPreview projectId={id} />
+              <ProjectLogoPreview materials={row.materials || []} />
               <div className="min-w-0 flex-1">
                 <ProjectOverviewDetails row={row} />
               </div>
@@ -134,7 +134,7 @@ export function ProjectDetailView({
             <ProjectStats row={row} />
           </div>
           <div className="grid grid-cols-[3fr_4fr] border-t border-[#e1e7ef] pt-3 max-[1200px]:grid-cols-1">
-            <ProjectMediaCards projectId={id} />
+            <ProjectMediaCards materials={row.materials || []} />
             <nav
               className="grid grid-cols-4 border-l border-[#e1e7ef] max-[1200px]:mt-3 max-[1200px]:border-l-0 max-[1200px]:border-t max-[1200px]:pt-3 max-[600px]:grid-cols-2"
               aria-label={t("项目资料分类")}
@@ -213,6 +213,7 @@ export function ProjectDetailView({
       />
       <ProjectMaterialsModal
         projectId={id}
+        materials={row.materials || []}
         section={section === "basic" ? undefined : section}
         onClose={() => setSection(undefined)}
       />

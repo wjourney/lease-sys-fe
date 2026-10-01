@@ -1,5 +1,6 @@
+import { RequestError as Alert } from "../feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import { Alert, Button, Empty, Space, Table } from "antd";
+import { Button, Empty, Space, Table } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -161,6 +162,14 @@ export const ResourceList = observer(function ResourceList({
             page,
             setSearch,
             query,
+            onPageChange: (value) =>
+              embedded
+                ? setLocalPage(value)
+                : setSearch({
+                    q: query,
+                    ...(filter ? { status: filter } : {}),
+                    page: String(value),
+                  }),
           }) ?? (
             <Table
               size="middle"

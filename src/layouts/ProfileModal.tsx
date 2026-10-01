@@ -1,14 +1,6 @@
+import { RequestError as Alert } from "../components/feedback/RequestError";
 import { CameraOutlined, EditOutlined, UserOutlined } from "@ant-design/icons";
-import {
-  Alert,
-  App as AntApp,
-  Avatar,
-  Button,
-  Form,
-  Input,
-  Modal,
-  Spin,
-} from "antd";
+import { App as AntApp, Avatar, Button, Form, Input, Modal, Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { api, dateText, errorMessage, type Row } from "../shared/api";

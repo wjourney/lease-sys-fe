@@ -1,4 +1,5 @@
-import { Alert, Button, Form, Input, Modal } from "antd";
+import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";

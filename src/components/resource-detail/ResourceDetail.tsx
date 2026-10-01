@@ -29,6 +29,7 @@ import { ActionForm } from "../forms/ActionForm";
 import { MaterialEditor } from "../forms/MaterialEditor";
 import { Editor } from "../forms/ResourceEditor";
 import { ResourceList } from "../resource-list/ResourceList";
+import { RequestError } from "../feedback/RequestError";
 import { DetailContext, DetailContextValue } from "./DetailContext";
 import { ownerFields } from "./owner-fields";
 import { RecordBasicInfo } from "./RecordBasicInfo";
@@ -63,7 +64,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   if (!config) return <Empty />;
   if (error)
     return (
-      <Alert
+      <RequestError
         message={t(error)}
         type="error"
         action={<Button onClick={load}>{t("重试")}</Button>}

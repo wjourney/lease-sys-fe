@@ -1,10 +1,10 @@
+import { RequestError as Alert } from "../../../components/feedback/RequestError";
 import {
   ArrowLeftOutlined,
   PictureOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import {
-  Alert,
   Button,
   Empty,
   Image,

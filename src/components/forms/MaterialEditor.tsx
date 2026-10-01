@@ -1,5 +1,6 @@
+import { RequestError as Alert } from "../feedback/RequestError";
 import { UploadOutlined } from "@ant-design/icons";
-import { Alert, Button, Drawer, Form, Input, Select, Upload } from "antd";
+import { Button, Drawer, Form, Input, Select, Upload } from "antd";
 import { useEffect, useState } from "react";
 import { api, errorMessage, options, Row } from "../../shared/api";
 import { configs } from "../../shared/config";

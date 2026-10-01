@@ -1,13 +1,8 @@
+import { RequestError as Alert } from "../../../../components/feedback/RequestError";
 import { EditOutlined } from "@ant-design/icons";
-import { Alert, Button, Modal, Spin } from "antd";
+import { Button, Modal, Spin } from "antd";
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  amount,
-  api,
-  errorMessage,
-  options,
-  Row,
-} from "../../../../shared/api";
+import { amount, api, errorMessage, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { Status } from "../../../../shared/ui";
 import { useRoot } from "../../../../stores/root";
@@ -66,18 +61,13 @@ export function UnitDetailModal({
 }) {
   const root = useRoot();
   const [detail, setDetail] = useState<Row>();
-  const [materials, setMaterials] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mediaLoading, setMediaLoading] = useState(false);
   const [error, setError] = useState("");
-  const [mediaError, setMediaError] = useState("");
 
   useEffect(() => {
     let active = true;
     setDetail(undefined);
-    setMaterials([]);
     setError("");
-    setMediaError("");
     setLoading(true);
     void api
       .get<Row>(`/units/${unit.id}`)
@@ -90,26 +80,6 @@ export function UnitDetailModal({
       .finally(() => {
         if (active) setLoading(false);
       });
-    if (root.canRead("materials")) {
-      setMediaLoading(true);
-      void options("materials", { unitId: unit.id })
-        .then((rows) => {
-          if (active)
-            setMaterials(
-              rows.filter(
-                (item) =>
-                  item.storageKey &&
-                  ["PHOTO", "VIDEO", "PROJECT_FILE"].includes(item.category),
-              ),
-            );
-        })
-        .catch((cause) => {
-          if (active) setMediaError(errorMessage(cause));
-        })
-        .finally(() => {
-          if (active) setMediaLoading(false);
-        });
-    }
     return () => {
       active = false;
     };
@@ -155,9 +125,13 @@ export function UnitDetailModal({
               </p>
               {root.canRead("materials") && (
                 <UnitDetailMedia
-                  materials={materials}
-                  loading={mediaLoading}
-                  error={mediaError}
+                  materials={(detail.materials || []).filter(
+                    (item: Row) =>
+                      item.storageKey &&
+                      ["PHOTO", "VIDEO", "PROJECT_FILE"].includes(
+                        item.category,
+                      ),
+                  )}
                 />
               )}
               <DetailSection title="单位定位">

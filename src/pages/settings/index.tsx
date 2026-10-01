@@ -1,5 +1,6 @@
+import { RequestError as Alert } from "../../components/feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Card, Typography } from "antd";
+import { App, Button, Card, Typography } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { api, errorMessage, options, Row } from "../../shared/api";
