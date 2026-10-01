@@ -24,6 +24,7 @@ import {
   ProjectMaterialsModal,
 } from "./ProjectMaterialsModal";
 import { ProjectMediaCards } from "./ProjectMediaCards";
+import { ProjectLogoPreview } from "./ProjectLogoPreview";
 import { ProjectOverviewDetails } from "./ProjectOverviewDetails";
 import { ProjectStats } from "./ProjectStats";
 import { UnitDetailModal } from "./UnitDetailModal";
@@ -124,7 +125,12 @@ export function ProjectDetailView({
             </div>
           </div>
           <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-6 pb-5 max-[1100px]:grid-cols-1">
-            <ProjectOverviewDetails row={row} />
+            <div className="flex min-w-0 items-start gap-5 max-[600px]:gap-3">
+              <ProjectLogoPreview projectId={id} />
+              <div className="min-w-0 flex-1">
+                <ProjectOverviewDetails row={row} />
+              </div>
+            </div>
             <ProjectStats row={row} />
           </div>
           <div className="grid grid-cols-[3fr_4fr] border-t border-[#e1e7ef] pt-3 max-[1200px]:grid-cols-1">
@@ -220,7 +226,7 @@ export function ProjectDetailView({
         }
       >
         <div className="max-h-[65vh] overflow-y-auto pt-2">
-          <RecordHistory logs={logs} fields={fields} />
+          <RecordHistory logs={logs} fields={fields} onlyUpdates inModal />
         </div>
       </Modal>
     </>

@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import type { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 
-export type MediaCategory = "PHOTO" | "VIDEO" | "PROJECT_FILE";
+export type MediaCategory = "LOGO" | "PHOTO" | "VIDEO" | "PROJECT_FILE";
 
 const mediaUrl = (id: string) => `/api/v1/materials/${id}/download`;
 
@@ -29,7 +29,10 @@ export function MediaGalleryModal({
   const currentIndex = Math.min(index, Math.max(0, items.length - 1));
   const item = items[currentIndex];
   const name = item?.originalName || item?.title || "文件";
-  const isImage = category === "PHOTO" || item?.mimeType?.startsWith("image/");
+  const isImage =
+    category === "LOGO" ||
+    category === "PHOTO" ||
+    item?.mimeType?.startsWith("image/");
   const isPdf = item?.mimeType === "application/pdf";
 
   return (

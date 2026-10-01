@@ -15,14 +15,14 @@ const regionOptions = ["港岛", "九龙", "新界", "离岛"].map((value) => ({
 export function ProjectBasicFields({
   uploads,
   onUploadChange,
-  projectCode,
+  isEdit,
 }: {
   uploads: ProjectUploads;
   onUploadChange: (
     category: ProjectUploadCategory,
     files: UploadFile[],
   ) => void;
-  projectCode?: string;
+  isEdit?: boolean;
 }) {
   const form = Form.useFormInstance();
   const completionDate = Form.useWatch("completionDate", form);
@@ -32,16 +32,6 @@ export function ProjectBasicFields({
 
   return (
     <ProjectCreateSection title="基本资料">
-      {projectCode && (
-        <Form.Item label={t("项目编号")} htmlFor="project-code">
-          <Input
-            id="project-code"
-            value={projectCode}
-            readOnly
-            className="!bg-[#f3f5f8]"
-          />
-        </Form.Item>
-      )}
       <Form.Item
         name="name"
         label={t("项目中文名称")}
@@ -172,7 +162,7 @@ export function ProjectBasicFields({
           }))}
         />
       </Form.Item>
-      {projectCode && (
+      {isEdit && (
         <Form.Item name="status" label={t("项目状态")}>
           <Select
             options={[

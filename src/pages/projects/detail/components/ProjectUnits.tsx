@@ -1,4 +1,8 @@
-import { PictureOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  PictureOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import { Alert, Button, Empty, Input, Pagination, Select, Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useState } from "react";
@@ -6,6 +10,7 @@ import { amount, options, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { ListStore, useRoot } from "../../../../stores/root";
+import { UnitDeleteModal } from "./UnitDeleteModal";
 
 type Filters = {
   q: string;
@@ -30,6 +35,7 @@ export const ProjectUnits = observer(function ProjectUnits({
   const [draft, setDraft] = useState<Filters>({ q: "" });
   const [filters, setFilters] = useState<Filters>({ q: "" });
   const [page, setPage] = useState(1);
+  const [unitToDelete, setUnitToDelete] = useState<Row>();
   const [unitTypes, setUnitTypes] = useState<
     { label: string; value: string }[]
   >([]);
@@ -223,14 +229,23 @@ export const ProjectUnits = observer(function ProjectUnits({
                     {" · "}
                     {t("文件可在详情中下载")}
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
                     <Button onClick={() => onViewUnit(unit)}>
                       {t("查看单位")}
                     </Button>
                     {root.canWrite("units") && (
-                      <Button onClick={() => onEditUnit(unit)}>
-                        {t("编辑单位")}
-                      </Button>
+                      <>
+                        <Button onClick={() => onEditUnit(unit)}>
+                          {t("编辑单位")}
+                        </Button>
+                        <Button
+                          danger
+                          icon={<DeleteOutlined aria-hidden />}
+                          onClick={() => setUnitToDelete(unit)}
+                        >
+                          {t("删除")}
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -265,6 +280,16 @@ export const ProjectUnits = observer(function ProjectUnits({
           onChange={setPage}
         />
       </div>
+      {unitToDelete && (
+        <UnitDeleteModal
+          unit={unitToDelete}
+          onClose={() => setUnitToDelete(undefined)}
+          onDeleted={() => {
+            setUnitToDelete(undefined);
+            root.invalidate();
+          }}
+        />
+      )}
     </section>
   );
 });

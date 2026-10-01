@@ -189,7 +189,7 @@ export function ProjectDrawer({
           <ProjectBasicFields
             uploads={uploads}
             onUploadChange={onUploadChange}
-            projectCode={row?.code}
+            isEdit={!!row}
           />
           <ProjectPropertyFields unitCount={row?.unitCount} />
           <ProjectFilesFields
