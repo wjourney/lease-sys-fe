@@ -2,6 +2,7 @@ import { Alert, Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { api, errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { AccountActionNote } from "../../components/AccountActionNote";
 
 export function DeleteUserModal({
   id,
@@ -48,7 +49,12 @@ export function DeleteUserModal({
           <Button onClick={onClose} disabled={saving}>
             {t("取消")}
           </Button>
-          <Button danger type="primary" loading={saving} onClick={() => form.submit()}>
+          <Button
+            danger
+            type="primary"
+            loading={saving}
+            onClick={() => form.submit()}
+          >
             {t("确认删除")}
           </Button>
         </div>
@@ -59,12 +65,13 @@ export function DeleteUserModal({
         <strong className="mx-1 text-[#243248]">{t(name)}</strong>
         {t("吗？删除后该账号将无法登录。")}
       </p>
-      <Alert
-        type="info"
-        showIcon
-        className="mb-4"
-        message={t("已有业务引用的账号无法删除，请改为停用。")}
-      />
+      <div className="mb-4">
+        <AccountActionNote>
+          {t(
+            "若该账号关联了订单、佣金等业务记录，系统会阻止删除；此时可停用账号，历史记录仍会保留。",
+          )}
+        </AccountActionNote>
+      </div>
       {error && (
         <Alert type="error" showIcon message={t(error)} className="mb-4" />
       )}

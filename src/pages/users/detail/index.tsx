@@ -4,7 +4,6 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
-import { Editor } from "../../../components/forms/ResourceEditor";
 import { api, dateText, errorMessage } from "../../../shared/api";
 import { dateTimeText } from "../../../shared/date-time";
 import { t } from "../../../shared/i18n";
@@ -13,6 +12,7 @@ import { useRoot } from "../../../stores/root";
 import { AccountStatusTag } from "../components/AccountStatusTag";
 import { AccountPasswordModal } from "../components/AccountPasswordModal";
 import { DisableUserModal } from "./components/DisableUserModal";
+import { UserDrawer } from "../list/components/UserDrawer";
 import { useUserDetail } from "./useUserDetail";
 
 function maskedPhone(phone?: string) {
@@ -192,9 +192,7 @@ const UserDetailPage = observer(function UserDetailPage() {
               </span>
             </Tooltip>
             {canManageStatus && row.status === "ACTIVE" ? (
-              <Tooltip
-                title={self ? t("不能停用当前登录账号") : undefined}
-              >
+              <Tooltip title={self ? t("不能停用当前登录账号") : undefined}>
                 <span>
                   <Button
                     danger
@@ -230,9 +228,9 @@ const UserDetailPage = observer(function UserDetailPage() {
         )}
       </Spin>
       {editing && (
-        <Editor
-          resource="users"
-          row={row}
+        <UserDrawer
+          open
+          account={row}
           onClose={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);

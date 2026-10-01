@@ -1,6 +1,8 @@
-import { UploadOutlined } from "@ant-design/icons";
+import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import {
   Alert,
+  App,
+  Avatar,
   Button,
   DatePicker,
   Drawer,
@@ -11,8 +13,8 @@ import {
   Upload,
 } from "antd";
 import type { UploadFile } from "antd";
-import type { Dayjs } from "dayjs";
-import { useEffect, useState } from "react";
+import dayjs, { type Dayjs } from "dayjs";
+import { useEffect, useRef, useState } from "react";
 import { api, errorMessage, options, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { useRoot } from "../../../../stores/root";
@@ -20,52 +22,95 @@ import { useRoot } from "../../../../stores/root";
 const fieldClass =
   "min-w-0 [&_.ant-input]:!h-10 [&_.ant-select]:!h-10 [&_.ant-input-affix-wrapper]:!h-10 [&_.ant-input-affix-wrapper_.ant-input]:!h-auto";
 
-export function CreateUserDrawer({
+export function UserDrawer({
   open,
   onClose,
   onCreated,
+  onSaved,
+  account,
   initialSalesCompanyId,
 }: {
   open: boolean;
   onClose: () => void;
-  onCreated: (account: Row) => void;
+  onCreated?: (account: Row) => void;
+  onSaved?: () => void;
+  account?: Row;
   initialSalesCompanyId?: string;
 }) {
   const root = useRoot();
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [companies, setCompanies] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatar, setAvatar] = useState<UploadFile[]>([]);
+  const [avatarPreview, setAvatarPreview] = useState<string>();
   const [createdAccount, setCreatedAccount] = useState<Row>();
   const [error, setError] = useState("");
+  const currentRevision = useRef(account?.revision);
   const role = Form.useWatch("role", form);
   const companyId = Form.useWatch("salesCompanyId", form);
   const companyAdmin = root.user?.role === "SALES_COMPANY_ADMIN";
   const company = companies.find((item) => item.id === companyId);
   const salesRole = ["SALES", "SALES_COMPANY_ADMIN"].includes(role);
+  const phoneLocked = !!account && account.username === account.phone;
+
+  useEffect(() => {
+    const file = avatar[0]?.originFileObj;
+    if (!file) {
+      setAvatarPreview(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setAvatarPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatar]);
 
   useEffect(() => {
     if (!open) return;
-    form.setFieldsValue({
-      role: companyAdmin || initialSalesCompanyId ? "SALES" : undefined,
-      status: "ACTIVE",
-      salesCompanyId:
-        initialSalesCompanyId || root.user?.salesCompanyId || undefined,
-    });
+    currentRevision.current = account?.revision;
+    setAvatar([]);
+    setError("");
+    form.setFieldsValue(
+      account
+        ? {
+            role: account.role,
+            name: account.name,
+            nameEn: account.nameEn,
+            phone: account.phone,
+            email: account.email,
+            salesCompanyId: account.salesCompanyId || undefined,
+            branchCode: account.branchCode || undefined,
+            positionCode: account.positionCode || undefined,
+            expiresAt: account.expiresAt ? dayjs(account.expiresAt) : null,
+            status: account.status,
+          }
+        : {
+            role: companyAdmin || initialSalesCompanyId ? "SALES" : undefined,
+            status: "ACTIVE",
+            salesCompanyId:
+              initialSalesCompanyId || root.user?.salesCompanyId || undefined,
+          },
+    );
     setLoading(true);
     options("sales-companies")
       .then(setCompanies)
       .catch((cause) => setError(errorMessage(cause)))
       .finally(() => setLoading(false));
-  }, [open, initialSalesCompanyId, companyAdmin, root.user?.salesCompanyId]);
+  }, [
+    open,
+    account?.id,
+    initialSalesCompanyId,
+    companyAdmin,
+    root.user?.salesCompanyId,
+  ]);
 
   function close() {
     if (saving) return;
     setError("");
     form.resetFields();
     setAvatar([]);
-    if (createdAccount) {
+    if (createdAccount && onCreated) {
       onCreated(createdAccount);
       setCreatedAccount(undefined);
     } else onClose();
@@ -75,6 +120,7 @@ export function CreateUserDrawer({
     setSaving(true);
     setError("");
     let accountCreated = !!createdAccount;
+    let detailsSaved = false;
     try {
       const {
         password,
@@ -90,33 +136,52 @@ export function CreateUserDrawer({
       const loginPhone = values.phone.trim();
       if (avatar.length && !selectedAvatar)
         throw new Error(t("头像文件读取失败，请重新选择"));
-      const account =
-        createdAccount ||
-        (
-          await api.post<Row>("/users", {
-            ...rest,
-            phone: loginPhone,
-            username: loginPhone,
-            ...(password ? { password } : {}),
-            ...(expiresAt
-              ? { expiresAt: (expiresAt as Dayjs).format("YYYY-MM-DD") }
-              : {}),
-            salesCompanyId: salesRole ? salesCompanyId : null,
-            ...(salesRole ? { branchCode, positionCode } : {}),
-          })
-        ).data;
+      const accountData = account
+        ? (
+            await api.patch<Row>(`/users/${account.id}`, {
+              ...rest,
+              phone: loginPhone,
+              expiresAt: expiresAt
+                ? (expiresAt as Dayjs).format("YYYY-MM-DD")
+                : null,
+              salesCompanyId: salesRole ? salesCompanyId : null,
+              branchCode: salesRole ? branchCode || "" : "",
+              positionCode: salesRole ? positionCode || "" : "",
+              revision: currentRevision.current,
+            })
+          ).data
+        : createdAccount ||
+          (
+            await api.post<Row>("/users", {
+              ...rest,
+              phone: loginPhone,
+              username: loginPhone,
+              ...(password ? { password } : {}),
+              ...(expiresAt
+                ? { expiresAt: (expiresAt as Dayjs).format("YYYY-MM-DD") }
+                : {}),
+              salesCompanyId: salesRole ? salesCompanyId : null,
+              ...(salesRole ? { branchCode, positionCode } : {}),
+            })
+          ).data;
+      if (account) {
+        currentRevision.current = accountData.revision;
+        detailsSaved = true;
+      }
       const created = {
-        ...account,
-        initialPassword: account.initialPassword || password,
+        ...accountData,
+        initialPassword: accountData.initialPassword || password,
       };
-      setCreatedAccount(created);
-      accountCreated = true;
+      if (!account) {
+        setCreatedAccount(created);
+        accountCreated = true;
+      }
       let result = created;
       if (selectedAvatar) {
         const payload = new FormData();
         payload.append("file", selectedAvatar, avatar[0].name);
         const { data } = await api.post<Row>(
-          `/users/${account.id}/avatar`,
+          `/users/${accountData.id}/avatar`,
           payload,
         );
         result = { ...created, ...data };
@@ -124,12 +189,18 @@ export function CreateUserDrawer({
       form.resetFields();
       setAvatar([]);
       setCreatedAccount(undefined);
-      onCreated(result);
+      if (account) {
+        message.success(t("账号资料已更新"));
+        root.invalidate();
+        onSaved?.();
+      } else onCreated?.(result);
     } catch (cause) {
       setError(
-        accountCreated
-          ? t(`账号已创建，头像上传失败；请重试：${errorMessage(cause)}`)
-          : errorMessage(cause),
+        detailsSaved
+          ? t(`资料已保存，头像上传失败；请重试：${errorMessage(cause)}`)
+          : accountCreated
+            ? t(`账号已创建，头像上传失败；请重试：${errorMessage(cause)}`)
+            : errorMessage(cause),
       );
     } finally {
       setSaving(false);
@@ -141,7 +212,7 @@ export function CreateUserDrawer({
       open={open}
       placement="right"
       width={760}
-      title={t("新建成员账号")}
+      title={t(account ? "编辑账号" : "新建成员账号")}
       onClose={close}
       closable={!saving}
       maskClosable={!saving}
@@ -152,7 +223,7 @@ export function CreateUserDrawer({
             {t("取消")}
           </Button>
           <Button type="primary" loading={saving} onClick={() => form.submit()}>
-            {t("创建账号")}
+            {t(account ? "保存修改" : "创建账号")}
           </Button>
         </div>
       }
@@ -173,15 +244,15 @@ export function CreateUserDrawer({
             </h2>
             <div className="mb-5">
               <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#718099]">
-                <span>{t("头像（选填）")}</span>
+                <span>{t(account ? "头像" : "头像（选填）")}</span>
                 <span className="text-[#8a96a8]">
                   {t("支持 JPG、PNG、WebP，最大 2MB")}
                 </span>
               </div>
               <Upload
                 accept=".jpg,.jpeg,.png,.webp"
-                listType="picture-card"
                 fileList={avatar}
+                showUploadList={false}
                 beforeUpload={(file) => {
                   if (
                     !["image/jpeg", "image/png", "image/webp"].includes(
@@ -197,13 +268,38 @@ export function CreateUserDrawer({
                 }}
                 onChange={({ fileList }) => setAvatar(fileList.slice(-1))}
                 maxCount={1}
+                className="[&_.ant-upload]:!inline-block"
               >
-                {avatar.length ? null : (
-                  <div className="text-xs text-[#718099]">
-                    <UploadOutlined className="mb-1 block text-base" />
-                    {t("上传头像")}
+                <div
+                  className="group relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-[#cbd5e1] bg-white text-[#718099] hover:border-[#233b5e] focus-within:border-[#233b5e]"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t(account ? "更换头像" : "上传头像")}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      event.currentTarget.click();
+                    }
+                  }}
+                >
+                  {avatarPreview || account?.avatarUrl ? (
+                    <Avatar
+                      shape="circle"
+                      size={96}
+                      src={avatarPreview || account?.avatarUrl}
+                      alt={t("成员头像")}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-xs">
+                      <UserOutlined className="text-2xl" aria-hidden />
+                      {t("头像")}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[#172b49]/80 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                    <EditOutlined className="text-base" aria-hidden />
+                    {t(account ? "更换头像" : "上传头像")}
                   </div>
-                )}
+                </div>
               </Upload>
             </div>
             <div className="grid grid-cols-3 gap-x-4 gap-y-1 max-[680px]:grid-cols-2 max-[480px]:grid-cols-1">
@@ -281,7 +377,9 @@ export function CreateUserDrawer({
                     validator: (_, value: string) =>
                       !value || /^\d{8,20}$/.test(value.trim())
                         ? Promise.resolve()
-                        : Promise.reject(new Error(t("请输入 8 至 20 位数字手机号"))),
+                        : Promise.reject(
+                            new Error(t("请输入 8 至 20 位数字手机号")),
+                          ),
                   },
                 ]}
               >
@@ -289,8 +387,14 @@ export function CreateUserDrawer({
                   inputMode="numeric"
                   maxLength={20}
                   placeholder={t("请输入手机号码")}
+                  disabled={phoneLocked}
                 />
               </Form.Item>
+              {phoneLocked && (
+                <p className="col-span-3 -mt-3 mb-3 text-xs text-[#8491a3] max-[680px]:col-span-2 max-[480px]:col-span-1">
+                  {t("该手机号是登录账号，暂不支持修改。")}
+                </p>
+              )}
               <Form.Item
                 name="email"
                 label="Email"
@@ -379,17 +483,19 @@ export function CreateUserDrawer({
                   placeholder={t("请选择日期，不填则长期有效")}
                 />
               </Form.Item>
-              <Form.Item
-                name="password"
-                label={t("初始密码（选填，至少 10 位）")}
-                className={fieldClass}
-                rules={[{ min: 10, message: t("初始密码至少 10 位") }]}
-              >
-                <Input.Password
-                  placeholder={t("留空则由系统生成")}
-                  autoComplete="new-password"
-                />
-              </Form.Item>
+              {!account && (
+                <Form.Item
+                  name="password"
+                  label={t("初始密码（选填，至少 10 位）")}
+                  className={fieldClass}
+                  rules={[{ min: 10, message: t("初始密码至少 10 位") }]}
+                >
+                  <Input.Password
+                    placeholder={t("留空则由系统生成")}
+                    autoComplete="new-password"
+                  />
+                </Form.Item>
+              )}
               <Form.Item
                 name="status"
                 label={t("启用状态")}
@@ -400,6 +506,11 @@ export function CreateUserDrawer({
                     { value: "ACTIVE", label: t("启用") },
                     { value: "DISABLED", label: t("停用") },
                   ]}
+                  disabled={
+                    !!account &&
+                    (account.id === root.user?.id ||
+                      root.user?.role !== "SUPER_ADMIN")
+                  }
                 />
               </Form.Item>
             </div>

@@ -2,6 +2,7 @@ import { Alert, Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { api, errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { AccountActionNote } from "../../components/AccountActionNote";
 
 export function DisableUserModal({
   id,
@@ -68,11 +69,9 @@ export function DisableUserModal({
           />
         </Form.Item>
       </Form>
-      <Alert
-        type="info"
-        showIcon
-        message={t("停用后无法登录；历史订单和操作记录会保留。")}
-      />
+      <AccountActionNote>
+        {t("停用后该账号无法登录，历史订单、佣金和操作记录仍会保留。")}
+      </AccountActionNote>
       {error && (
         <Alert className="mt-3" type="error" showIcon message={t(error)} />
       )}

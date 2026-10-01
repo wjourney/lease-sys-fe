@@ -19,7 +19,6 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
-import { Editor } from "../../../components/forms/ResourceEditor";
 import {
   api,
   dateText,
@@ -34,7 +33,7 @@ import { roleLabels } from "../../../shared/resource-config";
 import { useRoot } from "../../../stores/root";
 import { AccountPasswordModal } from "../../users/components/AccountPasswordModal";
 import { AccountStatusTag } from "../../users/components/AccountStatusTag";
-import { CreateUserDrawer } from "../../users/list/components/CreateUserDrawer";
+import { UserDrawer } from "../../users/list/components/UserDrawer";
 import { SalesCompanyDrawer } from "../list/components/SalesCompanyDrawer";
 
 const PAGE_SIZE = 10;
@@ -499,14 +498,14 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
         />
       )}
       {editingMember && (
-        <Editor
-          resource="users"
-          row={editingMember}
+        <UserDrawer
+          open
+          account={editingMember}
           onClose={() => setEditingMember(undefined)}
           onSaved={() => setEditingMember(undefined)}
         />
       )}
-      <CreateUserDrawer
+      <UserDrawer
         open={creating}
         initialSalesCompanyId={id}
         onClose={() => setCreating(false)}

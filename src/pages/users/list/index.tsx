@@ -21,7 +21,7 @@ import { roleLabels } from "../../../shared/resource-config";
 import { AccountStatusTag } from "../components/AccountStatusTag";
 import { AccountPasswordModal } from "../components/AccountPasswordModal";
 import { DisableUserModal } from "../detail/components/DisableUserModal";
-import { CreateUserDrawer } from "./components/CreateUserDrawer";
+import { UserDrawer } from "./components/UserDrawer";
 import { DeleteUserModal } from "./components/DeleteUserModal";
 
 const PAGE_SIZE = 10;
@@ -123,11 +123,7 @@ const UserListPage = observer(function UserListPage() {
               </Tooltip>
             )}
             {root.canWrite("users") && (
-              <Tooltip
-                title={
-                  self ? t("不能删除当前登录账号") : undefined
-                }
-              >
+              <Tooltip title={self ? t("不能删除当前登录账号") : undefined}>
                 <span>
                   <Button
                     danger
@@ -246,7 +242,7 @@ const UserListPage = observer(function UserListPage() {
           />
         </div>
       </section>
-      <CreateUserDrawer
+      <UserDrawer
         open={creating}
         onClose={() => setCreating(false)}
         onCreated={(row) => {
