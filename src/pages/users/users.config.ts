@@ -1,0 +1,51 @@
+import {
+  cols,
+  Config,
+  date,
+  opts,
+  roleLabels,
+  source,
+  status,
+  text,
+} from "../../shared/resource-config";
+export const UserConfig: Config = {
+  title: "账号管理",
+  description: "个人登录账号及销售公司成员管理",
+  fields: [
+    {
+      ...text("username", "登录账号", true),
+      createOnly: true,
+    },
+    {
+      key: "password",
+      label: "初始密码（至少 10 位）",
+      type: "password",
+      required: true,
+      createOnly: true,
+    },
+    text("name", "姓名", true),
+    text("nameEn", "英文姓名"),
+    text("phone", "手机号码"),
+    text("email", "电子邮箱"),
+    {
+      key: "role",
+      label: "角色",
+      type: "select",
+      options: opts(roleLabels),
+      required: true,
+    },
+    source("salesCompanyId", "所属销售公司", "sales-companies", false),
+    text("branchCode", "分行编码"),
+    text("positionCode", "职位编码"),
+    date("expiresAt", "账号有效期", false),
+    status,
+  ],
+  columns: cols({
+    name: "姓名",
+    username: "登录账号",
+    role: "角色",
+    companyName: "销售公司",
+    phone: "联系电话",
+    status: "状态",
+  }),
+};
