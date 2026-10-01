@@ -53,7 +53,12 @@ export function DisableUserModal({
         </div>
       }
     >
-      <Form form={form} layout="vertical" onFinish={submit} className="mt-5">
+      <div className="mt-5 mb-4">
+        <AccountActionNote>
+          {t("停用后该账号无法登录，历史订单、佣金和操作记录仍会保留。")}
+        </AccountActionNote>
+      </div>
+      <Form form={form} layout="vertical" onFinish={submit}>
         <Form.Item
           name="reason"
           label={t("停用原因")}
@@ -69,9 +74,6 @@ export function DisableUserModal({
           />
         </Form.Item>
       </Form>
-      <AccountActionNote>
-        {t("停用后该账号无法登录，历史订单、佣金和操作记录仍会保留。")}
-      </AccountActionNote>
       {error && (
         <Alert className="mt-3" type="error" showIcon message={t(error)} />
       )}

@@ -1,4 +1,4 @@
-import { SearchOutlined } from "@ant-design/icons";
+import { PictureOutlined, SearchOutlined } from "@ant-design/icons";
 import { Alert, Button, Empty, Input, Pagination, Select, Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useState } from "react";
@@ -181,44 +181,58 @@ export const ProjectUnits = observer(function ProjectUnits({
             {store.items.map((unit) => (
               <article
                 key={unit.id}
-                className="cursor-pointer rounded-[7px] border border-[#dfe6ee] px-[26px] py-[25px]"
+                className="cursor-pointer overflow-hidden rounded-[7px] border border-[#dfe6ee] transition-colors hover:border-[#afc1d6]"
                 onClick={(event) => {
                   if (shouldOpenRow(event)) onViewUnit(unit);
                 }}
               >
-                <h3 className="m-0 text-[20px] font-semibold text-[#26334a]">
-                  {t(unit.unitNo)}
-                </h3>
-                <p className="mb-[18px] mt-5 text-[13px] text-[#78879b]">
-                  {[
-                    unit.layout,
-                    unit.area != null ? `${unit.area}㎡` : "",
-                    unit.decoration,
-                  ]
-                    .filter(Boolean)
-                    .map(t)
-                    .join(" · ") || "—"}
-                </p>
-                <p className="m-0 text-[18px] font-semibold text-[#192d4c]">
-                  {unit.referenceRent != null
-                    ? `${t("参考月租")} ${t(amount(unit.referenceRent))}`
-                    : `${t("参考月租范围")} ${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
-                </p>
-                <p className="my-[19px] text-[12px] text-[#8190a2]">
-                  {t("单位类型")}：
-                  {t(unit.unitTypeName || unit.unitTypeCode || "—")}
-                  {" · "}
-                  {t("文件可在详情中下载")}
-                </p>
-                <div className="flex gap-3">
-                  <Button onClick={() => onViewUnit(unit)}>
-                    {t("查看单位")}
-                  </Button>
-                  {root.canWrite("units") && (
-                    <Button onClick={() => onEditUnit(unit)}>
-                      {t("编辑单位")}
+                {unit.coverUrl ? (
+                  <img
+                    src={unit.coverUrl}
+                    alt={t(`${unit.unitNo}的首张图片`)}
+                    loading="lazy"
+                    className="h-44 w-full bg-[#f2f5f8] object-cover"
+                  />
+                ) : (
+                  <div className="flex h-44 items-center justify-center bg-[#f2f5f8] text-[#9eacbf]">
+                    <PictureOutlined className="text-4xl" aria-hidden />
+                  </div>
+                )}
+                <div className="px-[26px] py-[22px]">
+                  <h3 className="m-0 text-[20px] font-semibold text-[#26334a]">
+                    {t(unit.unitNo)}
+                  </h3>
+                  <p className="mb-[18px] mt-5 text-[13px] text-[#78879b]">
+                    {[
+                      unit.layout,
+                      unit.area != null ? `${unit.area}㎡` : "",
+                      unit.decoration,
+                    ]
+                      .filter(Boolean)
+                      .map(t)
+                      .join(" · ") || "—"}
+                  </p>
+                  <p className="m-0 text-[18px] font-semibold text-[#192d4c]">
+                    {unit.referenceRent != null
+                      ? `${t("参考月租")} ${t(amount(unit.referenceRent))}`
+                      : `${t("参考月租范围")} ${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
+                  </p>
+                  <p className="my-[19px] text-[12px] text-[#8190a2]">
+                    {t("单位类型")}：
+                    {t(unit.unitTypeName || unit.unitTypeCode || "—")}
+                    {" · "}
+                    {t("文件可在详情中下载")}
+                  </p>
+                  <div className="flex gap-3">
+                    <Button onClick={() => onViewUnit(unit)}>
+                      {t("查看单位")}
                     </Button>
-                  )}
+                    {root.canWrite("units") && (
+                      <Button onClick={() => onEditUnit(unit)}>
+                        {t("编辑单位")}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </article>
             ))}
