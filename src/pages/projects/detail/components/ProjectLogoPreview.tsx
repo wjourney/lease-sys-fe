@@ -22,7 +22,9 @@ export function ProjectLogoPreview({ materials }: { materials: Row[] }) {
         >
           <img
             src={
-              primary.downloadUrl || `/api/v1/materials/${primary.id}/download`
+              primary.previewUrl ||
+              primary.downloadUrl ||
+              `/api/v1/materials/${primary.id}/download`
             }
             alt={t("项目 Logo")}
             className="max-h-full max-w-full object-contain"

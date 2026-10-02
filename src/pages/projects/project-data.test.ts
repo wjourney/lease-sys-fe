@@ -60,6 +60,7 @@ describe("project edit data", () => {
         id: "photo",
         category: "PHOTO",
         storageKey: "stored",
+        previewUrl: "https://example.oss-cn-shanghai.aliyuncs.com/photo?Signature=example",
         originalName: "项目外观.jpg",
       },
       {
@@ -79,6 +80,9 @@ describe("project edit data", () => {
     expect(files.LOGO.map((file) => file.uid)).toEqual(["first", "second"]);
     expect(files.OFFICIAL[0].name).toBe("价单.pdf");
     expect(files.PHOTO[0].name).toBe("项目外观.jpg");
+    expect(files.PHOTO[0].url).toBe(
+      "https://example.oss-cn-shanghai.aliyuncs.com/photo?Signature=example",
+    );
     expect(files.VIDEO[0].name).toBe("项目介绍.mp4");
     expect(files.PROJECT_FILE[0].name).toBe("项目资料.pdf");
     expect(files.GUIDE).toEqual([]);

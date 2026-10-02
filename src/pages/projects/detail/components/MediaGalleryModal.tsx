@@ -12,7 +12,12 @@ import { t } from "../../../../shared/i18n";
 export type MediaCategory = "LOGO" | "PHOTO" | "VIDEO" | "PROJECT_FILE";
 
 const mediaUrl = (item: Row) =>
-  item.downloadUrl || `/api/v1/materials/${item.id}/download`;
+  item.previewUrl ||
+  item.downloadUrl ||
+  `/api/v1/materials/${item.id}/download`;
+
+const attachmentUrl = (item: Row) =>
+  `${item.downloadUrl || `/api/v1/materials/${item.id}/download`}?download=1`;
 
 export function MediaGalleryModal({
   category,
@@ -50,7 +55,7 @@ export function MediaGalleryModal({
             <Button
               type="primary"
               icon={<DownloadOutlined aria-hidden />}
-              href={`${mediaUrl(item)}?download=1`}
+              href={attachmentUrl(item)}
             >
               {t("下载")}
             </Button>

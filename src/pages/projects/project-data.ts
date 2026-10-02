@@ -82,7 +82,7 @@ export function projectUploadsFromMaterials(materials: Row[]): ProjectUploads {
       uid: row.id,
       name: row.originalName || row.title,
       status: "done",
-      url: `/api/v1/materials/${row.id}/download`,
+      url: row.previewUrl || `/api/v1/materials/${row.id}/download`,
     }));
   }
   return uploads;

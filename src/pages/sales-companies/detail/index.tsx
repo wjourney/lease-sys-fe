@@ -345,7 +345,10 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                   <Image.PreviewGroup>
                     <div className="relative h-[140px] w-[152px]">
                       <Image
-                        src={`/api/v1/materials/${featuredImage.id}/download`}
+                        src={
+                          featuredImage.previewUrl ||
+                          `/api/v1/materials/${featuredImage.id}/download`
+                        }
                         alt={
                           featuredImage.originalName ||
                           featuredImage.title ||
@@ -360,7 +363,10 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                           {otherImages.map((image) => (
                             <Image
                               key={image.id}
-                              src={`/api/v1/materials/${image.id}/download`}
+                              src={
+                                image.previewUrl ||
+                                `/api/v1/materials/${image.id}/download`
+                              }
                               alt={
                                 image.originalName ||
                                 image.title ||

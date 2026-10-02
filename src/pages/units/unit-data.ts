@@ -22,7 +22,7 @@ export function mediaFromMaterials(materials: Row[]): UnitMedia {
         uid: item.id,
         name: item.originalName || item.title,
         status: "done",
-        url: `/api/v1/materials/${item.id}/download`,
+        url: item.previewUrl || `/api/v1/materials/${item.id}/download`,
       }));
   return media;
 }

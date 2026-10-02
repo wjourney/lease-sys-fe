@@ -15,8 +15,8 @@ const sectionNames: Record<MaterialSection, string> = {
   GUIDE: "开单资料",
 };
 
-function downloadUrl(id: string) {
-  return `/api/v1/materials/${id}/download`;
+function previewUrl(item: Row) {
+  return item.previewUrl || `/api/v1/materials/${item.id}/download`;
 }
 
 export function ProjectMaterialsModal({
@@ -100,7 +100,7 @@ export function ProjectMaterialsModal({
                       if (!shouldOpenRow(event)) return;
                       if (item.storageKey)
                         window.open(
-                          downloadUrl(item.id),
+                          previewUrl(item),
                           "_blank",
                           "noopener,noreferrer",
                         );
@@ -122,7 +122,7 @@ export function ProjectMaterialsModal({
                       {item.storageKey ? (
                         <Button
                           size="small"
-                          href={downloadUrl(item.id)}
+                          href={previewUrl(item)}
                           target="_blank"
                         >
                           {t(section === "OFFICIAL" ? "预览" : "查看")}
@@ -190,7 +190,7 @@ export function ProjectMaterialsModal({
                   {item.storageKey && (
                     <Button
                       size="small"
-                      href={downloadUrl(item.id)}
+                      href={previewUrl(item)}
                       target="_blank"
                     >
                       {t("预览")}
