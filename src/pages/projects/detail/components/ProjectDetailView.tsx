@@ -79,10 +79,10 @@ export function ProjectDetailView({
   return (
     <>
       {headerHost ? createPortal(heading, headerHost) : heading}
-      <div className="space-y-5 max-[760px]:space-y-4">
-        <section className="rounded-[7px] border border-[#e0e6ed] bg-white px-5 py-5 max-[760px]:px-4 max-[760px]:py-4">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="m-0 text-[24px] font-semibold leading-8 text-[#142d51] max-[600px]:text-[21px]">
+      <div className="space-y-4">
+        <section className="rounded-[7px] border border-[#e0e6ed] bg-white px-5 py-4 max-[760px]:px-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="m-0 text-[22px] font-semibold leading-8 text-[#142d51] max-[600px]:text-[20px]">
               {t("项目概览")}
             </h2>
             <div className="flex min-w-0 flex-wrap justify-end gap-2">
@@ -126,46 +126,48 @@ export function ProjectDetailView({
               )}
             </div>
           </div>
-          <div className="flex min-w-0 items-start gap-5 max-[600px]:gap-3">
+          <div className="flex min-w-0 items-start gap-4 max-[600px]:gap-3">
             <ProjectLogoPreview materials={row.materials || []} />
-            <div className="flex min-w-0 flex-1 flex-col gap-4">
-              <ProjectOverviewDetails row={row} />
-              <div className="flex flex-wrap justify-end gap-2">
-                <Dropdown
-                  menu={{
-                    items: [
-                      { key: "PHOTO", label: t("项目图片") },
-                      { key: "VIDEO", label: t("项目视频") },
-                    ],
-                    onClick: ({ key }) =>
-                      setMediaCategory(key as ProjectMediaCategory),
-                  }}
-                >
-                  <Button icon={<PictureOutlined aria-hidden />}>
-                    {t("项目素材")} <DownOutlined aria-hidden />
-                  </Button>
-                </Dropdown>
-                <Dropdown
-                  menu={{
-                    items: [
-                      { key: "PROJECT_FILE", label: t("项目文件") },
-                      { key: "basic", label: t("基本资料") },
-                      { key: "OFFICIAL", label: t("官方文件") },
-                      { key: "MARKETING", label: t("营销资料") },
-                      { key: "GUIDE", label: t("开单资料") },
-                    ],
-                    onClick: ({ key }) => {
-                      if (key === "PROJECT_FILE") setMediaCategory(key);
-                      else setSection(key as Section);
-                    },
-                  }}
-                >
-                  <Button icon={<FileTextOutlined aria-hidden />}>
-                    {t("项目资料")} <DownOutlined aria-hidden />
-                  </Button>
-                </Dropdown>
-              </div>
-            </div>
+            <ProjectOverviewDetails
+              row={row}
+              actions={
+                <>
+                  <Dropdown
+                    menu={{
+                      items: [
+                        { key: "PHOTO", label: t("项目图片") },
+                        { key: "VIDEO", label: t("项目视频") },
+                      ],
+                      onClick: ({ key }) =>
+                        setMediaCategory(key as ProjectMediaCategory),
+                    }}
+                  >
+                    <Button icon={<PictureOutlined aria-hidden />}>
+                      {t("项目素材")} <DownOutlined aria-hidden />
+                    </Button>
+                  </Dropdown>
+                  <Dropdown
+                    menu={{
+                      items: [
+                        { key: "PROJECT_FILE", label: t("项目文件") },
+                        { key: "basic", label: t("基本资料") },
+                        { key: "OFFICIAL", label: t("官方文件") },
+                        { key: "MARKETING", label: t("营销资料") },
+                        { key: "GUIDE", label: t("开单资料") },
+                      ],
+                      onClick: ({ key }) => {
+                        if (key === "PROJECT_FILE") setMediaCategory(key);
+                        else setSection(key as Section);
+                      },
+                    }}
+                  >
+                    <Button icon={<FileTextOutlined aria-hidden />}>
+                      {t("项目资料")} <DownOutlined aria-hidden />
+                    </Button>
+                  </Dropdown>
+                </>
+              }
+            />
           </div>
         </section>
 

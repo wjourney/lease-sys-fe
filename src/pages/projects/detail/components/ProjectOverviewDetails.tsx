@@ -15,21 +15,34 @@ function DetailItem({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-export function ProjectOverviewDetails({ row }: { row: Row }) {
+export function ProjectOverviewDetails({
+  row,
+  actions,
+}: {
+  row: Row;
+  actions: ReactNode;
+}) {
   return (
-    <dl className="grid grid-cols-3 gap-x-6 gap-y-5 text-[14px] leading-6 max-[1250px]:grid-cols-2 max-[700px]:grid-cols-1">
-      <DetailItem label="区域" value={t(row.region || "—")} />
-      <DetailItem label="详细地址" value={t(row.address || "—")} />
-      <DetailItem
-        label="销售端价格"
-        value={
-          row.salesCanViewExactRent ? t("可查看具体租金") : t("仅显示范围")
-        }
-      />
-      <DetailItem
-        label="项目介绍"
-        value={t(row.description || "暂无项目介绍")}
-      />
-    </dl>
+    <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4 gap-y-3 max-[850px]:grid-cols-1">
+      <dl className="col-span-2 grid grid-cols-3 gap-x-5 text-[14px] leading-6 max-[1250px]:grid-cols-2 max-[850px]:col-span-1 max-[700px]:grid-cols-1 max-[700px]:gap-y-2">
+        <DetailItem label="区域" value={t(row.region || "—")} />
+        <DetailItem label="详细地址" value={t(row.address || "—")} />
+        <DetailItem
+          label="销售端价格"
+          value={
+            row.salesCanViewExactRent ? t("可查看具体租金") : t("仅显示范围")
+          }
+        />
+      </dl>
+      <dl className="min-w-0 text-[14px] leading-6">
+        <DetailItem
+          label="项目介绍"
+          value={t(row.description || "暂无项目介绍")}
+        />
+      </dl>
+      <div className="flex flex-wrap justify-end gap-2 max-[850px]:justify-start">
+        {actions}
+      </div>
+    </div>
   );
 }

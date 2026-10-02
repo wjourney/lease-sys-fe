@@ -16,7 +16,7 @@ export function ProjectLogoPreview({ materials }: { materials: Row[] }) {
       {primary ? (
         <button
           type="button"
-          className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#dfe6ee] bg-[#f5f6f8] p-1 transition-colors hover:border-[#9cb0c9] focus-visible:outline-2 focus-visible:outline-[#192d4c] max-[600px]:size-20"
+          className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#dfe6ee] bg-[#f5f6f8] p-1 transition-colors hover:border-[#9cb0c9] focus-visible:outline-2 focus-visible:outline-[#192d4c] max-[600px]:size-20"
           onClick={() => setOpen(true)}
           aria-label={t(`预览项目 Logo，共 ${logos.length} 张`)}
         >
@@ -32,7 +32,7 @@ export function ProjectLogoPreview({ materials }: { materials: Row[] }) {
         </button>
       ) : (
         <div
-          className="flex size-28 shrink-0 items-center justify-center rounded-md border border-[#dfe6ee] bg-[#f5f6f8] text-[#9eacbf] max-[600px]:size-20"
+          className="flex size-24 shrink-0 items-center justify-center rounded-md border border-[#dfe6ee] bg-[#f5f6f8] text-[#9eacbf] max-[600px]:size-20"
           aria-label={t("暂无项目 Logo")}
         >
           <PictureOutlined className="text-3xl" aria-hidden />
