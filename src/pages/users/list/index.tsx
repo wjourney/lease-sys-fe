@@ -14,7 +14,7 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useResourceList } from "../../../components/resource-list/useResourceList";
-import { Row } from "../../../shared/api";
+import { Row, api, errorMessage } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
 import { shouldOpenRow } from "../../../shared/row-navigation";
 import { roleLabels } from "../../../shared/resource-config";
@@ -46,7 +46,25 @@ const UserListPage = observer(function UserListPage() {
   const [created, setCreated] = useState<Row>();
   const [accountToDisable, setAccountToDisable] = useState<Row>();
   const [accountToDelete, setAccountToDelete] = useState<Row>();
-  const { message } = App.useApp();
+  const [enablingId, setEnablingId] = useState<string>();
+  const { message, modal } = App.useApp();
+
+  async function enableAccount(row: Row) {
+    setEnablingId(row.id);
+    try {
+      await api.patch(`/users/${row.id}`, {
+        status: "ACTIVE",
+        revision: row.revision,
+        reason: "重新启用账号",
+      });
+      root.invalidate();
+      message.success(t("账号已启用"));
+    } catch (cause) {
+      message.error(t(errorMessage(cause)));
+    } finally {
+      setEnablingId(undefined);
+    }
+  }
 
   if (!root.canRead("users"))
     return <Empty description={t("暂无此模块的访问权限")} />;
@@ -101,23 +119,26 @@ const UserListPage = observer(function UserListPage() {
               {t("查看")}
             </Button>
             {root.user?.role === "SUPER_ADMIN" && (
-              <Tooltip
-                title={
-                  self
-                    ? t("不能停用当前登录账号")
-                    : alreadyDisabled
-                      ? t("账号已停用")
-                      : undefined
-                }
-              >
+              <Tooltip title={self ? t("不能停用当前登录账号") : undefined}>
                 <span>
                   <Button
-                    danger
+                    danger={!alreadyDisabled}
                     size="small"
-                    disabled={self || alreadyDisabled}
-                    onClick={() => setAccountToDisable(row)}
+                    disabled={self}
+                    loading={enablingId === row.id}
+                    onClick={() => {
+                      if (alreadyDisabled)
+                        modal.confirm({
+                          title: t("启用账号"),
+                          content: t("确定重新启用此账号？"),
+                          okText: t("确认启用"),
+                          cancelText: t("取消"),
+                          onOk: () => enableAccount(row),
+                        });
+                      else setAccountToDisable(row);
+                    }}
                   >
-                    {t("停用")}
+                    {t(alreadyDisabled ? "启用" : "停用")}
                   </Button>
                 </span>
               </Tooltip>
