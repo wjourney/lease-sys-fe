@@ -48,6 +48,10 @@
     flex-shrink: 0;
   }
 
+  .standalone-list-content footer {
+    display: none;
+  }
+
   .embedded-list-scroll,
   .embedded-resource-list .list-scroll-area {
     max-height: min(65dvh, 720px);
