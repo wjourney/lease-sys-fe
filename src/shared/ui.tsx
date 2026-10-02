@@ -50,6 +50,28 @@ export function valueView(key: string, value: any, resource?: string) {
     return <Text type="secondary">—</Text>;
   if (key === "role") return t(roleLabels[value] || value);
   if (key === "feeType") return t(feeLabels[value] || value);
+  if (key === "registrationNoType")
+    return t(
+      (
+        {
+          BR: "商业登记号码",
+          CR: "公司注册号码",
+          HKID: "香港身份证",
+          PASSPORT: "护照",
+        } as Record<string, string>
+      )[value] || value,
+    );
+  if (key === "depositPlan")
+    return t(
+      (
+        {
+          ONE_ONE: "押一付一",
+          TWO_ONE: "押二付一",
+          THREE_ONE: "押三付一",
+          OTHER: "其他",
+        } as Record<string, string>
+      )[value] || value,
+    );
   if (key.toLowerCase().includes("status"))
     return <Status value={value} resource={resource} />;
   if (

@@ -1276,6 +1276,8 @@ export interface components {
       /** @enum {string} */
       tenantType: "PERSON" | "COMPANY";
       tenantName: string;
+      /** @enum {string} */
+      registrationNoType?: "BR" | "CR" | "HKID" | "PASSPORT";
       tenantRegistrationNo?: string;
       tenantContactName?: string;
       tenantPhone?: string;
@@ -1284,6 +1286,17 @@ export interface components {
       endsOn: string;
       monthlyRent: string | number;
       depositAmount: string | number;
+      /** @enum {string} */
+      depositPlan?: "ONE_ONE" | "TWO_ONE" | "THREE_ONE" | "OTHER";
+      moveInOn?: string;
+      initialPayment?: {
+        paid: boolean;
+        rentPaid: boolean;
+        depositPaid: boolean;
+        rentReceived: string | number;
+        depositReceived: string | number;
+        dueOn?: string;
+      };
       paymentIntervalMonths?: number;
       rentDueDay?: number;
       billLeadDays?: number;

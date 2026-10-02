@@ -31,6 +31,17 @@ export const OrderConfig: Config = {
       required: true,
     },
     text("tenantName", "租客 / 公司名称", true),
+    {
+      key: "registrationNoType",
+      label: "注册号码类型",
+      type: "select",
+      options: opts({
+        BR: "商业登记号码",
+        CR: "公司注册号码",
+        HKID: "香港身份证",
+        PASSPORT: "护照",
+      }),
+    },
     text("tenantRegistrationNo", "证件 / 商业登记号码"),
     text("tenantContactName", "联系人"),
     text("tenantPhone", "联系电话"),
@@ -39,6 +50,18 @@ export const OrderConfig: Config = {
     date("endsOn", "租期结束"),
     money("monthlyRent", "成交月租"),
     money("depositAmount", "押金"),
+    {
+      key: "depositPlan",
+      label: "押付方式",
+      type: "select",
+      options: opts({
+        ONE_ONE: "押一付一",
+        TWO_ONE: "押二付一",
+        THREE_ONE: "押三付一",
+        OTHER: "其他",
+      }),
+    },
+    date("moveInOn", "办理入住日期"),
     {
       key: "paymentIntervalMonths",
       label: "付款周期（月）",
