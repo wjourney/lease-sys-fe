@@ -63,12 +63,13 @@ export function ProjectDetailView({
         onClick={() => navigate("/projects")}
       />
       <div className="min-w-0">
-        <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
+        <h1
+          className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]"
+          title={`${t(row.name)}${row.address ? ` · ${t(row.address)}` : ""}`}
+        >
           {t(row.name)}
+          {row.address ? ` · ${t(row.address)}` : null}
         </h1>
-        <p className="m-0 mt-1 text-[11px] text-[#7f8b9d]">
-          {t("房源编号")} {t(row.code)}
-        </p>
       </div>
     </div>
   );
