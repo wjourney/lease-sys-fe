@@ -22,4 +22,4 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             lease-deploy@47.117.136.208 \
-            "ps -o pid,ppid,user,etime,stat,wchan,args -p 27970,27974,27975; ps -eo pid,ppid,user,etime,stat,wchan,args | grep -E 'lease-sys-deploy|flock|gzip -dc|tar -xf' | tail -25"
+            "ls -lh ~/lease-release-*.tar.gz 2>/dev/null || true; ps -eo pid,ppid,user,etime,stat,wchan,args | grep -E 'lease-sys-deploy|flock|gzip -dc|tar -xf' | tail -25"
