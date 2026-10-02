@@ -17,18 +17,18 @@ function DetailItem({ label, value }: { label: string; value: ReactNode }) {
 
 export function ProjectOverviewDetails({ row }: { row: Row }) {
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[14px] leading-6 max-[700px]:grid-cols-1">
+    <dl className="grid grid-cols-3 gap-x-6 gap-y-5 text-[14px] leading-6 max-[1250px]:grid-cols-2 max-[700px]:grid-cols-1">
       <DetailItem label="区域" value={t(row.region || "—")} />
       <DetailItem label="详细地址" value={t(row.address || "—")} />
-      <DetailItem
-        label="项目介绍"
-        value={t(row.description || "暂无项目介绍")}
-      />
       <DetailItem
         label="销售端价格"
         value={
           row.salesCanViewExactRent ? t("可查看具体租金") : t("仅显示范围")
         }
+      />
+      <DetailItem
+        label="项目介绍"
+        value={t(row.description || "暂无项目介绍")}
       />
     </dl>
   );

@@ -24,6 +24,7 @@ export const ResourceList = observer(function ResourceList({
   filterExtras,
   onResetExtras,
   hideCreate = false,
+  hideStatus = false,
   renderRowActions,
   renderCreateEditor,
   renderEditor,
@@ -141,6 +142,7 @@ export const ResourceList = observer(function ResourceList({
       }
       extraFilters={filterExtras}
       onResetExtras={onResetExtras}
+      hideStatus={hideStatus}
     />
   );
   return (

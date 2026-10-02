@@ -12,14 +12,17 @@ import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { ListStore, useRoot } from "../../../../stores/root";
 import { UnitDeleteModal } from "./UnitDeleteModal";
+import { ProjectStats, type ProjectUnitStatus } from "./ProjectStats";
 
 export const ProjectUnits = observer(function ProjectUnits({
   projectId,
+  stats,
   allowExactRent,
   onViewUnit,
   onEditUnit,
 }: {
   projectId: string;
+  stats: Row;
   allowExactRent: boolean;
   onViewUnit: (unit: Row) => void;
   onEditUnit: (unit: Row) => void;
@@ -27,6 +30,7 @@ export const ProjectUnits = observer(function ProjectUnits({
   const root = useRoot();
   const [unitTypeCode, setUnitTypeCode] = useState<string>();
   const [sort, setSort] = useState("default");
+  const [statusFilter, setStatusFilter] = useState<ProjectUnitStatus>();
   const [unitTypes, setUnitTypes] = useState<
     { label: string; value: string }[]
   >([]);
@@ -53,16 +57,25 @@ export const ProjectUnits = observer(function ProjectUnits({
     <>
       <section className="rounded-[7px] border border-[#e0e6ed] bg-white">
         <ResourceList
-          key={`${projectId}:${unitTypeCode ?? ""}:${sort}`}
+          key={projectId}
           resource="units"
           fixed={{
             projectId,
+            status: statusFilter || "",
             ...(unitTypeCode ? { unitTypeCode } : {}),
             ...(sort !== "default" ? { sortBy: "referenceRent", sort } : {}),
           }}
           embedded
           pageSize={9}
           hideCreate
+          hideStatus
+          listToolbar={
+            <ProjectStats
+              row={stats}
+              status={statusFilter}
+              onChange={setStatusFilter}
+            />
+          }
           onResetExtras={() => {
             setUnitTypeCode(undefined);
             setSort("default");
@@ -72,7 +85,7 @@ export const ProjectUnits = observer(function ProjectUnits({
               <div className="flex items-center gap-2.5">
                 <span className="whitespace-nowrap">{t("单位类型")}</span>
                 <Select
-                  className="w-36"
+                  className="w-40"
                   allowClear
                   placeholder={t("全部类型")}
                   value={unitTypeCode}
@@ -84,7 +97,7 @@ export const ProjectUnits = observer(function ProjectUnits({
                 <div className="flex items-center gap-2.5">
                   <span className="whitespace-nowrap">{t("价格排序")}</span>
                   <Select
-                    className="w-36"
+                    className="w-40"
                     value={sort}
                     options={[
                       { value: "default", label: t("默认排序") },

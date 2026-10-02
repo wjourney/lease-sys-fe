@@ -22,14 +22,18 @@ export function useResourceList(
   const page = embedded ? localPage : Number(search.get("page") || 1);
   const query = embedded ? q : search.get("q") || "";
   const filter = embedded ? status : search.get("status") || undefined;
+  const fixedKey = JSON.stringify(fixed);
   const key = JSON.stringify({
     ...Object.fromEntries(search.entries()),
     ...fixed,
     page,
     pageSize,
     q: query,
-    status: filter,
+    status: fixed.status ?? filter,
   });
+  useEffect(() => {
+    if (embedded) setLocalPage(1);
+  }, [embedded, fixedKey]);
   const epoch = root.epoch,
     identity = root.user?.id || "",
     allowed = !!config && root.canRead(resource);

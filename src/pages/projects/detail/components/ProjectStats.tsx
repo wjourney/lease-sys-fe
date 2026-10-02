@@ -1,26 +1,72 @@
 import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 
-export function ProjectStats({ row }: { row: Row }) {
-  const stats = [
-    { label: "单位总数", value: row.unitCount, color: "bg-[#8995aa]" },
-    { label: "可租", value: row.availableCount, color: "bg-[#52c52e]" },
-    { label: "已锁定", value: row.lockedCount, color: "bg-[#ffb62c]" },
-    { label: "出租中", value: row.occupiedCount, color: "bg-[#2878f0]" },
+export type ProjectUnitStatus = "AVAILABLE" | "LOCKED" | "OCCUPIED";
+
+export function ProjectStats({
+  row,
+  status,
+  onChange,
+}: {
+  row: Row;
+  status?: ProjectUnitStatus;
+  onChange: (status?: ProjectUnitStatus) => void;
+}) {
+  const stats: {
+    label: string;
+    value: number;
+    status?: ProjectUnitStatus;
+    color?: string;
+  }[] = [
+    { label: "单位总数", value: row.unitCount ?? 0 },
+    {
+      label: "可租",
+      value: row.availableCount ?? 0,
+      status: "AVAILABLE",
+      color: "bg-[#52c52e]",
+    },
+    {
+      label: "已锁定",
+      value: row.lockedCount ?? 0,
+      status: "LOCKED",
+      color: "bg-[#ffb62c]",
+    },
+    {
+      label: "出租中",
+      value: row.occupiedCount ?? 0,
+      status: "OCCUPIED",
+      color: "bg-[#2878f0]",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-4 content-center gap-3 border-l border-[#e1e7ef] pl-6 max-[1100px]:border-l-0 max-[1100px]:border-t max-[1100px]:pl-0 max-[1100px]:pt-4 max-[600px]:grid-cols-2">
+    <div
+      role="tablist"
+      aria-label={t("单位状态")}
+      className="mb-4 flex flex-wrap gap-x-5 border-b border-[#e1e7ef] max-[700px]:gap-x-2"
+    >
       {stats.map((stat) => (
-        <div key={stat.label} className="min-w-0 text-center">
-          <div className="flex items-center justify-center gap-2 text-[28px] font-semibold leading-8 text-[#132c53]">
-            <span className={`size-2.5 shrink-0 rounded-full ${stat.color}`} />
-            <span>{stat.value ?? 0}</span>
-          </div>
-          <div className="mt-1 text-xs font-medium text-[#31445f]">
-            {t(stat.label)}
-          </div>
-        </div>
+        <button
+          key={stat.label}
+          type="button"
+          role="tab"
+          aria-selected={status === stat.status}
+          className={`flex min-h-11 items-center gap-2 whitespace-nowrap border-b-[3px] px-2 text-[14px] font-medium transition-colors hover:text-[#142d51] focus-visible:outline-2 focus-visible:outline-[#192d4c] ${
+            status === stat.status
+              ? "border-[#142d51] text-[#142d51]"
+              : "border-transparent text-[#43546f]"
+          }`}
+          onClick={() => onChange(stat.status)}
+        >
+          {stat.color && (
+            <span
+              className={`size-2.5 rounded-full ${stat.color}`}
+              aria-hidden
+            />
+          )}
+          <span>{t(stat.label)}</span>
+          <strong className="font-semibold">{t(stat.value)}</strong>
+        </button>
       ))}
     </div>
   );

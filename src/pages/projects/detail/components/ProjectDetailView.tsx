@@ -1,16 +1,15 @@
 import {
   ArrowLeftOutlined,
-  BarChartOutlined,
   DeleteOutlined,
+  DownOutlined,
   EditOutlined,
   FileTextOutlined,
-  FolderOpenOutlined,
   HistoryOutlined,
+  PictureOutlined,
   PlusOutlined,
-  ProfileOutlined,
 } from "@ant-design/icons";
-import { Button, Modal } from "antd";
-import { useState, type ReactNode } from "react";
+import { Button, Dropdown, Modal } from "antd";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { UnitDrawer } from "../../../units/components/UnitDrawer";
 import { RecordHistory } from "../../../../components/resource-detail/RecordHistory";
@@ -23,14 +22,19 @@ import {
   MaterialSection,
   ProjectMaterialsModal,
 } from "./ProjectMaterialsModal";
-import { ProjectMediaCards } from "./ProjectMediaCards";
+import { MediaGalleryModal, type MediaCategory } from "./MediaGalleryModal";
 import { ProjectLogoPreview } from "./ProjectLogoPreview";
 import { ProjectOverviewDetails } from "./ProjectOverviewDetails";
-import { ProjectStats } from "./ProjectStats";
 import { UnitDetailModal } from "./UnitDetailModal";
 import { ProjectUnits } from "./ProjectUnits";
 
 type Section = "basic" | MaterialSection;
+type ProjectMediaCategory = Exclude<MediaCategory, "LOGO">;
+const mediaTitles: Record<ProjectMediaCategory, string> = {
+  PHOTO: "项目图片",
+  VIDEO: "项目视频",
+  PROJECT_FILE: "项目文件",
+};
 
 export function ProjectDetailView({
   fields,
@@ -43,6 +47,7 @@ export function ProjectDetailView({
 }) {
   const { row, id, root, navigate, logs } = useRecordDetail();
   const [section, setSection] = useState<Section>();
+  const [mediaCategory, setMediaCategory] = useState<ProjectMediaCategory>();
   const [showHistory, setShowHistory] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [unitEditor, setUnitEditor] = useState<Row | true>();
@@ -67,12 +72,9 @@ export function ProjectDetailView({
       </div>
     </div>
   );
-  const sections: { key: Section; label: string; icon: ReactNode }[] = [
-    { key: "basic", label: "基本资料", icon: <ProfileOutlined /> },
-    { key: "OFFICIAL", label: "官方文件", icon: <FolderOpenOutlined /> },
-    { key: "MARKETING", label: "营销资料", icon: <BarChartOutlined /> },
-    { key: "GUIDE", label: "开单资料", icon: <FileTextOutlined /> },
-  ];
+  const materials = (row.materials || []).filter(
+    (item: Row) => item.storageKey,
+  );
 
   return (
     <>
@@ -124,40 +126,52 @@ export function ProjectDetailView({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-6 pb-5 max-[1100px]:grid-cols-1">
-            <div className="flex min-w-0 items-start gap-5 max-[600px]:gap-3">
-              <ProjectLogoPreview materials={row.materials || []} />
-              <div className="min-w-0 flex-1">
-                <ProjectOverviewDetails row={row} />
+          <div className="flex min-w-0 items-start gap-5 max-[600px]:gap-3">
+            <ProjectLogoPreview materials={row.materials || []} />
+            <div className="flex min-w-0 flex-1 flex-col gap-4">
+              <ProjectOverviewDetails row={row} />
+              <div className="flex flex-wrap justify-end gap-2">
+                <Dropdown
+                  menu={{
+                    items: [
+                      { key: "PHOTO", label: t("项目图片") },
+                      { key: "VIDEO", label: t("项目视频") },
+                    ],
+                    onClick: ({ key }) =>
+                      setMediaCategory(key as ProjectMediaCategory),
+                  }}
+                >
+                  <Button icon={<PictureOutlined aria-hidden />}>
+                    {t("项目素材")} <DownOutlined aria-hidden />
+                  </Button>
+                </Dropdown>
+                <Dropdown
+                  menu={{
+                    items: [
+                      { key: "PROJECT_FILE", label: t("项目文件") },
+                      { key: "basic", label: t("基本资料") },
+                      { key: "OFFICIAL", label: t("官方文件") },
+                      { key: "MARKETING", label: t("营销资料") },
+                      { key: "GUIDE", label: t("开单资料") },
+                    ],
+                    onClick: ({ key }) => {
+                      if (key === "PROJECT_FILE") setMediaCategory(key);
+                      else setSection(key as Section);
+                    },
+                  }}
+                >
+                  <Button icon={<FileTextOutlined aria-hidden />}>
+                    {t("项目资料")} <DownOutlined aria-hidden />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
-            <ProjectStats row={row} />
-          </div>
-          <div className="grid grid-cols-[3fr_4fr] border-t border-[#e1e7ef] pt-3 max-[1200px]:grid-cols-1">
-            <ProjectMediaCards materials={row.materials || []} />
-            <nav
-              className="grid grid-cols-4 border-l border-[#e1e7ef] max-[1200px]:mt-3 max-[1200px]:border-l-0 max-[1200px]:border-t max-[1200px]:pt-3 max-[600px]:grid-cols-2"
-              aria-label={t("项目资料分类")}
-            >
-              {sections.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  className="flex min-h-12 items-center justify-center gap-2 border-r border-[#e1e7ef] px-2 text-[14px] font-medium text-[#1b355d] transition-colors hover:bg-[#f5f8fc] last:border-r-0 focus-visible:outline-2 focus-visible:outline-[#192d4c] max-[600px]:even:border-r-0"
-                  onClick={() => setSection(item.key)}
-                >
-                  <span className="text-[20px]" aria-hidden>
-                    {item.icon}
-                  </span>
-                  <span>{t(item.label)}</span>
-                </button>
-              ))}
-            </nav>
           </div>
         </section>
 
         <ProjectUnits
           projectId={id}
+          stats={row}
           onViewUnit={setUnitDetail}
           onEditUnit={setUnitEditor}
           allowExactRent={
@@ -216,6 +230,12 @@ export function ProjectDetailView({
         materials={row.materials || []}
         section={section === "basic" ? undefined : section}
         onClose={() => setSection(undefined)}
+      />
+      <MediaGalleryModal
+        category={mediaCategory}
+        title={mediaCategory ? mediaTitles[mediaCategory] : "项目素材"}
+        items={materials.filter((item: Row) => item.category === mediaCategory)}
+        onClose={() => setMediaCategory(undefined)}
       />
       <Modal
         open={showHistory}

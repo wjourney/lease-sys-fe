@@ -17,6 +17,7 @@ export const ResourceFilters = observer(function ResourceFilters({
   actions,
   extraFilters,
   onResetExtras,
+  hideStatus = false,
 }: {
   q: string;
   setQ: (value: string) => void;
@@ -30,13 +31,14 @@ export const ResourceFilters = observer(function ResourceFilters({
   actions?: ReactNode;
   extraFilters?: ReactNode;
   onResetExtras?: () => void;
+  hideStatus?: boolean;
 }) {
   return (
     <div
       className={`mb-6 flex items-center gap-4 max-[760px]:flex-wrap ${extraFilters ? "max-[1500px]:flex-wrap" : ""}`}
     >
       <div
-        className={`flex min-w-0 flex-1 items-center gap-2.5 max-[760px]:w-full max-[760px]:max-w-none [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 ${extraFilters ? "max-w-[360px]" : "max-w-[450px]"}`}
+        className={`flex min-w-0 flex-1 items-center gap-2.5 max-[760px]:w-full max-[760px]:max-w-none [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 ${hideStatus ? "max-w-[480px]" : extraFilters ? "max-w-[360px]" : "max-w-[450px]"}`}
       >
         <label>{t("关键词")}</label>
         <Input
@@ -48,57 +50,58 @@ export const ResourceFilters = observer(function ResourceFilters({
           placeholder={t("搜索编号、名称或关键词")}
         />
       </div>
-      {!["materials", "settings", "fund-accounts"].includes(resource) && (
-        <div
-          className={`flex min-w-0 items-center gap-2.5 max-[760px]:w-full max-[760px]:flex-auto [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 [&_.ant-select]:min-w-0 [&_.ant-select]:flex-1 ${extraFilters ? "w-[185px]" : "w-[250px]"}`}
-        >
-          <label>{t("状态")}</label>
-          <Select
-            allowClear
-            placeholder={t("全部状态")}
-            value={status}
-            onChange={setStatus}
-            options={Object.entries(
-              resource === "units"
-                ? {
-                    AVAILABLE: "可租",
-                    LOCKED: "已锁定",
-                    OCCUPIED: "出租中",
-                  }
-                : resource === "orders"
+      {!hideStatus &&
+        !["materials", "settings", "fund-accounts"].includes(resource) && (
+          <div
+            className={`flex min-w-0 items-center gap-2.5 max-[760px]:w-full max-[760px]:flex-auto [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 [&_.ant-select]:min-w-0 [&_.ant-select]:flex-1 ${extraFilters ? "w-[185px]" : "w-[250px]"}`}
+          >
+            <label>{t("状态")}</label>
+            <Select
+              allowClear
+              placeholder={t("全部状态")}
+              value={status}
+              onChange={setStatus}
+              options={Object.entries(
+                resource === "units"
                   ? {
-                      PENDING: "待确认",
-                      ACTIVE: "租赁中",
-                      COMPLETED: "已完成",
-                      CLOSED: "已关闭",
+                      AVAILABLE: "可租",
+                      LOCKED: "已锁定",
+                      OCCUPIED: "出租中",
                     }
-                  : resource === "incomes"
+                  : resource === "orders"
                     ? {
-                        OPEN: "待收款",
-                        PARTIAL: "部分收款",
-                        PAID: "已收齐",
+                        PENDING: "待确认",
+                        ACTIVE: "租赁中",
+                        COMPLETED: "已完成",
+                        CLOSED: "已关闭",
                       }
-                    : resource === "expenses"
+                    : resource === "incomes"
                       ? {
-                          UNPAID: "待付款",
-                          PAID: "已付款",
+                          OPEN: "待收款",
+                          PARTIAL: "部分收款",
+                          PAID: "已收齐",
                         }
-                      : resource === "invoices"
+                      : resource === "expenses"
                         ? {
-                            ACTIVE: "有效",
-                            VOID: "已作废",
+                            UNPAID: "待付款",
+                            PAID: "已付款",
                           }
-                        : {
-                            ACTIVE: "启用",
-                            DISABLED: "停用",
-                          },
-            ).map(([value, label]) => ({
-              value,
-              label: t(label),
-            }))}
-          />
-        </div>
-      )}
+                        : resource === "invoices"
+                          ? {
+                              ACTIVE: "有效",
+                              VOID: "已作废",
+                            }
+                          : {
+                              ACTIVE: "启用",
+                              DISABLED: "停用",
+                            },
+              ).map(([value, label]) => ({
+                value,
+                label: t(label),
+              }))}
+            />
+          </div>
+        )}
       {extraFilters}
       {actions && (
         <div className="flex shrink-0 flex-wrap gap-2 max-[760px]:w-full">
