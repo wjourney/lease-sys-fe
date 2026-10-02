@@ -1,13 +1,6 @@
 import { RequestError as Alert } from "../../../components/feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import {
-  App,
-  Button,
-  Empty,
-  Pagination,
-  Table,
-  Tooltip,
-} from "antd";
+import { App, Button, Empty, Pagination, Table, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -182,34 +175,38 @@ const UserListPage = observer(function UserListPage() {
           resource="users"
           status={status}
           setStatus={setStatus}
-          actions={root.canWrite("users") && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setCreating(true)}
-            >
-              {t("新建账号")}
-            </Button>
-          )}
+          actions={
+            root.canWrite("users") && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setCreating(true)}
+              >
+                {t("新建账号")}
+              </Button>
+            )
+          }
         />
-        <Table
-          rowKey="id"
-          onRow={(row) => ({
-            className: "cursor-pointer",
-            onClick: (event) => {
-              if (shouldOpenRow(event)) navigate(`/users/${row.id}`);
-            },
-          })}
-          columns={columns}
-          dataSource={store.items}
-          loading={store.loading}
-          pagination={false}
-          scroll={{ x: 900 }}
-          size="middle"
-          locale={{ emptyText: t("暂无账号") }}
-          className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e]"
-        />
-        <div className="mt-5 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+        <div className="list-scroll-area">
+          <Table
+            rowKey="id"
+            onRow={(row) => ({
+              className: "cursor-pointer",
+              onClick: (event) => {
+                if (shouldOpenRow(event)) navigate(`/users/${row.id}`);
+              },
+            })}
+            columns={columns}
+            dataSource={store.items}
+            loading={store.loading}
+            pagination={false}
+            scroll={{ x: 900 }}
+            size="middle"
+            locale={{ emptyText: t("暂无账号") }}
+            className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e]"
+          />
+        </div>
+        <div className="list-pagination flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           <span className="whitespace-nowrap text-sm text-[#8491a3]">
             {t(`共 ${store.total} 条`)}
           </span>

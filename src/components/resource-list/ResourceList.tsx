@@ -1,6 +1,6 @@
 import { RequestError as Alert } from "../feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Empty, Space, Table } from "antd";
+import { Button, Empty, Pagination, Space, Table } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -145,7 +145,9 @@ export const ResourceList = observer(function ResourceList({
     />
   );
   return (
-    <div className="[&_.ant-table-thead_th]:!text-[11px] [&_.ant-table-thead_th]:!font-medium [&_.ant-table-thead_th]:whitespace-nowrap [&_.ant-table-tbody_td]:text-xs [&_.ant-table-tbody_td_a]:font-medium">
+    <div
+      className={`[&_.ant-table-thead_th]:!text-[11px] [&_.ant-table-thead_th]:!font-medium [&_.ant-table-thead_th]:whitespace-nowrap [&_.ant-table-tbody_td]:text-xs [&_.ant-table-tbody_td_a]:font-medium ${embedded ? "embedded-resource-list" : "resource-list"}`}
+    >
       {store.error && (
         <Alert
           type="error"
@@ -159,44 +161,55 @@ export const ResourceList = observer(function ResourceList({
         {listToolbar}
         {t(toolbar)}
 
-        {t(
-          renderItems?.({
-            store,
-            navigate,
-            page,
-            setSearch,
-            query,
-            onPageChange: changePage,
-          }) ?? (
-            <Table
-              size="middle"
-              rowKey="id"
-              onRow={(row) => ({
-                className: "cursor-pointer",
-                onClick: (event) => {
-                  if (shouldOpenRow(event)) navigate(`/${resource}/${row.id}`);
-                },
-              })}
-              columns={columns}
-              dataSource={store.items.map((x) => ({
-                ...x,
-              }))}
-              loading={store.loading}
-              scroll={{
-                x: "max-content",
-              }}
-              pagination={{
-                position: ["bottomRight"],
-                current: page,
-                pageSize: 12,
-                total: store.total,
-                showSizeChanger: false,
-                showTotal: (n) => `共 ${n} 条`,
-                onChange: changePage,
-              }}
-            />
-          ),
-        )}
+        <div className="list-results">
+          {t(
+            renderItems?.({
+              store,
+              navigate,
+              page,
+              setSearch,
+              query,
+              onPageChange: changePage,
+            }) ?? (
+              <>
+                <div className="list-scroll-area">
+                  <Table
+                    size="middle"
+                    rowKey="id"
+                    onRow={(row) => ({
+                      className: "cursor-pointer",
+                      onClick: (event) => {
+                        if (shouldOpenRow(event))
+                          navigate(`/${resource}/${row.id}`);
+                      },
+                    })}
+                    columns={columns}
+                    dataSource={store.items.map((x) => ({
+                      ...x,
+                    }))}
+                    loading={store.loading}
+                    scroll={{
+                      x: "max-content",
+                    }}
+                    pagination={false}
+                  />
+                </div>
+                <div className="list-pagination flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+                  <span className="whitespace-nowrap text-sm text-[#8491a3]">
+                    {t(`共 ${store.total} 条`)}
+                  </span>
+                  <Pagination
+                    current={page}
+                    pageSize={pageSize}
+                    total={store.total}
+                    showSizeChanger={false}
+                    onChange={changePage}
+                  />
+                </div>
+              </>
+            ),
+          )}
+        </div>
       </ResourceListSurface>
       {editor &&
         (renderEditor ? (

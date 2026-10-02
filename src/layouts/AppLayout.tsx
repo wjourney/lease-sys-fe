@@ -26,6 +26,18 @@ import { useRoot } from "../stores/root";
 import { getNavigation } from "./navigation";
 import { ChangePasswordModal, ProfileModal } from "./ProfileModal";
 const { Header, Sider, Content } = Layout;
+const standaloneListPaths = new Set([
+  "/projects",
+  "/sales-companies",
+  "/orders",
+  "/users",
+  "/incomes",
+  "/expenses",
+  "/commissions",
+  "/invoices",
+  "/materials",
+  "/fund-accounts",
+]);
 export const AppLayout = observer(function AppLayout() {
   const root = useRoot();
   const { modal } = App.useApp();
@@ -44,6 +56,9 @@ export const AppLayout = observer(function AppLayout() {
         ? ["finance"]
         : [];
   const isRecordDetail = /^\/[^/]+\/[^/]+\/?$/.test(location.pathname);
+  const isStandaloneList = standaloneListPaths.has(
+    location.pathname.replace(/\/$/, ""),
+  );
   return (
     <Layout className="app-layout min-h-screen">
       <Drawer
@@ -87,9 +102,7 @@ export const AppLayout = observer(function AppLayout() {
           collapsed ? "ml-20 max-[760px]:!ml-0" : "ml-[208px] max-[760px]:!ml-0"
         }
       >
-        <Header
-          className="topbar !sticky top-0 z-[15] !flex !h-[54px] items-center justify-between !border-b !border-[#edf0f4] !bg-white !px-7 !leading-normal [&>div]:flex [&>div]:items-center [&>div]:gap-[15px] max-[760px]:!px-3"
-        >
+        <Header className="topbar !sticky top-0 z-[15] !flex !h-[54px] items-center justify-between !border-b !border-[#edf0f4] !bg-white !px-7 !leading-normal [&>div]:flex [&>div]:items-center [&>div]:gap-[15px] max-[760px]:!px-3">
           {isRecordDetail ? (
             <div id="record-detail-header" className="min-w-0" />
           ) : (
@@ -195,7 +208,9 @@ export const AppLayout = observer(function AppLayout() {
             </div>
           </div>
         </Header>
-        <Content className="main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px]">
+        <Content
+          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""}`}
+        >
           <Suspense
             fallback={
               <div className="flex h-[70vh] items-center justify-center">

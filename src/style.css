@@ -8,3 +8,50 @@
   -webkit-text-fill-color: #233047 !important;
   caret-color: #233047;
 }
+
+.list-pagination {
+  margin-top: 20px;
+}
+
+@media (min-width: 761px) {
+  .standalone-list-content {
+    height: calc(100dvh - 54px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .standalone-list-content > .resource-list,
+  .standalone-list-content > .list-surface,
+  .standalone-list-content .resource-list > .list-surface,
+  .standalone-list-content .list-results,
+  .standalone-list-content .list-results > .ant-spin-nested-loading,
+  .standalone-list-content
+    .list-results
+    > .ant-spin-nested-loading
+    > .ant-spin-container {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .standalone-list-content .list-scroll-area {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .standalone-list-content .list-pagination,
+  .standalone-list-content footer {
+    flex-shrink: 0;
+  }
+
+  .embedded-list-scroll,
+  .embedded-resource-list .list-scroll-area {
+    max-height: min(65dvh, 720px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}

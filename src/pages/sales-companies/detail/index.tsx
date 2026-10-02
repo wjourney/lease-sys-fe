@@ -491,22 +491,24 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                 message={t(membersError)}
               />
             )}
-            <Table
-              rowKey="id"
-              onRow={(member) => ({
-                className: "cursor-pointer",
-                onClick: (event) => {
-                  if (shouldOpenRow(event)) navigate(`/users/${member.id}`);
-                },
-              })}
-              columns={columns}
-              dataSource={members.items}
-              loading={membersLoading}
-              pagination={false}
-              scroll={{ x: 760 }}
-              locale={{ emptyText: t("暂无成员账号") }}
-              className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-72"
-            />
+            <div className="embedded-list-scroll">
+              <Table
+                rowKey="id"
+                onRow={(member) => ({
+                  className: "cursor-pointer",
+                  onClick: (event) => {
+                    if (shouldOpenRow(event)) navigate(`/users/${member.id}`);
+                  },
+                })}
+                columns={columns}
+                dataSource={members.items}
+                loading={membersLoading}
+                pagination={false}
+                scroll={{ x: 760 }}
+                locale={{ emptyText: t("暂无成员账号") }}
+                className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-72"
+              />
+            </div>
             <div className="flex flex-wrap items-center justify-end gap-5 px-5 py-4 text-sm text-[#8190a4]">
               <span>{t(`共 ${members.total} 条`)}</span>
               <Pagination
