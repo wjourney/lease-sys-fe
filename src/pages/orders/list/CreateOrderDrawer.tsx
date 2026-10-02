@@ -10,6 +10,7 @@ import {
   Select,
   Upload,
 } from "antd";
+import type { InputNumberProps } from "antd";
 import type { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
 import { api, errorMessage, options, type Row } from "../../../shared/api";
@@ -68,9 +69,9 @@ function Section({
   );
 }
 
-function MoneyInput({ disabled = false }: { disabled?: boolean }) {
+function MoneyInput(props: InputNumberProps<string>) {
   return (
-    <InputNumber
+    <InputNumber<string>
       stringMode
       min="0"
       precision={2}
@@ -78,7 +79,7 @@ function MoneyInput({ disabled = false }: { disabled?: boolean }) {
       style={{ width: "100%" }}
       placeholder="0.00"
       controls={false}
-      disabled={disabled}
+      {...props}
     />
   );
 }
