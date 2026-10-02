@@ -1,11 +1,11 @@
 import { ResourceList } from "../../../components/resource-list/ResourceList";
-import { CreateOrderDrawer } from "./CreateOrderDrawer";
+import { OrderDrawer } from "../components/OrderDrawer";
 export default function OrderListPage() {
   return (
     <ResourceList
       resource="orders"
       renderCreateEditor={({ onClose, onSaved }) => (
-        <CreateOrderDrawer onClose={onClose} onSaved={onSaved} />
+        <OrderDrawer onClose={onClose} onSaved={onSaved} />
       )}
     />
   );

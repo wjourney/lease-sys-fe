@@ -11,6 +11,7 @@ import {
   Upload,
 } from "antd";
 import type { InputNumberProps } from "antd";
+import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { useEffect, useState } from "react";
 import { api, errorMessage, options, type Row } from "../../../shared/api";
@@ -18,6 +19,11 @@ import { t } from "../../../shared/i18n";
 import { useRoot } from "../../../stores/root";
 
 type Choice = { label: string; value: string };
+function withCurrentChoice(choices: Choice[], value?: string, label?: string) {
+  if (value && !choices.some((choice) => choice.value === value))
+    return [...choices, { value, label: label || value }];
+  return choices;
+}
 type OrderValues = {
   projectId: string;
   unitId: string;
@@ -48,6 +54,7 @@ type OrderValues = {
   initialRentReceived?: string;
   initialDepositReceived?: string;
   initialPaymentReceivedOn?: Dayjs;
+  reason?: string;
 };
 
 const required = [{ required: true, message: "请填写此项" }];
@@ -84,10 +91,12 @@ function MoneyInput(props: InputNumberProps<string>) {
   );
 }
 
-export function CreateOrderDrawer({
+export function OrderDrawer({
+  row,
   onClose,
   onSaved,
 }: {
+  row?: Row;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -123,23 +132,48 @@ export function CreateOrderDrawer({
       .then(([projectRows, companyRows, userRows]) => {
         if (!active) return;
         setProjects(
-          projectRows
-            .filter((row) => row.status === "ACTIVE")
-            .map((row) => ({ value: row.id, label: row.name })),
+          withCurrentChoice(
+            projectRows
+              .filter(
+                (project) =>
+                  project.status === "ACTIVE" || project.id === row?.projectId,
+              )
+              .map((project) => ({ value: project.id, label: project.name })),
+            row?.projectId,
+            row?.projectName,
+          ),
         );
         setCompanies(
-          root.canRead("sales-companies")
-            ? companyRows
-                .filter((row) => row.status === "ACTIVE")
-                .map((row) => ({ value: row.id, label: row.name }))
-            : root.user?.salesCompanyId
-              ? [
-                  {
-                    value: root.user.salesCompanyId,
-                    label: root.user.companyName || t("所属销售公司"),
-                  },
-                ]
-              : [],
+          withCurrentChoice(
+            root.canRead("sales-companies")
+              ? companyRows
+                  .filter(
+                    (company) =>
+                      company.status === "ACTIVE" ||
+                      company.id === row?.salesCompanyId,
+                  )
+                  .map((company) => ({
+                    value: company.id,
+                    label: company.name,
+                  }))
+              : root.user?.salesCompanyId
+                ? [
+                    {
+                      value: root.user.salesCompanyId,
+                      label: root.user.companyName || t("所属销售公司"),
+                    },
+                  ]
+                : row?.salesCompanyId
+                  ? [
+                      {
+                        value: row.salesCompanyId,
+                        label: row.companyName || row.salesCompanyId,
+                      },
+                    ]
+                  : [],
+            row?.salesCompanyId,
+            row?.companyName,
+          ),
         );
         setSalesUsers(
           userRows.filter(
@@ -153,7 +187,7 @@ export function CreateOrderDrawer({
     return () => {
       active = false;
     };
-  }, [message, root]);
+  }, [message, root, row?.projectId]);
 
   useEffect(() => {
     if (!projectId) {
@@ -165,20 +199,41 @@ export function CreateOrderDrawer({
       .then((rows) => {
         if (active)
           setUnits(
-            rows
-              .filter((row) => row.enabled && row.status !== "DISABLED")
-              .map((row) => ({ value: row.id, label: row.unitNo })),
+            withCurrentChoice(
+              rows
+                .filter(
+                  (unit) =>
+                    unit.id === row?.unitId ||
+                    (unit.enabled && unit.status !== "DISABLED"),
+                )
+                .map((unit) => ({ value: unit.id, label: unit.unitNo })),
+              row?.unitId,
+              row?.unitNo,
+            ),
           );
       })
       .catch((error) => message.error(errorMessage(error)));
     return () => {
       active = false;
     };
-  }, [projectId, message]);
+  }, [projectId, message, row?.unitId]);
 
   const availableSalesUsers = salesUsers
-    .filter((row) => !salesCompanyId || row.salesCompanyId === salesCompanyId)
-    .map((row) => ({ value: row.id, label: row.name || row.username }));
+    .filter(
+      (user) =>
+        user.id === row?.salesUserId ||
+        !salesCompanyId ||
+        user.salesCompanyId === salesCompanyId,
+    )
+    .map((user) => ({ value: user.id, label: user.name || user.username }));
+  if (
+    row?.salesUserId &&
+    !availableSalesUsers.some((user) => user.value === row.salesUserId)
+  )
+    availableSalesUsers.push({
+      value: row.salesUserId,
+      label: row.salesName || row.salesUserId,
+    });
 
   async function uploadFile(orderId: string, file: File, category: string) {
     const data = new FormData();
@@ -235,8 +290,9 @@ export function CreateOrderDrawer({
     setLoading(true);
     try {
       const payload = {
-        unitId: values.unitId,
-        salesUserId: values.salesUserId,
+        ...(!row
+          ? { unitId: values.unitId, salesUserId: values.salesUserId }
+          : {}),
         tenantType: values.tenantType,
         tenantName: values.tenantName.trim(),
         ...(values.tenantType === "COMPANY"
@@ -245,20 +301,27 @@ export function CreateOrderDrawer({
               tenantRegistrationNo: values.tenantRegistrationNo?.trim(),
               tenantContactName: values.tenantContactName?.trim(),
             }
-          : {}),
+          : row
+            ? {
+                registrationNoType: null,
+                tenantRegistrationNo: "",
+                tenantContactName: "",
+              }
+            : {}),
         tenantPhone: values.tenantPhone.trim(),
         tenantEmail: values.tenantEmail.trim(),
         startsOn: values.startsOn.format("YYYY-MM-DD"),
         endsOn: values.endsOn.format("YYYY-MM-DD"),
         monthlyRent: values.monthlyRent,
         depositAmount: values.depositAmount,
-        depositPlan: values.depositPlan,
+        depositPlan: values.depositPlan ?? (row ? null : undefined),
         paymentIntervalMonths: values.paymentIntervalMonths,
         rentDueDay: values.rentDueDay,
         billLeadDays: values.billLeadDays,
         firstPeriodProration: values.firstPeriodProration,
         lastPeriodProration: values.lastPeriodProration,
-        moveInOn: values.moveInOn?.format("YYYY-MM-DD"),
+        moveInOn:
+          values.moveInOn?.format("YYYY-MM-DD") ?? (row ? null : undefined),
         remark: values.remark?.trim(),
         initialPayment: {
           paid: values.firstPaymentPaid,
@@ -275,16 +338,30 @@ export function CreateOrderDrawer({
             : undefined,
         },
       };
-      const { data: order } = await api.post<Row>("/orders", payload);
+      const order = row
+        ? (
+            await api.patch<Row>(`/orders/${row.id}`, {
+              ...payload,
+              revision: row.revision,
+              reason: values.reason?.trim(),
+            })
+          ).data
+        : (await api.post<Row>("/orders", payload)).data;
       root.invalidate();
       try {
         if (values.firstPaymentPaid && contractFile)
           await uploadFile(order.id, contractFile, "CONTRACT");
         if (values.firstPaymentPaid && voucherFile)
           await uploadFile(order.id, voucherFile, "VOUCHER");
-        message.success(t("订单创建成功"));
+        message.success(t(row ? "订单修改成功" : "订单创建成功"));
       } catch {
-        message.warning(t("订单已创建，但附件上传失败，请在订单详情补传"));
+        message.warning(
+          t(
+            row
+              ? "订单已修改，但附件上传失败，请在订单详情补传"
+              : "订单已创建，但附件上传失败，请在订单详情补传",
+          ),
+        );
       }
       onSaved();
     } catch (error) {
@@ -298,7 +375,7 @@ export function CreateOrderDrawer({
     <Drawer
       open
       width="min(820px, 100vw)"
-      title={t("新建订单")}
+      title={t(row ? "编辑订单" : "新建订单")}
       onClose={onClose}
       closable={false}
       extra={
@@ -317,7 +394,7 @@ export function CreateOrderDrawer({
             loading={loading}
             onClick={() => form.submit()}
           >
-            {t("提交订单")}
+            {t(row ? "保存修改" : "提交订单")}
           </Button>
         </div>
       }
@@ -328,17 +405,47 @@ export function CreateOrderDrawer({
         onFinish={submit}
         requiredMark
         initialValues={{
-          tenantType: "COMPANY",
-          paymentIntervalMonths: 1,
-          rentDueDay: 1,
-          billLeadDays: 7,
-          firstPeriodProration: true,
-          lastPeriodProration: true,
-          firstPaymentPaid: false,
-          initialRentPaid: false,
-          initialDepositPaid: false,
-          salesCompanyId: root.user?.salesCompanyId,
-          salesUserId: root.user?.role === "SALES" ? root.user.id : undefined,
+          projectId: row?.projectId,
+          unitId: row?.unitId,
+          tenantType: row?.tenantType || "COMPANY",
+          tenantName: row?.tenantName,
+          registrationNoType: row?.registrationNoType,
+          tenantRegistrationNo: row?.tenantRegistrationNo,
+          tenantContactName: row?.tenantContactName,
+          tenantPhone: row?.tenantPhone,
+          tenantEmail: row?.tenantEmail,
+          startsOn: row?.startsOn ? dayjs(row.startsOn) : undefined,
+          endsOn: row?.endsOn ? dayjs(row.endsOn) : undefined,
+          monthlyRent:
+            row?.monthlyRent != null ? String(row.monthlyRent) : undefined,
+          depositAmount:
+            row?.depositAmount != null ? String(row.depositAmount) : undefined,
+          depositPlan: row?.depositPlan || undefined,
+          paymentIntervalMonths: row?.paymentIntervalMonths ?? 1,
+          rentDueDay: row?.rentDueDay ?? 1,
+          billLeadDays: row?.billLeadDays ?? 7,
+          firstPeriodProration: row?.firstPeriodProration ?? true,
+          lastPeriodProration: row?.lastPeriodProration ?? true,
+          moveInOn: row?.moveInOn ? dayjs(row.moveInOn) : undefined,
+          remark: row?.remark,
+          firstPaymentPaid: Boolean(row?.initialPayment?.paid),
+          initialRentPaid: Boolean(row?.initialPayment?.rentPaid),
+          initialDepositPaid: Boolean(row?.initialPayment?.depositPaid),
+          initialRentReceived:
+            row?.initialPayment?.rentReceived != null
+              ? String(row.initialPayment.rentReceived)
+              : undefined,
+          initialDepositReceived:
+            row?.initialPayment?.depositReceived != null
+              ? String(row.initialPayment.depositReceived)
+              : undefined,
+          initialPaymentReceivedOn: row?.initialPayment?.receivedOn
+            ? dayjs(row.initialPayment.receivedOn)
+            : undefined,
+          salesCompanyId: row?.salesCompanyId ?? root.user?.salesCompanyId,
+          salesUserId:
+            row?.salesUserId ??
+            (root.user?.role === "SALES" ? root.user.id : undefined),
         }}
         className="flex flex-col gap-2.5 [&_.ant-form-item]:!mb-2.5"
       >
@@ -350,6 +457,7 @@ export function CreateOrderDrawer({
                 optionFilterProp="label"
                 options={projects}
                 placeholder={t("请选择项目")}
+                disabled={!!row}
                 onChange={() => form.setFieldValue("unitId", undefined)}
               />
             </Form.Item>
@@ -358,7 +466,7 @@ export function CreateOrderDrawer({
                 showSearch
                 optionFilterProp="label"
                 options={units}
-                disabled={!projectId}
+                disabled={!!row || !projectId}
                 placeholder={t("请选择单位")}
               />
             </Form.Item>
@@ -576,7 +684,7 @@ export function CreateOrderDrawer({
                 optionFilterProp="label"
                 options={companies}
                 onChange={() => form.setFieldValue("salesUserId", undefined)}
-                disabled={!!root.user?.salesCompanyId}
+                disabled={!!row || !!root.user?.salesCompanyId}
               />
             </Form.Item>
             <Form.Item
@@ -588,6 +696,7 @@ export function CreateOrderDrawer({
                 showSearch
                 optionFilterProp="label"
                 options={availableSalesUsers}
+                disabled={!!row}
               />
             </Form.Item>
           </div>
@@ -726,6 +835,11 @@ export function CreateOrderDrawer({
             "此处为首期收款填报，实际到账仍须财务核对；核对后才生成相关单据。提交时会校验同一单位的租期是否冲突。",
           )}
         </p>
+        {row && (
+          <Form.Item name="reason" label={t("修改原因")} rules={required}>
+            <Input.TextArea rows={2} maxLength={500} />
+          </Form.Item>
+        )}
       </Form>
     </Drawer>
   );

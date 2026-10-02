@@ -19,6 +19,7 @@ import { ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import { ProjectDrawer } from "../../pages/projects/components/ProjectDrawer";
+import { OrderDrawer } from "../../pages/orders/components/OrderDrawer";
 import { ProjectDetailView } from "../../pages/projects/detail/components/ProjectDetailView";
 import { amount, api, Row } from "../../shared/api";
 import { configs } from "../../shared/config";
@@ -281,6 +282,15 @@ export const ResourceDetail = observer(function ResourceDetail({
         {edit &&
           (resource === "projects" ? (
             <ProjectDrawer
+              row={row}
+              onClose={() => setEdit(false)}
+              onSaved={() => {
+                setEdit(false);
+                void load();
+              }}
+            />
+          ) : resource === "orders" ? (
+            <OrderDrawer
               row={row}
               onClose={() => setEdit(false)}
               onSaved={() => {
