@@ -363,6 +363,10 @@ export function OrderDrawer({
           ),
         );
       }
+      if (!row && order.contractGenerationPending)
+        message.warning(
+          t("订单已创建，合同暂未生成，可在订单详情点击下载合同重试"),
+        );
       onSaved();
     } catch (error) {
       message.error(errorMessage(error));

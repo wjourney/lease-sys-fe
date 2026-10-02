@@ -1,11 +1,30 @@
+import { DownloadOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import { observer } from "mobx-react-lite";
+import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
-import { errorMessage, options } from "../../../../shared/api";
+import { api, errorMessage, options } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 export const OrderActions = observer(function OrderActions() {
+  const [preparingContract, setPreparingContract] = useState(false);
   const { resource, row, root, modal, run, id, openAction, message } =
     useRecordDetail();
+  async function downloadContract() {
+    setPreparingContract(true);
+    try {
+      await api.post(`/orders/${id}/contract/ensure`);
+      const link = document.createElement("a");
+      link.href = `/api/v1/orders/${id}/contract/download`;
+      link.download = `${row.orderNo} 租赁合同.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      message.error(errorMessage(error));
+    } finally {
+      setPreparingContract(false);
+    }
+  }
   return (
     <>
       {resource === "orders" && (
@@ -25,6 +44,13 @@ export const OrderActions = observer(function OrderActions() {
                 {t("关闭订单")}
               </Button>
             )}
+          <Button
+            icon={<DownloadOutlined aria-hidden />}
+            loading={preparingContract}
+            onClick={() => void downloadContract()}
+          >
+            {t("下载合同")}
+          </Button>
           {root.manageOrders && (
             <>
               <Button
@@ -37,7 +63,9 @@ export const OrderActions = observer(function OrderActions() {
                       })
                     ).filter((m) => m.body);
                     openAction(
-                      "生成合同",
+                      row.currentContractMaterialId
+                        ? "重新生成合同"
+                        : "生成合同",
                       [
                         {
                           key: "templateMaterialId",
@@ -57,7 +85,7 @@ export const OrderActions = observer(function OrderActions() {
                   }
                 }}
               >
-                {t("生成合同")}
+                {t(row.currentContractMaterialId ? "重新生成合同" : "生成合同")}
               </Button>
               {row.status === "ACTIVE" && (
                 <Button
