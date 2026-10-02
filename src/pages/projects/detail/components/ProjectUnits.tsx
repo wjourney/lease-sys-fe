@@ -1,5 +1,9 @@
-import { PictureOutlined } from "@ant-design/icons";
-import { Button, Empty, Pagination, Select, Spin } from "antd";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PictureOutlined,
+} from "@ant-design/icons";
+import { Button, Card, Empty, Pagination, Select, Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { ResourceList } from "../../../../components/resource-list/ResourceList";
@@ -139,64 +143,78 @@ const UnitGrid = observer(function UnitGrid({
 }) {
   return (
     <Spin spinning={store.loading}>
-      <div className="grid grid-cols-3 gap-4 max-[1100px]:grid-cols-2 max-[700px]:grid-cols-1">
+      <div className="grid grid-cols-4 gap-4 max-[1500px]:grid-cols-3 max-[1100px]:grid-cols-2 max-[760px]:grid-cols-1">
         {store.items.map((unit) => (
-          <article
+          <Card
             key={unit.id}
-            className="flex min-w-0 cursor-pointer overflow-hidden rounded-[7px] border border-[#e4e9f0] transition-colors hover:border-[#afc1d6]"
+            className="project-card min-w-0 cursor-pointer overflow-hidden !border-[#e6eaf0] transition-colors hover:!border-[#afc1d6] [&_.ant-card-body]:!p-[14px]"
             onClick={(event) => {
               if (shouldOpenRow(event)) onViewUnit(unit);
             }}
+            cover={
+              unit.coverUrl ? (
+                <img
+                  src={unit.coverUrl}
+                  alt={t(`${unit.unitNo}的首张图片`)}
+                  loading="lazy"
+                  className="h-[145px] w-full bg-[#f2f5f8] object-cover"
+                />
+              ) : (
+                <div className="flex h-[145px] items-center justify-center bg-[#f2f5f8] text-[#9eacbf]">
+                  <PictureOutlined className="text-2xl" aria-hidden />
+                </div>
+              )
+            }
           >
-            {unit.coverUrl ? (
-              <img
-                src={unit.coverUrl}
-                alt={t(`${unit.unitNo}的首张图片`)}
-                loading="lazy"
-                className="h-32 w-28 shrink-0 bg-[#f2f5f8] object-cover max-[480px]:w-24"
-              />
-            ) : (
-              <div className="flex h-32 w-28 shrink-0 items-center justify-center bg-[#f2f5f8] text-[#9eacbf] max-[480px]:w-24">
-                <PictureOutlined className="text-2xl" aria-hidden />
-              </div>
-            )}
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 px-4 py-3">
-              <h3 className="m-0 truncate text-[16px] font-semibold text-[#26334a]">
-                {t(unit.unitNo)}
-              </h3>
-              <p className="m-0 truncate text-[14px] font-medium text-[#1b355d]">
-                {t("参考月租")}{" "}
-                {unit.referenceRent != null
-                  ? t(amount(unit.referenceRent))
-                  : `${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
-              </p>
-              <div className="flex flex-wrap gap-1.5 pt-1" data-row-action>
-                <Button size="small" onClick={() => onViewUnit(unit)}>
-                  {t("查看")}
-                </Button>
-                {canEdit && (
-                  <>
-                    <Button size="small" onClick={() => onEditUnit(unit)}>
-                      {t("编辑")}
-                    </Button>
-                    <Button
-                      size="small"
-                      danger
-                      onClick={() => onDeleteUnit(unit)}
-                    >
-                      {t("删除")}
-                    </Button>
-                  </>
-                )}
-              </div>
+            <h3 className="m-0 truncate text-[15px] font-semibold text-[#26334a]">
+              {t(unit.unitNo)}
+            </h3>
+            <p className="my-2.5 truncate text-[13px] font-medium text-[#1b355d]">
+              {t("参考月租")}{" "}
+              {unit.referenceRent != null
+                ? t(amount(unit.referenceRent))
+                : `${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
+            </p>
+            <div
+              className="flex gap-2 border-t border-[#eff1f5] pt-2.5"
+              data-row-action
+            >
+              <Button
+                size="small"
+                className="flex-1"
+                onClick={() => onViewUnit(unit)}
+              >
+                {t("查看")}
+              </Button>
+              {canEdit && (
+                <>
+                  <Button
+                    size="small"
+                    className="flex-1"
+                    icon={<EditOutlined aria-hidden />}
+                    onClick={() => onEditUnit(unit)}
+                  >
+                    {t("编辑")}
+                  </Button>
+                  <Button
+                    size="small"
+                    className="flex-1"
+                    danger
+                    icon={<DeleteOutlined aria-hidden />}
+                    onClick={() => onDeleteUnit(unit)}
+                  >
+                    {t("删除")}
+                  </Button>
+                </>
+              )}
             </div>
-          </article>
+          </Card>
         ))}
       </div>
       {!store.items.length && !store.loading && !store.error && (
         <Empty description={t("暂无单位")} className="py-12" />
       )}
-      <div className="mt-6 flex items-center justify-end gap-4">
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
         <span className="text-xs text-[#8793a6]">
           {t(`共 ${store.total} 个单位`)}
         </span>

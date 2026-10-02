@@ -105,11 +105,11 @@ export function Brand() {
 }
 export function BuildingArt({ index = 0 }: { index?: number }) {
   const towerClassName =
-    "absolute -bottom-[18px] grid -skew-y-[5deg] gap-[7px] bg-[#e7eaec] p-[15px] shadow-[12px_0_0_#acbdc9] [&_i]:block [&_i]:min-h-3 [&_i]:min-w-2.5 [&_i]:bg-[linear-gradient(110deg,#b8cbd7,#a3b9ca)]";
+    "absolute -bottom-[14px] grid -skew-y-[5deg] gap-[5px] bg-[#e7eaec] p-[11px] shadow-[9px_0_0_#acbdc9] [&_i]:block [&_i]:min-h-2.5 [&_i]:min-w-2 [&_i]:bg-[linear-gradient(110deg,#b8cbd7,#a3b9ca)]";
   return (
     <div
       className={
-        "relative h-[190px] overflow-hidden " +
+        "relative h-[145px] overflow-hidden " +
         [
           "bg-[linear-gradient(140deg,#e2e9ec,#c4d4df)]",
           "bg-[linear-gradient(130deg,#e3e7dd,#c3d0c5)]",
@@ -117,9 +117,9 @@ export function BuildingArt({ index = 0 }: { index?: number }) {
         ][index % 3]
       }
     >
-      <div className="absolute top-[15px] left-[18%] size-[100px] rounded-full bg-[#f6f1e6] opacity-70" />
+      <div className="absolute top-[11px] left-[18%] size-[76px] rounded-full bg-[#f6f1e6] opacity-70" />
       <div
-        className={`${towerClassName} left-[15%] h-[150px] w-[65px] grid-cols-3`}
+        className={`${towerClassName} left-[15%] h-[114px] w-[50px] grid-cols-3`}
       >
         {t(
           Array.from(
@@ -131,7 +131,7 @@ export function BuildingArt({ index = 0 }: { index?: number }) {
         )}
       </div>
       <div
-        className={`${towerClassName} left-[40%] h-[190px] w-[85px] grid-cols-4`}
+        className={`${towerClassName} left-[40%] h-[145px] w-[65px] grid-cols-4`}
       >
         {t(
           Array.from(
@@ -143,7 +143,7 @@ export function BuildingArt({ index = 0 }: { index?: number }) {
         )}
       </div>
       <div
-        className={`${towerClassName} left-[72%] h-[115px] w-[56px] grid-cols-3`}
+        className={`${towerClassName} left-[72%] h-[88px] w-[43px] grid-cols-3`}
       >
         {t(
           Array.from(

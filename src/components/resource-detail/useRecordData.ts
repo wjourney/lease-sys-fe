@@ -15,9 +15,8 @@ export function useRecordData(resource: string, id: string, epoch: number) {
     setLoading(true);
     setError("");
     try {
-      const [record, history, related] = await Promise.all([
+      const [record, related] = await Promise.all([
         api.get<Row>(`/${resource}/${id}`),
-        api.get<Row[]>(`/${resource}/${id}/operations`),
         resource === "materials"
           ? api.get(`/materials/${id}/versions`)
           : resource === "incomes"
@@ -26,7 +25,7 @@ export function useRecordData(resource: string, id: string, epoch: number) {
       ]);
       if (current !== request.current) return;
       setRow(record.data);
-      setLogs(history.data || []);
+      setLogs(record.data.operations || []);
       setReceipts(resource === "incomes" ? related?.data.items || [] : []);
       setVersions(resource === "materials" ? related?.data.items || [] : []);
     } catch (e) {
