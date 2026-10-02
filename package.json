@@ -11,7 +11,6 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "preview": "vite preview --host 127.0.0.1",
-    "api:generate": "openapi-typescript https://47.117.136.208/api/docs-json -o src/shared/api.generated.ts",
     "format": "prettier --write src tests *.ts",
     "lint": "tsc -b --pretty false"
   },
@@ -34,7 +33,6 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^4.7.0",
-    "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.9",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2",

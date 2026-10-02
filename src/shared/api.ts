@@ -1,7 +1,4 @@
 import axios from "axios";
-import type { components } from "./api.generated";
-export type ApiInput<K extends keyof components["schemas"]> =
-  components["schemas"][K];
 export const api = axios.create({
   baseURL: "/api/v1",
   withCredentials: true,

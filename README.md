@@ -79,7 +79,7 @@ src/
 
 修改某个页面时先进入对应目录；只有多处共用的布局或行为才提取到 components。请求和状态逻辑放在 hook/store，表单通过字段控件复用，不再维护包含全部页面的大型组件。
 
-`src/shared/api.generated.ts` 由服务器 Swagger 生成，后端变更后运行 `pnpm api:generate`；接口文档为 https://47.117.136.208/api/docs 。该自动生成文件不手工拆分。`docs/` 保留已确认的业务方案，实际字段和约束以后端 Prisma schema/SQL 为准。
+前端请求通过 `src/shared/api.ts` 发出。原先的整站 Swagger 类型文件没有被业务代码使用，已移除；需要为某个接口补充类型时，在对应业务目录定义并用于请求与响应，不再把整站接口集中生成到一个文件。接口文档为 https://47.117.136.208/api/docs 。`docs/` 保留已确认的业务方案，实际字段和约束以后端 Prisma schema/SQL 为准。
 
 ## 检查与测试
 
