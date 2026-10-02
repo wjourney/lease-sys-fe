@@ -31,13 +31,19 @@
     > .ant-spin-nested-loading
     > .ant-spin-container {
     display: flex;
-    flex: 1 1 0;
+    flex: 0 1 auto;
     flex-direction: column;
     min-height: 0;
   }
 
+  .standalone-list-content > .resource-list,
+  .standalone-list-content > .list-surface,
+  .standalone-list-content .resource-list > .list-surface {
+    max-height: 100%;
+  }
+
   .standalone-list-content .list-scroll-area {
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -59,15 +65,15 @@
     overscroll-behavior: contain;
   }
 
-  .project-detail-content {
+  .viewport-detail-content {
     height: calc(100dvh - 54px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  .project-detail-content > .ant-spin-nested-loading,
-  .project-detail-content > .ant-spin-nested-loading > .ant-spin-container,
+  .viewport-detail-content > .ant-spin-nested-loading,
+  .viewport-detail-content > .ant-spin-nested-loading > .ant-spin-container,
   .project-detail-layout,
   .project-unit-section,
   .project-unit-section .embedded-resource-list,
@@ -76,12 +82,13 @@
   .project-unit-section .list-results > .ant-spin-nested-loading,
   .project-unit-section .list-results > .ant-spin-nested-loading > .ant-spin-container {
     display: flex;
-    flex: 1 1 0;
+    flex: 0 1 auto;
     flex-direction: column;
     min-height: 0;
   }
 
   .project-detail-layout {
+    max-height: 100%;
     gap: 16px;
   }
 
@@ -90,21 +97,48 @@
   }
 
   .project-detail-layout > .project-unit-section {
-    flex: 1 1 0;
+    flex: 0 1 auto;
   }
 
   .project-detail-layout > .project-unit-section .embedded-list-scroll {
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-height: 0;
     max-height: none;
   }
 
   .project-unit-section .list-pagination,
-  .project-detail-content .list-surface > :not(.list-results) {
+  .viewport-detail-content .list-surface > :not(.list-results) {
     flex-shrink: 0;
   }
 
-  .project-detail-content footer {
+  .sales-company-detail-layout,
+  .company-member-section {
+    display: flex;
+    flex: 0 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .sales-company-detail-layout {
+    gap: 20px;
+    max-height: 100%;
+  }
+
+  .sales-company-detail-layout > :not(.company-member-section) {
+    flex-shrink: 0;
+  }
+
+  .company-member-section .embedded-list-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .company-member-section > :last-child {
+    flex-shrink: 0;
+  }
+
+  .viewport-detail-content footer {
     display: none;
   }
 }

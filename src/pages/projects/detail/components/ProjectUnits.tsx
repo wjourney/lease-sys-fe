@@ -227,7 +227,7 @@ const UnitGrid = observer(function UnitGrid({
           ))}
         </div>
         {!store.items.length && !store.loading && !store.error && (
-          <Empty description={t("暂无单位")} className="py-12" />
+          <Empty description={t("暂无单位")} className="py-6" />
         )}
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">

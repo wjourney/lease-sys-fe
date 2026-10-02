@@ -334,7 +334,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     <>
       {headerHost ? createPortal(heading, headerHost) : heading}
       <Spin spinning={loading}>
-        <div className="space-y-5">
+        <div className="sales-company-detail-layout">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm font-medium text-[#67758b]">
               {t("销售组织")} / {t(company.name)}
@@ -434,7 +434,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
             </div>
           </section>
           <section
-            className="rounded-lg border border-[#e1e7ef] bg-white"
+            className="company-member-section rounded-lg border border-[#e1e7ef] bg-white"
             aria-label={t("公司成员")}
           >
             <div className="flex flex-wrap items-end gap-3 p-5 max-[700px]:p-4">
@@ -506,7 +506,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                 pagination={false}
                 scroll={{ x: 760 }}
                 locale={{ emptyText: t("暂无成员账号") }}
-                className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-72"
+                className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-36"
               />
             </div>
             <div className="flex flex-wrap items-center justify-end gap-5 px-5 py-4 text-sm text-[#8190a4]">
