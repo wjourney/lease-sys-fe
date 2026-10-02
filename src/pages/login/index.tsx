@@ -48,7 +48,7 @@ const LoginPage = observer(function LoginPage() {
             layout="vertical"
             onFinish={submit}
             requiredMark={false}
-            className="login-form"
+            className="login-form credential-form"
           >
             <Form.Item
               name="username"

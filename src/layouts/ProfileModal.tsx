@@ -391,7 +391,7 @@ export const ChangePasswordModal = observer(function ChangePasswordModal({
       <Form
         form={form}
         layout="vertical"
-        className="mt-5"
+        className="credential-form mt-5"
         onFinish={async (values) => {
           setSaving(true);
           try {

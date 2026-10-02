@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-.login-form .ant-input-affix-wrapper input.ant-input:-webkit-autofill,
-.login-form .ant-input-affix-wrapper input.ant-input:-webkit-autofill:hover,
-.login-form .ant-input-affix-wrapper input.ant-input:-webkit-autofill:focus {
+.credential-form .ant-input-affix-wrapper input.ant-input:-webkit-autofill,
+.credential-form .ant-input-affix-wrapper input.ant-input:-webkit-autofill:hover,
+.credential-form .ant-input-affix-wrapper input.ant-input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
   box-shadow: 0 0 0 1000px #fff inset !important;
   -webkit-text-fill-color: #233047 !important;
