@@ -1,0 +1,25 @@
+name: Diagnose deployment host
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect deploy processes and permissions
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            lease-deploy@47.117.136.208 \
+            'sudo -n -l; ps -o pid,ppid,user,etime,stat,wchan,cmd -p 1262,1273,22559,22570; pgrep -a -f lease-sys-deploy || true'
