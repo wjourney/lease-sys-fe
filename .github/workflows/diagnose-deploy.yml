@@ -22,4 +22,4 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             lease-deploy@47.117.136.208 \
-            'id; docker info --format "{{.ServerVersion}}" 2>&1 | head -2; curl -sS -o /dev/null -w "GHCR HTTP %{http_code} in %{time_total}s\n" --max-time 10 https://ghcr.io/v2/ || true'
+            'command -v unzip; curl -sS -o /dev/null -w "GitHub API HTTP %{http_code} in %{time_total}s\n" --max-time 10 https://api.github.com/ || true'
