@@ -5,7 +5,7 @@ export default function ProjectListPage() {
   return (
     <ResourceList
       resource="projects"
-      pageSize={9}
+      pageSize={12}
       renderItems={(props) => <ProjectGrid {...props} />}
       renderCreateEditor={(props) => <ProjectDrawer {...props} />}
     />

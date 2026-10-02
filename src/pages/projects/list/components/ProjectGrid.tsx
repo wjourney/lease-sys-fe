@@ -134,7 +134,7 @@ export const ProjectGrid = observer(function ProjectGrid({
           </span>
           <Pagination
             current={page}
-            pageSize={9}
+            pageSize={12}
             total={store.total}
             onChange={onPageChange}
           />

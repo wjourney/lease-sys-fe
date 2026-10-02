@@ -66,7 +66,7 @@ export const ProjectUnits = observer(function ProjectUnits({
             ...(sort !== "default" ? { sortBy: "referenceRent", sort } : {}),
           }}
           embedded
-          pageSize={9}
+          pageSize={12}
           hideCreate
           hideStatus
           listToolbar={
@@ -236,7 +236,7 @@ const UnitGrid = observer(function UnitGrid({
         </span>
         <Pagination
           current={page}
-          pageSize={9}
+          pageSize={12}
           total={store.total}
           showSizeChanger={false}
           onChange={onPageChange}
