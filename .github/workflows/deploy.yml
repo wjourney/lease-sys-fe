@@ -59,7 +59,12 @@ jobs:
           git bundle create "$release_dir/source.bundle" master
           docker pull "ghcr.io/wjourney/lease-sys-fe:$GITHUB_SHA"
           docker save -o "$release_dir/image.tar" "ghcr.io/wjourney/lease-sys-fe:$GITHUB_SHA"
+          du -h "$release_dir/source.bundle" "$release_dir/image.tar"
+          ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            lease-deploy@47.117.136.208 \
+            'df -h /srv/lease-sys; pgrep -a -f lease-sys-deploy || true'
           tar -C "$release_dir" -cf - source.bundle image.tar | gzip -1 | \
             ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=20 \
             lease-deploy@47.117.136.208 \
             "sudo /usr/local/sbin/lease-sys-deploy web $GITHUB_SHA"
