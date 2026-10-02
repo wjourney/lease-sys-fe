@@ -32,7 +32,10 @@ export function getOrderTabs(
                 ["押金", payment.depositPaid ? "已付款" : "未付款"],
                 ["首期实收", amount(payment.rentReceived)],
                 ["押金实收", amount(payment.depositReceived)],
-                ["到期日期", dateText(payment.dueOn)],
+                [
+                  payment.receivedOn ? "到账日期" : "到期日期",
+                  dateText(payment.receivedOn || payment.dueOn),
+                ],
               ].map(([label, value]) => ({
                 key: label,
                 label: t(label),

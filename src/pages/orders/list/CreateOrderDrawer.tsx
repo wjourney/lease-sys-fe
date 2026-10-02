@@ -23,8 +23,8 @@ type OrderValues = {
   tenantType: "PERSON" | "COMPANY";
   tenantName: string;
   registrationNoType?: string;
-  tenantRegistrationNo: string;
-  tenantContactName: string;
+  tenantRegistrationNo?: string;
+  tenantContactName?: string;
   tenantPhone: string;
   tenantEmail: string;
   startsOn: Dayjs;
@@ -46,7 +46,7 @@ type OrderValues = {
   initialDepositPaid: boolean;
   initialRentReceived?: string;
   initialDepositReceived?: string;
-  initialPaymentDueOn?: Dayjs;
+  initialPaymentReceivedOn?: Dayjs;
 };
 
 const required = [{ required: true, message: "请填写此项" }];
@@ -68,7 +68,7 @@ function Section({
   );
 }
 
-function MoneyInput() {
+function MoneyInput({ disabled = false }: { disabled?: boolean }) {
   return (
     <InputNumber
       stringMode
@@ -78,6 +78,7 @@ function MoneyInput() {
       style={{ width: "100%" }}
       placeholder="0.00"
       controls={false}
+      disabled={disabled}
     />
   );
 }
@@ -95,6 +96,8 @@ export function CreateOrderDrawer({
   const projectId = Form.useWatch("projectId", form);
   const salesCompanyId = Form.useWatch("salesCompanyId", form);
   const tenantType = Form.useWatch("tenantType", form);
+  const registrationNoType = Form.useWatch("registrationNoType", form);
+  const firstPaymentPaid = Form.useWatch("firstPaymentPaid", form);
   const initialRentPaid = Form.useWatch("initialRentPaid", form);
   const initialDepositPaid = Form.useWatch("initialDepositPaid", form);
   const [projects, setProjects] = useState<Choice[]>([]);
@@ -209,18 +212,21 @@ export function CreateOrderDrawer({
 
   async function submit(values: OrderValues) {
     if (
-      values.firstPaymentPaid !==
-      (values.initialRentPaid || values.initialDepositPaid)
+      values.firstPaymentPaid &&
+      !values.initialRentPaid &&
+      !values.initialDepositPaid
     ) {
       message.error(t("首期款状态须与租金、押金的付款状态一致"));
       return;
     }
     if (
-      (values.initialRentPaid && Number(values.initialRentReceived) <= 0) ||
-      (values.initialDepositPaid &&
-        Number(values.initialDepositReceived) <= 0) ||
-      (!values.initialRentPaid && Number(values.initialRentReceived) > 0) ||
-      (!values.initialDepositPaid && Number(values.initialDepositReceived) > 0)
+      values.firstPaymentPaid &&
+      ((values.initialRentPaid && Number(values.initialRentReceived) <= 0) ||
+        (values.initialDepositPaid &&
+          Number(values.initialDepositReceived) <= 0) ||
+        (!values.initialRentPaid && Number(values.initialRentReceived) > 0) ||
+        (!values.initialDepositPaid &&
+          Number(values.initialDepositReceived) > 0))
     ) {
       message.error(t("已付款项目请填写对应的实收金额"));
       return;
@@ -232,9 +238,13 @@ export function CreateOrderDrawer({
         salesUserId: values.salesUserId,
         tenantType: values.tenantType,
         tenantName: values.tenantName.trim(),
-        registrationNoType: values.registrationNoType,
-        tenantRegistrationNo: values.tenantRegistrationNo.trim(),
-        tenantContactName: values.tenantContactName.trim(),
+        ...(values.tenantType === "COMPANY"
+          ? {
+              registrationNoType: values.registrationNoType,
+              tenantRegistrationNo: values.tenantRegistrationNo?.trim(),
+              tenantContactName: values.tenantContactName?.trim(),
+            }
+          : {}),
         tenantPhone: values.tenantPhone.trim(),
         tenantEmail: values.tenantEmail.trim(),
         startsOn: values.startsOn.format("YYYY-MM-DD"),
@@ -251,18 +261,26 @@ export function CreateOrderDrawer({
         remark: values.remark?.trim(),
         initialPayment: {
           paid: values.firstPaymentPaid,
-          rentPaid: values.initialRentPaid,
-          depositPaid: values.initialDepositPaid,
-          rentReceived: values.initialRentReceived || "0",
-          depositReceived: values.initialDepositReceived || "0",
-          dueOn: values.initialPaymentDueOn?.format("YYYY-MM-DD"),
+          rentPaid: values.firstPaymentPaid && values.initialRentPaid,
+          depositPaid: values.firstPaymentPaid && values.initialDepositPaid,
+          rentReceived: values.firstPaymentPaid
+            ? values.initialRentReceived || "0"
+            : "0",
+          depositReceived: values.firstPaymentPaid
+            ? values.initialDepositReceived || "0"
+            : "0",
+          receivedOn: values.firstPaymentPaid
+            ? values.initialPaymentReceivedOn?.format("YYYY-MM-DD")
+            : undefined,
         },
       };
       const { data: order } = await api.post<Row>("/orders", payload);
       root.invalidate();
       try {
-        if (contractFile) await uploadFile(order.id, contractFile, "CONTRACT");
-        if (voucherFile) await uploadFile(order.id, voucherFile, "VOUCHER");
+        if (values.firstPaymentPaid && contractFile)
+          await uploadFile(order.id, contractFile, "CONTRACT");
+        if (values.firstPaymentPaid && voucherFile)
+          await uploadFile(order.id, voucherFile, "VOUCHER");
         message.success(t("订单创建成功"));
       } catch {
         message.warning(t("订单已创建，但附件上传失败，请在订单详情补传"));
@@ -355,8 +373,10 @@ export function CreateOrderDrawer({
                   { value: "PERSON", label: t("个人") },
                 ]}
                 onChange={() => {
+                  form.setFieldValue("tenantName", undefined);
                   form.setFieldValue("registrationNoType", undefined);
                   form.setFieldValue("tenantRegistrationNo", undefined);
+                  form.setFieldValue("tenantContactName", undefined);
                 }}
               />
             </Form.Item>
@@ -367,39 +387,45 @@ export function CreateOrderDrawer({
             >
               <Input />
             </Form.Item>
-            <Form.Item
-              name="registrationNoType"
-              label={t("注册号码类型")}
-              rules={required}
-            >
-              <Select
-                options={
-                  tenantType === "PERSON"
-                    ? [
-                        { value: "HKID", label: t("香港身份证") },
-                        { value: "PASSPORT", label: t("护照") },
-                      ]
-                    : [
-                        { value: "BR", label: t("商业登记号码") },
-                        { value: "CR", label: t("公司注册号码") },
-                      ]
-                }
-              />
-            </Form.Item>
-            <Form.Item
-              name="tenantRegistrationNo"
-              label={t(tenantType === "PERSON" ? "证件号码" : "商业登记号码")}
-              rules={required}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="tenantContactName"
-              label={t("联系人")}
-              rules={required}
-            >
-              <Input />
-            </Form.Item>
+            {tenantType === "COMPANY" && (
+              <Form.Item
+                name="registrationNoType"
+                label={t("注册号码类型")}
+                rules={required}
+                preserve={false}
+              >
+                <Select
+                  options={[
+                    { value: "BR", label: t("商业登记号码") },
+                    { value: "CR", label: t("公司注册号码") },
+                  ]}
+                />
+              </Form.Item>
+            )}
+            {tenantType === "COMPANY" && (
+              <>
+                <Form.Item
+                  name="tenantRegistrationNo"
+                  label={t(
+                    registrationNoType === "CR"
+                      ? "公司注册号码"
+                      : "商业登记号码",
+                  )}
+                  rules={required}
+                  preserve={false}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  name="tenantContactName"
+                  label={t("联系人")}
+                  rules={required}
+                  preserve={false}
+                >
+                  <Input />
+                </Form.Item>
+              </>
+            )}
             <Form.Item
               name="tenantPhone"
               label={t("联系电话")}
@@ -572,88 +598,127 @@ export function CreateOrderDrawer({
               name="firstPaymentPaid"
               label={t("是否已付首期款")}
               rules={required}
+              className={
+                firstPaymentPaid
+                  ? undefined
+                  : "col-span-3 max-[760px]:col-span-1"
+              }
             >
               <Select
                 options={[
                   { value: false, label: t("未付款") },
                   { value: true, label: t("已付款") },
                 ]}
-              />
-            </Form.Item>
-            <Form.Item
-              name="initialRentPaid"
-              label={t("首期租金")}
-              rules={required}
-            >
-              <Select
-                options={[
-                  { value: false, label: t("未付款") },
-                  { value: true, label: t("已付款") },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item
-              name="initialDepositPaid"
-              label={t("押金")}
-              rules={required}
-            >
-              <Select
-                options={[
-                  { value: false, label: t("未付款") },
-                  { value: true, label: t("已付款") },
-                ]}
-              />
-            </Form.Item>
-            <Form.Item
-              name="initialRentReceived"
-              label={t("首期实收（HKD）")}
-              rules={initialRentPaid ? required : undefined}
-            >
-              <MoneyInput />
-            </Form.Item>
-            <Form.Item
-              name="initialDepositReceived"
-              label={t("押金实收（HKD）")}
-              rules={initialDepositPaid ? required : undefined}
-            >
-              <MoneyInput />
-            </Form.Item>
-            <Form.Item name="initialPaymentDueOn" label={t("到期日期")}>
-              <DatePicker className="w-full" />
-            </Form.Item>
-          </div>
-          <div className="grid grid-cols-2 gap-x-3 max-[760px]:grid-cols-1">
-            <Form.Item label={t("租赁合同")}>
-              <Upload
-                maxCount={1}
-                accept=".pdf"
-                beforeUpload={(file) => {
-                  const result = acceptFile(file, true);
-                  if (result !== false) return result;
-                  setContractFile(file);
-                  return false;
+                onChange={(paid: boolean) => {
+                  form.setFieldsValue({
+                    initialRentPaid: paid,
+                    initialDepositPaid: paid,
+                    initialRentReceived: undefined,
+                    initialDepositReceived: undefined,
+                    initialPaymentReceivedOn: undefined,
+                  });
+                  if (!paid) {
+                    setContractFile(undefined);
+                    setVoucherFile(undefined);
+                  }
                 }}
-                onRemove={() => setContractFile(undefined)}
-              >
-                <Button icon={<UploadOutlined />}>{t("上传合同 PDF")}</Button>
-              </Upload>
+              />
             </Form.Item>
-            <Form.Item label={t("付款凭证（可选）")}>
-              <Upload
-                maxCount={1}
-                accept=".pdf,.png,.jpg,.jpeg,.webp"
-                beforeUpload={(file) => {
-                  const result = acceptFile(file, false);
-                  if (result !== false) return result;
-                  setVoucherFile(file);
-                  return false;
-                }}
-                onRemove={() => setVoucherFile(undefined)}
-              >
-                <Button icon={<UploadOutlined />}>{t("上传付款凭证")}</Button>
-              </Upload>
-            </Form.Item>
+            {firstPaymentPaid && (
+              <>
+                <Form.Item
+                  name="initialRentPaid"
+                  label={t("首期租金")}
+                  rules={required}
+                >
+                  <Select
+                    options={[
+                      { value: false, label: t("未付款") },
+                      { value: true, label: t("已付款") },
+                    ]}
+                    onChange={(paid: boolean) => {
+                      if (!paid)
+                        form.setFieldValue("initialRentReceived", undefined);
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="initialDepositPaid"
+                  label={t("押金")}
+                  rules={required}
+                >
+                  <Select
+                    options={[
+                      { value: false, label: t("未付款") },
+                      { value: true, label: t("已付款") },
+                    ]}
+                    onChange={(paid: boolean) => {
+                      if (!paid)
+                        form.setFieldValue("initialDepositReceived", undefined);
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="initialRentReceived"
+                  label={t("首期实收（HKD）")}
+                  rules={initialRentPaid ? required : undefined}
+                  preserve={false}
+                >
+                  <MoneyInput disabled={!initialRentPaid} />
+                </Form.Item>
+                <Form.Item
+                  name="initialDepositReceived"
+                  label={t("押金实收（HKD）")}
+                  rules={initialDepositPaid ? required : undefined}
+                  preserve={false}
+                >
+                  <MoneyInput disabled={!initialDepositPaid} />
+                </Form.Item>
+                <Form.Item
+                  name="initialPaymentReceivedOn"
+                  label={t("到账日期")}
+                  rules={required}
+                  preserve={false}
+                >
+                  <DatePicker className="w-full" />
+                </Form.Item>
+              </>
+            )}
           </div>
+          {firstPaymentPaid && (
+            <div className="grid grid-cols-2 gap-x-3 max-[760px]:grid-cols-1">
+              <Form.Item label={t("租赁合同")}>
+                <Upload
+                  maxCount={1}
+                  accept=".pdf"
+                  beforeUpload={(file) => {
+                    const result = acceptFile(file, true);
+                    if (result !== false) return result;
+                    setContractFile(file);
+                    return false;
+                  }}
+                  onRemove={() => setContractFile(undefined)}
+                >
+                  <Button icon={<UploadOutlined />}>{t("上传合同 PDF")}</Button>
+                </Upload>
+              </Form.Item>
+              <Form.Item label={t("付款凭证（可选）")}>
+                <Upload
+                  maxCount={1}
+                  accept=".pdf,.png,.jpg,.jpeg,.webp"
+                  beforeUpload={(file) => {
+                    const result = acceptFile(file, false);
+                    if (result !== false) return result;
+                    setVoucherFile(file);
+                    return false;
+                  }}
+                  onRemove={() => setVoucherFile(undefined)}
+                >
+                  <Button icon={<UploadOutlined />}>{t("上传付款凭证")}</Button>
+                </Upload>
+              </Form.Item>
+            </div>
+          )}
         </Section>
         <p className="text-xs text-[#63738d]">
           {t(

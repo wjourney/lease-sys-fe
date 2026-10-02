@@ -1296,6 +1296,7 @@ export interface components {
         rentReceived: string | number;
         depositReceived: string | number;
         dueOn?: string;
+        receivedOn?: string;
       };
       paymentIntervalMonths?: number;
       rentDueDay?: number;
