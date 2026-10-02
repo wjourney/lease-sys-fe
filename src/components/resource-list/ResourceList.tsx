@@ -11,6 +11,7 @@ import { valueView } from "../../shared/ui";
 import { MaterialEditor } from "../forms/MaterialEditor";
 import { Editor } from "../forms/ResourceEditor";
 import { ResourceFilters } from "./ResourceFilters";
+import { ResourceListSurface } from "./ResourceListSurface";
 import { ResourceListProps } from "./types";
 import { useResourceList } from "./useResourceList";
 const EMPTY_FILTERS: Row = {};
@@ -154,9 +155,7 @@ export const ResourceList = observer(function ResourceList({
           className="mb-4"
         />
       )}
-      <div
-        className={`surface rounded-[7px] border border-[#e9edf2] bg-white p-[22px] max-[760px]:p-[15px] ${embedded ? "!border-0" : ""}`}
-      >
+      <ResourceListSurface embedded={embedded}>
         {listToolbar}
         {t(toolbar)}
 
@@ -198,7 +197,7 @@ export const ResourceList = observer(function ResourceList({
             />
           ),
         )}
-      </div>
+      </ResourceListSurface>
       {editor &&
         (renderEditor ? (
           renderEditor({

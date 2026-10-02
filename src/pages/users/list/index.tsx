@@ -1,12 +1,10 @@
 import { RequestError as Alert } from "../../../components/feedback/RequestError";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import {
   App,
   Button,
   Empty,
-  Input,
   Pagination,
-  Select,
   Table,
   Tooltip,
 } from "antd";
@@ -14,6 +12,8 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useResourceList } from "../../../components/resource-list/useResourceList";
+import { ResourceFilters } from "../../../components/resource-list/ResourceFilters";
+import { ResourceListSurface } from "../../../components/resource-list/ResourceListSurface";
 import { Row, api, errorMessage } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
 import { shouldOpenRow } from "../../../shared/row-navigation";
@@ -164,7 +164,7 @@ const UserListPage = observer(function UserListPage() {
 
   return (
     <>
-      <section className="rounded-lg border border-[#e5eaf0] bg-white p-6 max-[700px]:p-4">
+      <ResourceListSurface>
         {store.error && (
           <Alert
             className="mb-4"
@@ -174,43 +174,15 @@ const UserListPage = observer(function UserListPage() {
             action={<Button onClick={refresh}>{t("重试")}</Button>}
           />
         )}
-        <div className="mb-5 flex flex-wrap items-center gap-3">
-          <label
-            htmlFor="user-search"
-            className="shrink-0 text-sm text-[#73819a]"
-          >
-            {t("关键词")}
-          </label>
-          <Input
-            id="user-search"
-            className="!h-10 !w-[280px] max-[700px]:!w-full"
-            value={q}
-            onChange={(event) => setQ(event.target.value)}
-            onPressEnter={(event) => {
-              if (!event.nativeEvent.isComposing) searchNow();
-            }}
-            prefix={<SearchOutlined className="text-[#8c99ac]" />}
-            placeholder={t("请输入关键词")}
-            allowClear
-          />
-          <label
-            htmlFor="user-status"
-            className="shrink-0 text-sm text-[#73819a]"
-          >
-            {t("状态")}
-          </label>
-          <Select
-            id="user-status"
-            className="!w-[180px] max-[700px]:!w-full"
-            value={status}
-            onChange={setStatus}
-            options={[
-              { value: "", label: t("全部状态") },
-              { value: "ACTIVE", label: t("启用") },
-              { value: "DISABLED", label: t("停用") },
-            ]}
-          />
-          {root.canWrite("users") && (
+        <ResourceFilters
+          q={q}
+          setQ={setQ}
+          searchNow={searchNow}
+          resetFilters={resetFilters}
+          resource="users"
+          status={status}
+          setStatus={setStatus}
+          actions={root.canWrite("users") && (
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -219,10 +191,7 @@ const UserListPage = observer(function UserListPage() {
               {t("新建账号")}
             </Button>
           )}
-          <div className="ml-auto flex gap-2 max-[700px]:ml-0">
-            <Button onClick={resetFilters}>{t("重置")}</Button>
-          </div>
-        </div>
+        />
         <Table
           rowKey="id"
           onRow={(row) => ({
@@ -252,7 +221,7 @@ const UserListPage = observer(function UserListPage() {
             onChange={changePage}
           />
         </div>
-      </section>
+      </ResourceListSurface>
       <UserDrawer
         open={creating}
         onClose={() => setCreating(false)}
