@@ -15,6 +15,8 @@ export const ResourceFilters = observer(function ResourceFilters({
   setSearch,
   setLocalPage,
   actions,
+  extraFilters,
+  onResetExtras,
 }: {
   q: string;
   setQ: (value: string) => void;
@@ -26,10 +28,16 @@ export const ResourceFilters = observer(function ResourceFilters({
   setSearch: SetURLSearchParams;
   setLocalPage: (value: number) => void;
   actions?: ReactNode;
+  extraFilters?: ReactNode;
+  onResetExtras?: () => void;
 }) {
   return (
-    <div className="mb-6 flex items-center gap-4 max-[760px]:flex-wrap">
-      <div className="flex max-w-[450px] min-w-0 flex-1 items-center gap-2.5 max-[760px]:w-full max-[760px]:max-w-none [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1">
+    <div
+      className={`mb-6 flex items-center gap-4 max-[760px]:flex-wrap ${extraFilters ? "max-[1500px]:flex-wrap" : ""}`}
+    >
+      <div
+        className={`flex min-w-0 flex-1 items-center gap-2.5 max-[760px]:w-full max-[760px]:max-w-none [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 ${extraFilters ? "max-w-[360px]" : "max-w-[450px]"}`}
+      >
         <label>{t("关键词")}</label>
         <Input
           allowClear
@@ -41,7 +49,9 @@ export const ResourceFilters = observer(function ResourceFilters({
         />
       </div>
       {!["materials", "settings", "fund-accounts"].includes(resource) && (
-        <div className="flex w-[250px] min-w-0 items-center gap-2.5 max-[760px]:w-full max-[760px]:flex-auto [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 [&_.ant-select]:min-w-0 [&_.ant-select]:flex-1">
+        <div
+          className={`flex min-w-0 items-center gap-2.5 max-[760px]:w-full max-[760px]:flex-auto [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 [&_.ant-select]:min-w-0 [&_.ant-select]:flex-1 ${extraFilters ? "w-[185px]" : "w-[250px]"}`}
+        >
           <label>{t("状态")}</label>
           <Select
             allowClear
@@ -89,6 +99,7 @@ export const ResourceFilters = observer(function ResourceFilters({
           />
         </div>
       )}
+      {extraFilters}
       {actions && (
         <div className="flex shrink-0 flex-wrap gap-2 max-[760px]:w-full">
           {actions}
@@ -99,6 +110,7 @@ export const ResourceFilters = observer(function ResourceFilters({
           onClick={() => {
             setQ("");
             setStatus(undefined);
+            onResetExtras?.();
             if (!embedded) setSearch({});
             else setLocalPage(1);
           }}

@@ -17,6 +17,9 @@ export interface ResourceListProps {
   pageSize?: number;
   renderItems?: (props: ListViewProps) => ReactNode;
   listToolbar?: ReactNode;
+  filterExtras?: ReactNode;
+  onResetExtras?: () => void;
+  hideCreate?: boolean;
   renderRowActions?: (row: Row) => ReactNode;
   renderCreateEditor?: (props: {
     onClose: () => void;

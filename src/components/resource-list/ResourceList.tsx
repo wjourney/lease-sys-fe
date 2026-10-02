@@ -21,6 +21,9 @@ export const ResourceList = observer(function ResourceList({
   pageSize = 12,
   renderItems,
   listToolbar,
+  filterExtras,
+  onResetExtras,
+  hideCreate = false,
   renderRowActions,
   renderCreateEditor,
   renderEditor,
@@ -111,9 +114,9 @@ export const ResourceList = observer(function ResourceList({
       setSearch={setSearch}
       setLocalPage={setLocalPage}
       actions={
-        newAllowed || resource === "materials" ? (
+        (newAllowed && !hideCreate) || resource === "materials" ? (
           <>
-            {newAllowed && (
+            {newAllowed && !hideCreate && (
               <Button
                 type="primary"
                 icon={<PlusOutlined aria-hidden />}
@@ -136,6 +139,8 @@ export const ResourceList = observer(function ResourceList({
           </>
         ) : undefined
       }
+      extraFilters={filterExtras}
+      onResetExtras={onResetExtras}
     />
   );
   return (

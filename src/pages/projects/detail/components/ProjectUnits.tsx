@@ -1,10 +1,5 @@
-import {
-  DeleteOutlined,
-  EditOutlined,
-  MoreOutlined,
-  PictureOutlined,
-} from "@ant-design/icons";
-import { Button, Dropdown, Empty, Pagination, Select, Spin } from "antd";
+import { PictureOutlined } from "@ant-design/icons";
+import { Button, Empty, Pagination, Select, Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { ResourceList } from "../../../../components/resource-list/ResourceList";
@@ -63,22 +58,29 @@ export const ProjectUnits = observer(function ProjectUnits({
           }}
           embedded
           pageSize={9}
-          listToolbar={
-            <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-[#718095]">
-              <span>{t("单位类型")}</span>
-              <Select
-                className="w-44"
-                allowClear
-                placeholder={t("全部类型")}
-                value={unitTypeCode}
-                options={unitTypes}
-                onChange={setUnitTypeCode}
-              />
+          hideCreate
+          onResetExtras={() => {
+            setUnitTypeCode(undefined);
+            setSort("default");
+          }}
+          filterExtras={
+            <div className="flex shrink-0 items-center gap-4 text-xs text-[#718095] max-[760px]:flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <span className="whitespace-nowrap">{t("单位类型")}</span>
+                <Select
+                  className="w-36"
+                  allowClear
+                  placeholder={t("全部类型")}
+                  value={unitTypeCode}
+                  options={unitTypes}
+                  onChange={setUnitTypeCode}
+                />
+              </div>
               {allowExactRent && (
-                <>
-                  <span>{t("价格排序")}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="whitespace-nowrap">{t("价格排序")}</span>
                   <Select
-                    className="w-44"
+                    className="w-36"
                     value={sort}
                     options={[
                       { value: "default", label: t("默认排序") },
@@ -87,7 +89,7 @@ export const ProjectUnits = observer(function ProjectUnits({
                     ]}
                     onChange={setSort}
                   />
-                </>
+                </div>
               )}
             </div>
           }
@@ -141,7 +143,7 @@ const UnitGrid = observer(function UnitGrid({
         {store.items.map((unit) => (
           <article
             key={unit.id}
-            className="group relative flex min-w-0 cursor-pointer overflow-hidden rounded-[7px] border border-[#e4e9f0] transition-colors hover:border-[#afc1d6]"
+            className="flex min-w-0 cursor-pointer overflow-hidden rounded-[7px] border border-[#e4e9f0] transition-colors hover:border-[#afc1d6]"
             onClick={(event) => {
               if (shouldOpenRow(event)) onViewUnit(unit);
             }}
@@ -151,10 +153,10 @@ const UnitGrid = observer(function UnitGrid({
                 src={unit.coverUrl}
                 alt={t(`${unit.unitNo}的首张图片`)}
                 loading="lazy"
-                className="h-28 w-32 shrink-0 bg-[#f2f5f8] object-cover max-[480px]:w-24"
+                className="h-32 w-28 shrink-0 bg-[#f2f5f8] object-cover max-[480px]:w-24"
               />
             ) : (
-              <div className="flex h-28 w-32 shrink-0 items-center justify-center bg-[#f2f5f8] text-[#9eacbf] max-[480px]:w-24">
+              <div className="flex h-32 w-28 shrink-0 items-center justify-center bg-[#f2f5f8] text-[#9eacbf] max-[480px]:w-24">
                 <PictureOutlined className="text-2xl" aria-hidden />
               </div>
             )}
@@ -168,38 +170,26 @@ const UnitGrid = observer(function UnitGrid({
                   ? t(amount(unit.referenceRent))
                   : `${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
               </p>
+              <div className="flex flex-wrap gap-1.5 pt-1" data-row-action>
+                <Button size="small" onClick={() => onViewUnit(unit)}>
+                  {t("查看")}
+                </Button>
+                {canEdit && (
+                  <>
+                    <Button size="small" onClick={() => onEditUnit(unit)}>
+                      {t("编辑")}
+                    </Button>
+                    <Button
+                      size="small"
+                      danger
+                      onClick={() => onDeleteUnit(unit)}
+                    >
+                      {t("删除")}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
-            {canEdit && (
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: "edit",
-                      label: t("编辑单位"),
-                      icon: <EditOutlined />,
-                      onClick: () => onEditUnit(unit),
-                    },
-                    {
-                      key: "delete",
-                      label: t("删除"),
-                      danger: true,
-                      icon: <DeleteOutlined />,
-                      onClick: () => onDeleteUnit(unit),
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-              >
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<MoreOutlined aria-hidden />}
-                  aria-label={t(`${unit.unitNo}的操作`)}
-                  className="!absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                  onClick={(event) => event.stopPropagation()}
-                />
-              </Dropdown>
-            )}
           </article>
         ))}
       </div>
