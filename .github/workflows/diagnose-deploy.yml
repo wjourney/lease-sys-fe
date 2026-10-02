@@ -4,22 +4,50 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
   diagnose:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect registry connectivity and Docker access
+      - run: head -c 10485760 /dev/urandom > "$RUNNER_TEMP/lease-transfer-check.bin"
+      - uses: actions/upload-artifact@v4
+        id: sample
+        with:
+          name: lease-transfer-check
+          path: ${{ runner.temp }}/lease-transfer-check.bin
+          compression-level: 0
+          retention-days: 1
+      - name: Measure host download from GitHub artifact storage
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.sample.outputs.artifact-id }}
         run: |
           set -euo pipefail
           umask 077
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+          archive_url=$(python3 - <<'PY'
+          import os, urllib.error, urllib.request
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/wjourney/lease-sys-fe/actions/artifacts/{os.environ['ARTIFACT_ID']}/zip",
+              headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}", "Accept": "application/vnd.github+json"},
+          )
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, fp, code, message, headers, new_url):
+                  return None
+          try:
+              urllib.request.build_opener(NoRedirect).open(request)
+          except urllib.error.HTTPError as error:
+              if error.code != 302:
+                  raise
+              print(error.headers["Location"])
+          PY
+          )
+          printf '%s\n' "$archive_url" | ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             lease-deploy@47.117.136.208 \
-            'command -v unzip; curl -sS -o /dev/null -w "GitHub API HTTP %{http_code} in %{time_total}s\n" --max-time 10 https://api.github.com/ || true'
+            'read -r archive_url; curl -fsSL --max-time 120 -o ~/lease-transfer-check.zip -w "Download: %{size_download} bytes in %{time_total}s\n" "$archive_url"; unzip -tq ~/lease-transfer-check.zip; rm -f ~/lease-transfer-check.zip'
