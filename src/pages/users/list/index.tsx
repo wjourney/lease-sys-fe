@@ -36,11 +36,10 @@ const UserListPage = observer(function UserListPage() {
     status,
     setStatus,
     page,
-    query,
-    filter,
-    setSearch,
+    changePage,
     refresh,
     searchNow,
+    resetFilters,
   } = useResourceList("users", {}, false, PAGE_SIZE);
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<Row>();
@@ -187,7 +186,9 @@ const UserListPage = observer(function UserListPage() {
             className="!h-10 !w-[280px] max-[700px]:!w-full"
             value={q}
             onChange={(event) => setQ(event.target.value)}
-            onPressEnter={searchNow}
+            onPressEnter={(event) => {
+              if (!event.nativeEvent.isComposing) searchNow();
+            }}
             prefix={<SearchOutlined className="text-[#8c99ac]" />}
             placeholder={t("请输入关键词")}
             allowClear
@@ -219,16 +220,7 @@ const UserListPage = observer(function UserListPage() {
             </Button>
           )}
           <div className="ml-auto flex gap-2 max-[700px]:ml-0">
-            <Button
-              onClick={() => {
-                setQ("");
-                setStatus("");
-                setSearch({ page: "1" });
-              }}
-            >
-              {t("重置")}
-            </Button>
-            <Button onClick={searchNow}>{t("查询")}</Button>
+            <Button onClick={resetFilters}>{t("重置")}</Button>
           </div>
         </div>
         <Table
@@ -257,9 +249,7 @@ const UserListPage = observer(function UserListPage() {
             pageSize={PAGE_SIZE}
             total={store.total}
             showSizeChanger={false}
-            onChange={(next) =>
-              setSearch({ q: query, status: filter || "", page: String(next) })
-            }
+            onChange={changePage}
           />
         </div>
       </section>

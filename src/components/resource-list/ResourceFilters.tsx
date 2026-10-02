@@ -2,18 +2,15 @@ import { SearchOutlined } from "@ant-design/icons";
 import { Button, Input, Select } from "antd";
 import { observer } from "mobx-react-lite";
 import type { ReactNode } from "react";
-import { SetURLSearchParams } from "react-router-dom";
 import { t } from "../../shared/i18n";
 export const ResourceFilters = observer(function ResourceFilters({
   q,
   setQ,
   searchNow,
+  resetFilters,
   resource,
   status,
   setStatus,
-  embedded,
-  setSearch,
-  setLocalPage,
   actions,
   extraFilters,
   onResetExtras,
@@ -22,12 +19,10 @@ export const ResourceFilters = observer(function ResourceFilters({
   q: string;
   setQ: (value: string) => void;
   searchNow: () => void;
+  resetFilters: () => void;
   resource: string;
   status: string | undefined;
   setStatus: (value: string | undefined) => void;
-  embedded: boolean;
-  setSearch: SetURLSearchParams;
-  setLocalPage: (value: number) => void;
   actions?: ReactNode;
   extraFilters?: ReactNode;
   onResetExtras?: () => void;
@@ -45,7 +40,9 @@ export const ResourceFilters = observer(function ResourceFilters({
           allowClear
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          onPressEnter={searchNow}
+          onPressEnter={(event) => {
+            if (!event.nativeEvent.isComposing) searchNow();
+          }}
           prefix={<SearchOutlined aria-hidden={true} />}
           placeholder={t("搜索编号、名称或关键词")}
         />
@@ -111,17 +108,11 @@ export const ResourceFilters = observer(function ResourceFilters({
       <div className="ml-auto flex gap-[9px] max-[760px]:ml-0">
         <Button
           onClick={() => {
-            setQ("");
-            setStatus(undefined);
+            resetFilters();
             onResetExtras?.();
-            if (!embedded) setSearch({});
-            else setLocalPage(1);
           }}
         >
           {t("重置")}
-        </Button>
-        <Button type="primary" onClick={searchNow}>
-          {t("查询")}
         </Button>
       </div>
     </div>

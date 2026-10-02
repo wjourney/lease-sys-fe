@@ -15,7 +15,7 @@ import {
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { NavigateFunction, SetURLSearchParams } from "react-router-dom";
+import { NavigateFunction } from "react-router-dom";
 import { api, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
@@ -28,14 +28,12 @@ export const ProjectGrid = observer(function ProjectGrid({
   store,
   navigate,
   page,
-  setSearch,
-  query,
+  onPageChange,
 }: {
   store: ListStore;
   navigate: NavigateFunction;
   page: number;
-  setSearch: SetURLSearchParams;
-  query: string;
+  onPageChange?: (page: number) => void;
 }) {
   const root = useRoot();
   const { message } = App.useApp();
@@ -136,12 +134,7 @@ export const ProjectGrid = observer(function ProjectGrid({
             current={page}
             pageSize={9}
             total={store.total}
-            onChange={(v) =>
-              setSearch({
-                q: query,
-                page: String(v),
-              })
-            }
+            onChange={onPageChange}
           />
         </div>
       </Spin>

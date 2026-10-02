@@ -30,6 +30,7 @@ import {
 import { t } from "../../../shared/i18n";
 import { shouldOpenRow } from "../../../shared/row-navigation";
 import { roleLabels } from "../../../shared/resource-config";
+import { SEARCH_DEBOUNCE_MS } from "../../../shared/search";
 import { useRoot } from "../../../stores/root";
 import { AccountPasswordModal } from "../../users/components/AccountPasswordModal";
 import { AccountStatusTag } from "../../users/components/AccountStatusTag";
@@ -78,7 +79,12 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const [editingMember, setEditingMember] = useState<Row>();
   const detailRequest = useRef(0);
   const memberRequest = useRef(0);
+  const memberSearchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const headerHost = document.getElementById("record-detail-header");
+
+  useEffect(() => () => clearTimeout(memberSearchTimer.current), []);
 
   useEffect(() => {
     const request = ++detailRequest.current;
@@ -171,15 +177,30 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     };
   }, [id, filters, page, root.epoch]);
 
-  function search() {
+  function applyMemberFilters(nextKeyword: string, nextRole: string) {
+    clearTimeout(memberSearchTimer.current);
     setPage(1);
-    setFilters({ keyword: keyword.trim(), role });
+    const normalizedKeyword = nextKeyword.trim();
+    setFilters((current) =>
+      current.keyword === normalizedKeyword && current.role === nextRole
+        ? current
+        : { keyword: normalizedKeyword, role: nextRole },
+    );
+  }
+  function changeKeyword(value: string) {
+    setKeyword(value);
+    clearTimeout(memberSearchTimer.current);
+    if (!value.trim()) applyMemberFilters("", role);
+    else
+      memberSearchTimer.current = setTimeout(
+        () => applyMemberFilters(value, role),
+        SEARCH_DEBOUNCE_MS,
+      );
   }
   function reset() {
     setKeyword("");
     setRole("");
-    setPage(1);
-    setFilters({ keyword: "", role: "" });
+    applyMemberFilters("", "");
   }
 
   if (!root.canRead("sales-companies"))
@@ -427,8 +448,11 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                 <Input
                   id="company-member-keyword"
                   value={keyword}
-                  onChange={(event) => setKeyword(event.target.value)}
-                  onPressEnter={search}
+                  onChange={(event) => changeKeyword(event.target.value)}
+                  onPressEnter={(event) => {
+                    if (!event.nativeEvent.isComposing)
+                      applyMemberFilters(keyword, role);
+                  }}
                   placeholder={t("请输入关键词")}
                   allowClear
                 />
@@ -444,7 +468,10 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                   id="company-member-role"
                   className="w-full"
                   value={role}
-                  onChange={setRole}
+                  onChange={(value) => {
+                    setRole(value);
+                    applyMemberFilters(keyword, value);
+                  }}
                   options={[
                     { value: "", label: t("全部角色") },
                     { value: "SALES_COMPANY_ADMIN", label: t("销售管理员") },
@@ -454,9 +481,6 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
               </div>
               <div className="ml-auto flex items-center gap-2 max-[650px]:w-full max-[650px]:justify-end">
                 <Button onClick={reset}>{t("重置")}</Button>
-                <Button type="primary" onClick={search}>
-                  {t("查询")}
-                </Button>
               </div>
             </div>
             {membersError && (

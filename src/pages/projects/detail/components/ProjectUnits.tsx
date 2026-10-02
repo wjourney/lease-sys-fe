@@ -77,6 +77,7 @@ export const ProjectUnits = observer(function ProjectUnits({
             />
           }
           onResetExtras={() => {
+            setStatusFilter(undefined);
             setUnitTypeCode(undefined);
             setSort("default");
           }}

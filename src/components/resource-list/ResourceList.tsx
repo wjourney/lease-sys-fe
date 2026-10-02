@@ -41,10 +41,10 @@ export const ResourceList = observer(function ResourceList({
     setStatus,
     page,
     query,
-    filter,
-    setLocalPage,
+    changePage,
     refresh,
     searchNow,
+    resetFilters,
   } = useResourceList(resource, fixed, embedded, pageSize);
   const [editor, setEditor] = useState<Row | boolean>(false);
   const [material, setMaterial] = useState(false);
@@ -108,12 +108,10 @@ export const ResourceList = observer(function ResourceList({
       q={q}
       setQ={setQ}
       searchNow={searchNow}
+      resetFilters={resetFilters}
       resource={resource}
       status={status}
       setStatus={setStatus}
-      embedded={embedded}
-      setSearch={setSearch}
-      setLocalPage={setLocalPage}
       actions={
         (newAllowed && !hideCreate) || resource === "materials" ? (
           <>
@@ -169,14 +167,7 @@ export const ResourceList = observer(function ResourceList({
             page,
             setSearch,
             query,
-            onPageChange: (value) =>
-              embedded
-                ? setLocalPage(value)
-                : setSearch({
-                    q: query,
-                    ...(filter ? { status: filter } : {}),
-                    page: String(value),
-                  }),
+            onPageChange: changePage,
           }) ?? (
             <Table
               size="middle"
@@ -202,18 +193,7 @@ export const ResourceList = observer(function ResourceList({
                 total: store.total,
                 showSizeChanger: false,
                 showTotal: (n) => `共 ${n} 条`,
-                onChange: (v) =>
-                  embedded
-                    ? setLocalPage(v)
-                    : setSearch({
-                        q: query,
-                        ...(filter
-                          ? {
-                              status: filter,
-                            }
-                          : {}),
-                        page: String(v),
-                      }),
+                onChange: changePage,
               }}
             />
           ),
