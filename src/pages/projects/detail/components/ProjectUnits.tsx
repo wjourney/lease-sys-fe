@@ -82,7 +82,7 @@ export const ProjectUnits = observer(function ProjectUnits({
             setSort("default");
           }}
           filterExtras={
-            <div className="flex shrink-0 items-center gap-4 text-xs text-[#718095] max-[760px]:flex-wrap">
+            <div className="flex shrink-0 items-center gap-4 text-sm text-[#718095] max-[760px]:flex-wrap">
               <div className="flex items-center gap-2.5">
                 <span className="whitespace-nowrap">{t("单位类型")}</span>
                 <Select

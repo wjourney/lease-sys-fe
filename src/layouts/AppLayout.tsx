@@ -54,6 +54,7 @@ export const AppLayout = observer(function AppLayout() {
         onClose={() => setMobileMenu(false)}
       >
         <Menu
+          className="[&_.ant-menu-title-content]:!text-sm"
           mode="inline"
           selectedKeys={[key]}
           defaultOpenKeys={defaultOpenKeys}
@@ -72,7 +73,7 @@ export const AppLayout = observer(function AppLayout() {
       >
         <Brand />
         <Menu
-          className="!px-[9px] [&_.ant-menu-item]:!mx-0 [&_.ant-menu-submenu-title]:!mx-0"
+          className="!px-[9px] [&_.ant-menu-item]:!mx-0 [&_.ant-menu-submenu-title]:!mx-0 [&_.ant-menu-title-content]:!text-sm"
           theme="dark"
           mode="inline"
           selectedKeys={[key]}
@@ -87,7 +88,7 @@ export const AppLayout = observer(function AppLayout() {
         }
       >
         <Header
-          className={`topbar !sticky top-0 z-[15] !flex items-center justify-between !border-b !border-[#edf0f4] !bg-white !px-7 !leading-normal [&>div]:flex [&>div]:items-center [&>div]:gap-[15px] max-[760px]:!px-3 ${isRecordDetail && key !== "/users" ? "!h-[86px]" : "!h-[68px]"}`}
+          className="topbar !sticky top-0 z-[15] !flex !h-[54px] items-center justify-between !border-b !border-[#edf0f4] !bg-white !px-7 !leading-normal [&>div]:flex [&>div]:items-center [&>div]:gap-[15px] max-[760px]:!px-3"
         >
           {isRecordDetail ? (
             <div id="record-detail-header" className="min-w-0" />

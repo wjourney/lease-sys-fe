@@ -105,6 +105,18 @@ export function UserDrawer({
     root.user?.salesCompanyId,
   ]);
 
+  useEffect(() => {
+    if (
+      open &&
+      !account &&
+      initialSalesCompanyId &&
+      salesRole &&
+      !form.getFieldValue("salesCompanyId")
+    ) {
+      form.setFieldValue("salesCompanyId", initialSalesCompanyId);
+    }
+  }, [open, account, initialSalesCompanyId, salesRole, form]);
+
   function close() {
     if (saving) return;
     setError("");
@@ -160,7 +172,9 @@ export function UserDrawer({
               ...(expiresAt
                 ? { expiresAt: (expiresAt as Dayjs).format("YYYY-MM-DD") }
                 : {}),
-              salesCompanyId: salesRole ? salesCompanyId : null,
+              salesCompanyId: salesRole
+                ? initialSalesCompanyId || salesCompanyId
+                : null,
               ...(salesRole ? { branchCode, positionCode } : {}),
             })
           ).data;
@@ -409,7 +423,6 @@ export function UserDrawer({
                     name="salesCompanyId"
                     label={t("所属销售公司")}
                     className={fieldClass}
-                    preserve={false}
                     rules={[{ required: true, message: t("请选择销售公司") }]}
                   >
                     <Select

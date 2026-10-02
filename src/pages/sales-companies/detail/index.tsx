@@ -441,7 +441,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
               <div className="w-[280px] max-[650px]:w-full">
                 <label
                   htmlFor="company-member-keyword"
-                  className="mb-2 block text-xs text-[#8190a4]"
+                  className="mb-2 block text-sm text-[#8190a4]"
                 >
                   {t("关键词")}
                 </label>
@@ -460,7 +460,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
               <div className="w-[180px] max-[650px]:w-full">
                 <label
                   htmlFor="company-member-role"
-                  className="mb-2 block text-xs text-[#8190a4]"
+                  className="mb-2 block text-sm text-[#8190a4]"
                 >
                   {t("成员角色")}
                 </label>

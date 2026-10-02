@@ -33,7 +33,7 @@ export const ResourceFilters = observer(function ResourceFilters({
       className={`mb-6 flex items-center gap-4 max-[760px]:flex-wrap ${extraFilters ? "max-[1500px]:flex-wrap" : ""}`}
     >
       <div
-        className={`flex min-w-0 flex-1 items-center gap-2.5 max-[760px]:w-full max-[760px]:max-w-none [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 ${hideStatus ? "max-w-[480px]" : extraFilters ? "max-w-[360px]" : "max-w-[450px]"}`}
+        className={`flex min-w-0 flex-1 items-center gap-2.5 max-[760px]:w-full max-[760px]:max-w-none [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-sm [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 ${hideStatus ? "max-w-[480px]" : extraFilters ? "max-w-[360px]" : "max-w-[450px]"}`}
       >
         <label>{t("关键词")}</label>
         <Input
@@ -50,7 +50,7 @@ export const ResourceFilters = observer(function ResourceFilters({
       {!hideStatus &&
         !["materials", "settings", "fund-accounts"].includes(resource) && (
           <div
-            className={`flex min-w-0 items-center gap-2.5 max-[760px]:w-full max-[760px]:flex-auto [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-[11px] [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 [&_.ant-select]:min-w-0 [&_.ant-select]:flex-1 ${extraFilters ? "w-[185px]" : "w-[250px]"}`}
+            className={`flex min-w-0 items-center gap-2.5 max-[760px]:w-full max-[760px]:flex-auto [&_label]:shrink-0 [&_label]:whitespace-nowrap [&_label]:text-sm [&_label]:text-[#718095] [&_.ant-input-affix-wrapper]:min-w-0 [&_.ant-input-affix-wrapper]:flex-1 [&_.ant-select]:min-w-0 [&_.ant-select]:flex-1 ${extraFilters ? "w-[185px]" : "w-[250px]"}`}
           >
             <label>{t("状态")}</label>
             <Select
