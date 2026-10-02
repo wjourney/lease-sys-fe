@@ -79,7 +79,7 @@ export function ProjectDetailView({
   return (
     <>
       {headerHost ? createPortal(heading, headerHost) : heading}
-      <div className="space-y-4">
+      <div className="project-detail-layout">
         <section className="rounded-[7px] border border-[#e0e6ed] bg-white px-5 py-4 max-[760px]:px-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="m-0 text-[22px] font-semibold leading-8 text-[#142d51] max-[600px]:text-[20px]">

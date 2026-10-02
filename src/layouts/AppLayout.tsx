@@ -59,6 +59,7 @@ export const AppLayout = observer(function AppLayout() {
   const isStandaloneList = standaloneListPaths.has(
     location.pathname.replace(/\/$/, ""),
   );
+  const isProjectDetail = /^\/projects\/[^/]+\/?$/.test(location.pathname);
   return (
     <Layout className="app-layout min-h-screen">
       <Drawer
@@ -209,7 +210,7 @@ export const AppLayout = observer(function AppLayout() {
           </div>
         </Header>
         <Content
-          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""}`}
+          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${isProjectDetail ? "project-detail-content" : ""}`}
         >
           <Suspense
             fallback={

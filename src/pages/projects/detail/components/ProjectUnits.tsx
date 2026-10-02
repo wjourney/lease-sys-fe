@@ -55,7 +55,7 @@ export const ProjectUnits = observer(function ProjectUnits({
 
   return (
     <>
-      <section className="rounded-[7px] border border-[#e0e6ed] bg-white">
+      <section className="project-unit-section rounded-[7px] border border-[#e0e6ed] bg-white">
         <ResourceList
           key={projectId}
           resource="units"

@@ -54,4 +54,53 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
+
+  .project-detail-content {
+    height: calc(100dvh - 54px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .project-detail-content > .ant-spin-nested-loading,
+  .project-detail-content > .ant-spin-nested-loading > .ant-spin-container,
+  .project-detail-layout,
+  .project-unit-section,
+  .project-unit-section .embedded-resource-list,
+  .project-unit-section .list-surface,
+  .project-unit-section .list-results,
+  .project-unit-section .list-results > .ant-spin-nested-loading,
+  .project-unit-section .list-results > .ant-spin-nested-loading > .ant-spin-container {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .project-detail-layout {
+    gap: 16px;
+  }
+
+  .project-detail-layout > section:first-child {
+    flex: 0 0 auto;
+  }
+
+  .project-detail-layout > .project-unit-section {
+    flex: 1 1 0;
+  }
+
+  .project-detail-layout > .project-unit-section .embedded-list-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .project-unit-section .list-pagination,
+  .project-detail-content .list-surface > :not(.list-results) {
+    flex-shrink: 0;
+  }
+
+  .project-detail-content footer {
+    display: none;
+  }
 }
