@@ -4,8 +4,8 @@ export default function OrderListPage() {
   return (
     <ResourceList
       resource="orders"
-      renderCreateEditor={({ onClose, onSaved }) => (
-        <OrderDrawer onClose={onClose} onSaved={onSaved} />
+      renderEditor={({ row, onClose, onSaved }) => (
+        <OrderDrawer row={row} onClose={onClose} onSaved={onSaved} />
       )}
     />
   );
