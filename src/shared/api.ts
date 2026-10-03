@@ -25,8 +25,24 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+const orderErrorHints: Record<string, string> = {
+  "押金有待确认收款，请先确认或驳回后再结算":
+    "请先处理待确认的押金收款，再办理结算。",
+  "抵扣账单有待确认收款，请先处理":
+    "请先核对这笔账单的待确认收款，再使用押金抵扣。",
+  扣除金额超过实收押金: "扣款金额超过已收押金，请核对扣款明细。",
+  押金抵扣金额超过账单剩余应收: "抵扣金额超过该账单的剩余欠款，请调整金额。",
+  付款金额超过待付余额: "退款金额超过待退余额，请核对后重新填写。",
+  金额超过可登记余额: "收款金额超过可登记余额，请核对金额或刷新账单。",
+  "押金已结算，请勿重复修改": "这笔押金已经结算，请刷新查看结算结果。",
+  "押金已结算，不能继续登记收款": "这笔押金已经结算，无法继续登记收款。",
+  "已登记付款，不能直接修改租约，请办理财务调整或退租结算":
+    "订单已登记收款，请通过财务调整或退租结算处理后续变更。",
+  交还完成后才能结算押金: "请先登记单位交还，再办理押金结算。",
+};
 export function errorMessage(error: unknown): string {
   if (typeof error === "string") {
+    if (Object.values(orderErrorHints).includes(error)) return error;
     if (
       /^(网络|请求|服务|操作|当前账号|登录状态|提交的信息|内容不存在|该记录|文件过大|请上传|资料已保存|项目资料已保存|单位资料已保存|公司资料已保存|账号已创建)/.test(
         error,
@@ -38,7 +54,7 @@ export function errorMessage(error: unknown): string {
   const e = error as {
     code?: string;
     message?: string;
-    response?: { status?: number; data?: { message?: unknown } };
+    response?: { status?: number; data?: { message?: unknown; code?: string } };
   } | null;
   if (!e) return "操作未完成，请稍后再试";
   if (
@@ -52,6 +68,13 @@ export function errorMessage(error: unknown): string {
   if (status === 429) return "操作过于频繁，请稍后重试";
   if (status && status >= 500) return "服务暂时不可用，请稍后再试";
   const serverMessage = e.response?.data?.message;
+  if (
+    status === 400 &&
+    e.response?.data?.code === "BUSINESS" &&
+    typeof serverMessage === "string" &&
+    orderErrorHints[serverMessage]
+  )
+    return orderErrorHints[serverMessage];
   if (
     typeof serverMessage === "string" &&
     /已有业务引用|存在业务关联/.test(serverMessage)

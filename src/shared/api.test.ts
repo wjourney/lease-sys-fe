@@ -33,6 +33,17 @@ describe("errorMessage", () => {
     ).toBe("提交的信息有误，请检查后重试");
   });
 
+  it("explains order settlement errors and preserves translated toast text", () => {
+    const hint = errorMessage({
+      response: {
+        status: 400,
+        data: { code: "BUSINESS", message: "付款金额超过待付余额" },
+      },
+    });
+    expect(hint).toBe("退款金额超过待退余额，请核对后重新填写。");
+    expect(errorMessage(hint)).toBe(hint);
+  });
+
   it("uses a safe fallback for unknown errors", () => {
     expect(errorMessage(new Error("Unexpected token <"))).toBe(
       "操作未完成，请稍后再试",

@@ -10,6 +10,7 @@ import { ResourceList } from "../../../../components/resource-list/ResourceList"
 import { amount, options, type Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
+import { Status } from "../../../../shared/ui";
 import { ListStore, useRoot } from "../../../../stores/root";
 import { UnitDeleteModal } from "./UnitDeleteModal";
 import { ProjectStats, type ProjectUnitStatus } from "./ProjectStats";
@@ -184,12 +185,17 @@ const UnitGrid = observer(function UnitGrid({
               <h3 className="m-0 truncate text-[15px] font-semibold text-[#26334a]">
                 {t(unit.unitNo)}
               </h3>
-              <p className="my-2.5 truncate text-[13px] font-medium text-[#1b355d]">
-                {t("参考月租")}{" "}
-                {unit.referenceRent != null
-                  ? t(amount(unit.referenceRent))
-                  : `${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
-              </p>
+              <div className="my-2.5 flex min-w-0 items-center justify-between gap-2 text-[13px] font-medium text-[#1b355d]">
+                <span className="min-w-0 truncate">
+                  {t("参考月租")}{" "}
+                  {unit.referenceRent != null
+                    ? t(amount(unit.referenceRent))
+                    : `${t(amount(unit.minRent))} – ${t(amount(unit.maxRent))}`}
+                </span>
+                <span className="shrink-0 [&_.ant-tag]:!m-0">
+                  <Status value={unit.occupancyStatus || "AVAILABLE"} />
+                </span>
+              </div>
               <div
                 className="flex gap-2 border-t border-[#eff1f5] pt-2.5"
                 data-row-action

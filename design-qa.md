@@ -80,3 +80,29 @@ final result: passed
 - 前后端 TypeScript 检查和前端生产构建通过；浏览器已核对头像直接打开弹窗、关闭弹窗及修改密码入口可打开。
 
 final result: passed
+
+---
+
+# 订单详情页视觉验收
+
+**final result: passed**
+
+对照范围：六个标签页，以及押金的收取、部分退款状态。来源是此前确认的设计稿；实现是本机隔离测试库中 Chrome 渲染的订单详情。设计稿约 1672 × 941 px，实测页面以 1440 × 900 CSS px、deviceScaleFactor 1 截图。对照图将两边分别等比缩放到 1000 px 宽，并列检查；原始尺寸和页面内容不同，不以像素差判定。
+
+| 标签 | 设计稿 | 实现截图 | 并列对照 |
+| --- | --- | --- | --- |
+| 基本资料 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-dfdc37cd-9a95-42d6-ba44-db8fa5a5deb8.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/basic.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-basic.png) |
+| 收款与账单 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-885f5ffd-7aa3-4235-8e94-749f5578c6bc.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/bills.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-bills.png) |
+| 押金收取 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-1cbc30d3-c99e-490e-a0de-376b1684864b.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/deposit.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-deposit.png) |
+| 押金部分退款 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-3bc0ab3c-372d-42a9-b7a7-049750c29edf.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/deposit-refund.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-deposit-refund.png) |
+| 订单佣金 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-426cdcba-a70f-4b9d-9f00-5ae4f823c891.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/commissions.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-commissions.png) |
+| 文件与资料 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-127897c3-ef12-43c1-8982-370a0c50572d.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/files.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-files.png) |
+| 操作记录 | [来源](/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-1c8f29d8-48ef-453a-9591-aecf7ac8b3d6.png) | [实测](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/history.png) | [对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-history.png) |
+
+**视觉检查**：标题、状态、元信息与六个标签的层级与设计稿一致；卡片间距、表格密度、圆角和灰底保持简洁。正文使用现有系统字体与 14 px 左右的标签层级，未出现明显换行或截断。语义色区分待确认、待付款和部分退款，图标沿用应用现有图标库；此页面没有替换设计稿中的真实图片素材。测试库中的订单编号、金额、记录数、空文件状态与设计稿示例不同，属于数据差异。现有应用侧栏和页眉视觉与概念图不完全相同，保留既有系统壳层。
+
+**重点区域检查**：并列对照中的押金步骤、押金收款与退款表格、佣金状态、操作记录内容均可辨认。浏览器逐页打开六个标签，未出现页面脚本错误；390 px 宽度端到端检查无横向溢出。押金结算和部分退款端到端用例通过。
+
+**对照迭代**：首次比对发现押金收取阶段的两张卡片在桌面端上下堆叠，现改为并列；[修正后对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-deposit.png)确认首屏结构匹配。佣金记录的未付状态原显示“待收款”，现改为“待付款”；[修正后对照](/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/order-detail-qa/compare-commissions.png)及浏览器可访问文本均确认。押金待收取时的说明同步改为先登记并确认收款。
+
+**剩余项**：无阻断性视觉差异。设计稿中示例文件和多条变更记录尚未在隔离测试库中构造，因此用空状态和单条记录检查了这两页的版式；文件行与多条时间线的布局已由现有组件实现。

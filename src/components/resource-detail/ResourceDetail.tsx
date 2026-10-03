@@ -1,10 +1,12 @@
+import { OrderBasicInfo } from "../../pages/orders/detail/components/OrderBasicInfo";
+import { OrderDetailHeader } from "../../pages/orders/detail/components/OrderDetailHeader";
+import { OrderHistory } from "../../pages/orders/detail/components/OrderHistory";
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
   EditOutlined,
 } from "@ant-design/icons";
 import {
-  Alert,
   App,
   Button,
   Empty,
@@ -52,6 +54,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const [edit, setEdit] = useState(false);
+  const [tab, setTab] = useState<string>();
   const [material, setMaterial] = useState<Row>();
   const [version, setVersion] = useState<string>();
   const { row, loading, error, logs, receipts, versions, load } = useRecordData(
@@ -72,8 +75,12 @@ export const ResourceDetail = observer(function ResourceDetail({
       />
     );
   if (!row) return <Spin />;
-  const editable = root.canWrite(resource) && config.fields.length > 0;
+  const editable =
+    root.canWrite(resource) &&
+    config.fields.length > 0 &&
+    (resource !== "orders" || (row.actions?.edit ?? row.status !== "CLOSED"));
   const title =
+    (resource === "orders" ? row.unitNo : null) ||
     row.name ||
     row.unitNo ||
     row.orderNo ||
@@ -104,6 +111,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   const history = <RecordHistory logs={logs} fields={fields} />;
   const context: DetailContextValue = {
     resource,
+    setTab,
     id,
     row,
     root,
@@ -123,12 +131,13 @@ export const ResourceDetail = observer(function ResourceDetail({
     {
       key: "basic",
       label: t("基本资料"),
-      children: detail,
+      children: resource === "orders" ? <OrderBasicInfo /> : detail,
     },
   ];
   tabs.push(...(getTabs?.(context) ?? []));
 
   if (
+    resource !== "orders" &&
     resource !== "users" &&
     ownerFields[resource] &&
     resource !== "materials" &&
@@ -151,7 +160,7 @@ export const ResourceDetail = observer(function ResourceDetail({
     tabs.push({
       key: "logs",
       label: t("操作记录"),
-      children: history,
+      children: resource === "orders" ? <OrderHistory /> : history,
     });
   return (
     <DetailContext.Provider value={context}>
@@ -169,75 +178,87 @@ export const ResourceDetail = observer(function ResourceDetail({
           />
         ) : (
           <>
-            {headerHost &&
-              createPortal(
-                <div className="flex min-w-0 items-center gap-3">
-                  <Button
-                    type="text"
-                    icon={<ArrowLeftOutlined aria-hidden />}
-                    aria-label={t("返回上级")}
-                    onClick={() => navigate("/" + resource)}
-                  />
-                  <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
-                    {t(title)}
-                  </h1>
-                </div>,
-                headerHost,
-              )}
-            <div className="mb-[25px] flex items-center justify-between gap-5 max-[1100px]:flex-col max-[1100px]:items-start [&_.ant-typography-secondary]:text-xs [&>.ant-space]:max-[1100px]:self-end [&>.ant-space]:max-[760px]:!flex-wrap [&>.ant-space]:max-[760px]:self-start">
-              <div>
-                <Space>
-                  <Status
-                    value={row.status || row.occupancyStatus || "ACTIVE"}
-                    resource={resource}
-                  />
-                  <Text type="secondary">
-                    {row.projectName || row.address || config.description}
-                  </Text>
-                </Space>
-              </div>
-              <Space wrap>
-                {editable && (
-                  <Button
-                    icon={<EditOutlined aria-hidden={true} />}
-                    onClick={() => setEdit(true)}
-                  >
-                    {t("编辑")}
-                  </Button>
-                )}
-                {actions}
-
-                {root.canWrite(resource) &&
-                  !["orders", "invoices", "settings"].includes(resource) && (
-                    <Button
-                      danger
-                      icon={<DeleteOutlined aria-hidden={true} />}
-                      onClick={() =>
-                        setAction({
-                          title: t("删除记录"),
-                          fields: [
-                            {
-                              key: "reason",
-                              label: t("删除原因"),
-                              type: "textarea",
-                            },
-                          ],
-                          onSubmit: async (v: Row) => {
-                            await api.delete(`/${resource}/${id}`, {
-                              data: v,
-                            });
-                            message.success("已删除");
-                            root.invalidate();
-                            navigate("/" + resource);
-                          },
-                        })
-                      }
-                    >
-                      {t("删除")}
-                    </Button>
+            {resource === "orders" ? (
+              <OrderDetailHeader
+                editable={editable}
+                onEdit={() => setEdit(true)}
+                actions={actions}
+              />
+            ) : (
+              <>
+                {headerHost &&
+                  createPortal(
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined aria-hidden />}
+                        aria-label={t("返回上级")}
+                        onClick={() => navigate("/" + resource)}
+                      />
+                      <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
+                        {t(title)}
+                      </h1>
+                    </div>,
+                    headerHost,
                   )}
-              </Space>
-            </div>
+                <div className="mb-[25px] flex items-center justify-between gap-5 max-[1100px]:flex-col max-[1100px]:items-start [&_.ant-typography-secondary]:text-xs [&>.ant-space]:max-[1100px]:self-end [&>.ant-space]:max-[760px]:!flex-wrap [&>.ant-space]:max-[760px]:self-start">
+                  <div>
+                    <Space wrap>
+                      <Status
+                        value={row.status || row.occupancyStatus || "ACTIVE"}
+                        resource={resource}
+                      />
+                      <Text type="secondary">
+                        {row.projectName || row.address || config.description}
+                      </Text>
+                    </Space>
+                  </div>
+                  <Space wrap>
+                    {editable && (
+                      <Button
+                        icon={<EditOutlined aria-hidden={true} />}
+                        onClick={() => setEdit(true)}
+                      >
+                        {t("编辑")}
+                      </Button>
+                    )}
+                    {actions}
+
+                    {root.canWrite(resource) &&
+                      !["orders", "invoices", "settings"].includes(
+                        resource,
+                      ) && (
+                        <Button
+                          danger
+                          icon={<DeleteOutlined aria-hidden={true} />}
+                          onClick={() =>
+                            setAction({
+                              title: t("删除记录"),
+                              fields: [
+                                {
+                                  key: "reason",
+                                  label: t("删除原因"),
+                                  type: "textarea",
+                                },
+                              ],
+                              onSubmit: async (v: Row) => {
+                                await api.delete(`/${resource}/${id}`, {
+                                  data: v,
+                                });
+                                message.success("已删除");
+                                root.invalidate();
+                                navigate("/" + resource);
+                              },
+                            })
+                          }
+                        >
+                          {t("删除")}
+                        </Button>
+                      )}
+                  </Space>
+                </div>
+              </>
+            )}
             {resource === "incomes" && (
               <div className="mb-5 grid grid-cols-4 rounded-[7px] border border-[#e9edf2] bg-white p-6 max-[760px]:grid-cols-2 max-[760px]:gap-5 [&>div]:border-r [&>div]:border-[#edf0f4] [&>div]:pl-6 [&>div]:max-[760px]:border-0 [&>div]:max-[760px]:pl-0 [&>div:first-child]:pl-0 [&>div:last-child]:border-0 [&_strong]:mt-3 [&_strong]:block [&_strong]:text-[21px] [&_strong]:font-medium [&_.ant-typography]:text-[11px]">
                 {[
@@ -253,21 +274,14 @@ export const ResourceDetail = observer(function ResourceDetail({
                 ))}
               </div>
             )}
-            {resource === "orders" && (
-              <Alert
-                className="mb-4"
-                type={row.status === "ACTIVE" ? "success" : "info"}
-                showIcon
-                message={t(
-                  row.status === "PENDING"
-                    ? "首期租金及押金确认收齐后，订单自动生效"
-                    : row.status === "ACTIVE"
-                      ? "租赁进行中，订单状态与财务结清分别管理"
-                      : "请核对交还状态与押金结算结果",
-                )}
-              />
-            )}
             <Tabs
+              className={
+                resource === "orders"
+                  ? "order-detail-tabs mx-auto w-full max-w-[1320px]"
+                  : undefined
+              }
+              activeKey={tab}
+              onChange={setTab}
               defaultActiveKey={
                 resource === "projects"
                   ? "units"

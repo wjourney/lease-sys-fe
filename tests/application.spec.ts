@@ -7,7 +7,7 @@ const login = async (page: Page, username: string) => {
     .fill(process.env.SEED_PASSWORD || "ChangeMe123!");
   await page.getByRole("button", { name: "登录系统" }).click();
   await page.waitForURL("**/projects");
-  await expect(page.locator(".page-heading")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "项目管理", exact: true }),
   ).toHaveCount(0);
@@ -41,7 +41,7 @@ for (const username of ["admin", "operations", "finance", "company", "sales"]) {
     ]) {
       if (!items.some((x) => x?.includes(label))) continue;
       await page.getByRole("menuitem", { name: label, exact: true }).click();
-      await expect(page.locator(".page-heading")).toBeVisible();
+      await expect(page.locator("main")).toBeVisible();
       await expect(
         page.getByRole("heading", { name: label, exact: true }),
       ).toHaveCount(0);
@@ -170,7 +170,7 @@ test("traditional Chinese toggle changes application text", async ({
     page.getByRole("menuitem", { name: "項目管理", exact: true }),
   ).toBeVisible();
   await page.getByRole("menuitem", { name: "項目管理", exact: true }).click();
-  await expect(page.locator(".page-heading")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "項目管理", exact: true }),
   ).toHaveCount(0);
@@ -181,7 +181,7 @@ test("mobile navigation remains accessible", async ({ page }) => {
   await login(page, "sales");
   await page.getByRole("button", { name: "折叠菜单" }).click();
   await page.getByRole("menuitem", { name: "项目管理", exact: true }).click();
-  await expect(page.locator(".page-heading")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "项目管理", exact: true }),
   ).toHaveCount(0);

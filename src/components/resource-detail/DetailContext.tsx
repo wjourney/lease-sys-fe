@@ -5,6 +5,7 @@ import { Row } from "../../shared/api";
 import { Field } from "../../shared/resource-config";
 import { RootStore } from "../../stores/root";
 export type DetailContextValue = {
+  setTab: (tab: string) => void;
   resource: string;
   id: string;
   row: Row;

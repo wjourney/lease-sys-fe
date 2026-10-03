@@ -39,6 +39,8 @@ export function Status({
   if (resource === "orders" && value === "ACTIVE") label = "租赁中";
   if (resource === "incomes" && value === "PAID") label = "已收齐";
   if (resource === "expenses" && value === "PAID") label = "已付款";
+  if (resource === "commissions" && ["OPEN", "UNPAID"].includes(value))
+    label = "待付款";
   return (
     <Tag bordered={false} color={color}>
       {t(label || "—")}

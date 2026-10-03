@@ -78,6 +78,7 @@ export const feeLabels: Record<string, string> = {
   MANAGEMENT: "管理费用",
   COMMISSION: "佣金",
   DEPOSIT_REFUND: "押金退款",
+  RENT_REFUND: "租金退款",
 };
 export const status: Field = {
   key: "status",

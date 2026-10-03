@@ -14,7 +14,9 @@ export const Editor = observer(function Editor({
   initial = {},
   onClose,
   onSaved,
+  lockedFields = [],
 }: {
+  lockedFields?: string[];
   resource: string;
   row?: Row;
   initial?: Row;
@@ -29,7 +31,7 @@ export const Editor = observer(function Editor({
   const [lookups, setLookups] = useState<Record<string, any[]>>({});
   const config = configs[resource];
   const fields = config.fields
-    .filter((f) => !(row && f.createOnly))
+    .filter((f) => !(row && f.createOnly) && !lockedFields.includes(f.key))
     .filter(
       (f) =>
         !(
@@ -159,6 +161,7 @@ export const Editor = observer(function Editor({
         data.recurrenceRule = {
           frequency: values.recurrenceRule || "ONCE",
         };
+      for (const key of lockedFields) data[key] = initial[key];
       if (row) {
         data.revision = row.revision;
         if (resource === "orders") data.reason = values.reason;
