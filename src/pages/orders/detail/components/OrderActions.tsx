@@ -3,7 +3,7 @@ import { Button } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
-import { api, errorMessage, options } from "../../../../shared/api";
+import { api, errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 export const OrderActions = observer(function OrderActions() {
   const [preparingContract, setPreparingContract] = useState(false);
@@ -53,40 +53,6 @@ export const OrderActions = observer(function OrderActions() {
           </Button>
           {root.manageOrders && (
             <>
-              <Button
-                onClick={async () => {
-                  try {
-                    const templates = (
-                      await options("materials", {
-                        projectId: row.projectId,
-                        category: "TEMPLATE",
-                      })
-                    ).filter((m) => m.body);
-                    openAction(
-                      row.currentContractMaterialId
-                        ? "重新生成合同"
-                        : "生成合同",
-                      [
-                        {
-                          key: "templateMaterialId",
-                          label: "选择合同模板",
-                          type: "select",
-                          required: false,
-                          options: templates.map((m) => ({
-                            value: m.id,
-                            label: m.title,
-                          })),
-                        },
-                      ],
-                      `/orders/${id}/contract`,
-                    );
-                  } catch (e) {
-                    message.error(errorMessage(e));
-                  }
-                }}
-              >
-                {t(row.currentContractMaterialId ? "重新生成合同" : "生成合同")}
-              </Button>
               {row.status === "ACTIVE" && (
                 <Button
                   onClick={() =>
