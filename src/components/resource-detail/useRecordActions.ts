@@ -2,6 +2,7 @@ import { App } from "antd";
 import { useState } from "react";
 import { api, errorMessage, Row } from "../../shared/api";
 import { Field } from "../../shared/resource-config";
+import { registerReceiptWithVoucher } from "../../shared/receipt-voucher";
 import { useRoot } from "../../stores/root";
 export function useRecordActions(id: string) {
   const root = useRoot();
@@ -25,6 +26,31 @@ export function useRecordActions(id: string) {
         });
         message.success("操作成功");
         root.invalidate();
+      },
+    });
+  }
+  function openReceiptAction(
+    fields: Field[],
+    path: string,
+    initial: Row = {},
+    extra: Row = {},
+  ) {
+    setAction({
+      title: "登记收款",
+      fields,
+      initial,
+      voucher: true,
+      onSubmit: async (values: Row, file?: File) => {
+        const { voucherFailed } = await registerReceiptWithVoucher(
+          path,
+          values,
+          extra,
+          file,
+        );
+        root.invalidate();
+        if (voucherFailed)
+          message.warning("收款已登记，但凭证上传失败，请在收款记录中补传。");
+        else message.success("收款登记成功");
       },
     });
   }
@@ -58,5 +84,12 @@ export function useRecordActions(id: string) {
       message.error(errorMessage(e));
     }
   }
-  return { action, setAction, openAction, run, previewInvoice };
+  return {
+    action,
+    setAction,
+    openAction,
+    openReceiptAction,
+    run,
+    previewInvoice,
+  };
 }

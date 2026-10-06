@@ -1,19 +1,13 @@
 import { Button, Card, Space } from "antd";
-import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
-import { Editor } from "../../../../components/forms/ResourceEditor";
 import { amount, dateText } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { Status } from "../../../../shared/ui";
 import { OrderTable } from "./OrderTable";
 export function OrderCommissions() {
   const { row, id, root, openAction, navigate } = useRecordDetail();
-  const [creating, setCreating] = useState(false);
-  const commissions = (row.commissions ?? []).filter(
-    (commission: { status: string }) => commission.status !== "VOID",
-  );
-  const hasCommission = commissions.length > 0;
+  const commissions = row.commissions ?? [];
   const agreement = commissions[0] ?? row.orderCommission;
   const mode =
     (
@@ -62,13 +56,6 @@ export function OrderCommissions() {
       <OrderTable
         title="结付记录"
         rows={commissions}
-        actions={
-          root.canWrite("commissions") && !hasCommission ? (
-            <Button type="primary" onClick={() => setCreating(true)}>
-              {t("新增佣金")}
-            </Button>
-          ) : null
-        }
         columns={[
           {
             title: t("结算期间"),
@@ -87,6 +74,29 @@ export function OrderCommissions() {
             title: t("操作"),
             render: (_, c) => (
               <Space>
+                {root.manageOrders &&
+                  c.status !== "VOID" &&
+                  Number(c.paidAmount) === 0 &&
+                  Number(c.availableAmount) === Number(c.amount) && (
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        openAction(
+                          "作废佣金",
+                          [
+                            {
+                              key: "reason",
+                              label: "作废原因",
+                              type: "textarea",
+                            },
+                          ],
+                          `/orders/${id}/commissions/${c.id}/void`,
+                        )
+                      }
+                    >
+                      {t("作废")}
+                    </Button>
+                  )}
                 <Button
                   size="small"
                   onClick={() => navigate(`/commissions/${c.id}`)}
@@ -123,15 +133,6 @@ export function OrderCommissions() {
           },
         ]}
       />
-      {creating && (
-        <Editor
-          resource="commissions"
-          initial={{ orderId: id }}
-          lockedFields={["orderId"]}
-          onClose={() => setCreating(false)}
-          onSaved={() => setCreating(false)}
-        />
-      )}
     </div>
   );
 }

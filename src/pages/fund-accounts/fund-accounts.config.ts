@@ -4,8 +4,8 @@ export const FundAccountConfig: Config = {
   description: "维护业务收付款账户",
   fields: [
     text("name", "账户名称", true),
-    text("bankName", "银行名称"),
-    text("accountIdentifier", "银行账号"),
+    text("bankName", "银行名称", true),
+    text("accountIdentifier", "银行账号", true),
     {
       key: "enabled",
       label: "启用",

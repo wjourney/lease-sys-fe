@@ -32,9 +32,20 @@ export function UnitDrawer({
   const root = useRoot();
   const { message } = App.useApp();
   const [projects, setProjects] = useState<Option[]>([]);
-  const [unitTypes, setUnitTypes] = useState<Option[]>([]);
+  const [projectRows, setProjectRows] = useState<Row[]>([]);
+  const projectId = Form.useWatch("projectId", form);
+  const selectedTypeCode = Form.useWatch("unitTypeCode", form);
+  const typeConfigs: Row[] =
+    projectRows.find((p) => p.id === projectId)?.typeConfigs ?? [];
+  const selectedType = typeConfigs.find(
+    (item) => item.code === selectedTypeCode,
+  );
+  const unitTypes = typeConfigs.map((item) => ({
+    value: item.code,
+    label: t(item.name || item.code),
+  }));
   const [media, setMedia] = useState<UnitMedia>(emptyUnitMedia);
-  const [loaded, setLoaded] = useState(!row);
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const current = useRef<Row | null>(row ?? null);
@@ -59,25 +70,18 @@ export function UnitDrawer({
     let active = true;
     Promise.all([
       options("projects"),
-      options("settings", { key: "unit_types" }),
       row
         ? row.materials
           ? Promise.resolve(row.materials as Row[])
           : options("materials", { unitId: row.id })
         : Promise.resolve([]),
     ])
-      .then(([projectRows, settings, materials]) => {
+      .then(([projectRows, materials]) => {
         if (!active) return;
         setProjects(
           projectRows.map((item) => ({ value: item.id, label: t(item.name) })),
         );
-        setUnitTypes(
-          (settings[0]?.value ?? [])
-            .filter(
-              (item: Row) => item.enabled || row?.unitTypeCode === item.code,
-            )
-            .map((item: Row) => ({ value: item.code, label: t(item.name) })),
-        );
+        setProjectRows(projectRows);
         const existing = mediaFromMaterials(materials);
         setMedia(existing);
         for (const category of unitMediaCategories)
@@ -178,7 +182,49 @@ export function UnitDrawer({
         <Alert type="error" showIcon message={t(error)} className="mb-4" />
       )}
       <Spin spinning={!loaded}>
-        <Form form={form} layout="vertical" onFinish={save}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={save}
+          onValuesChange={(changed) => {
+            if ("projectId" in changed)
+              form.setFieldsValue({
+                unitTypeCode: undefined,
+                area: undefined,
+                minRent: undefined,
+                maxRent: undefined,
+                referenceRent: undefined,
+              });
+            if ("unitTypeCode" in changed) {
+              const config = typeConfigs.find(
+                (item) => item.code === changed.unitTypeCode,
+              );
+              if (config)
+                form.setFieldsValue({
+                  minRent: config.minRent,
+                  maxRent: config.maxRent,
+                  area:
+                    config.minArea != null &&
+                    Number(config.minArea) === Number(config.maxArea)
+                      ? Number(config.minArea)
+                      : undefined,
+                  referenceRent: config.minRent,
+                });
+            }
+          }}
+        >
+          {loaded && !typeConfigs.length && (
+            <p className="mb-4 text-sm text-[#73819a]">
+              {t("当前项目尚未配置单位类型，请先编辑项目添加类型。")}
+            </p>
+          )}
+          {selectedType && (
+            <p className="mb-4 text-sm text-[#73819a]">
+              {t(
+                `类型参考：面积 ${selectedType.minArea ?? "—"}–${selectedType.maxArea ?? "—"} ㎡，月租 HK$ ${selectedType.minRent ?? "—"}–${selectedType.maxRent ?? "—"}；请填写本单位的实际面积及租金。`,
+              )}
+            </p>
+          )}
           <UnitFormSections
             projects={projects}
             unitTypes={unitTypes}

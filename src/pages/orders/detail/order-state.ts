@@ -47,7 +47,9 @@ export const paymentLabels: Record<string, string> = {
 export function orderLabel(row: Row) {
   return row.status === "COMPLETED"
     ? row.handoverStatus === "DONE"
-      ? "已结束"
+      ? row.settlement?.complete
+        ? "已完结"
+        : "待结清"
       : "待交还"
     : ({ PENDING: "待确认", ACTIVE: "租赁中", CLOSED: "已关闭" }[
         row.status as string
@@ -56,6 +58,10 @@ export function orderLabel(row: Row) {
 export function orderNotice(row: Row) {
   if (row.status === "CLOSED") return "订单已关闭，单位占用已释放。";
   if (row.status === "COMPLETED") {
+    if (row.settlement?.complete)
+      return "单位已交还，账单、押金和佣金均已结清。";
+    if (row.handoverStatus === "DONE" && row.settlement?.blockers?.length)
+      return `待结清：${row.settlement.blockers.join("；")}。`;
     if (row.handoverStatus !== "DONE")
       return "租赁已结束，请先确认单位交还，再办理押金结算。";
     if (Number(row.deposit?.pending) > 0)

@@ -54,6 +54,9 @@ type OrderValues = {
   initialRentReceived?: string;
   initialDepositReceived?: string;
   initialPaymentReceivedOn?: Dayjs;
+  initialFundAccountId?: string;
+  initialPaymentMethod?: string;
+  initialBankReference?: string;
   reason?: string;
   commissionMode: "ONE_TIME" | "RECURRING_MONTHLY";
   commissionDueOn: Dayjs;
@@ -196,7 +199,7 @@ export function OrderDrawer({
   );
   const commission = row?.orderCommission as Row | undefined;
   const lockedLease = !!row && row.actions?.editLease === false;
-  const requiresCommission = !lockedLease && (!row || !!commission);
+  const [fundAccounts, setFundAccounts] = useState<Choice[]>([]);
   const [projects, setProjects] = useState<Choice[]>([]);
   const [units, setUnits] = useState<Choice[]>([]);
   const [companies, setCompanies] = useState<Choice[]>([]);
@@ -208,6 +211,7 @@ export function OrderDrawer({
     if (loadingDetail || detailError) return;
     let active = true;
     Promise.all([
+      options("fund-accounts"),
       options("projects"),
       root.canRead("sales-companies")
         ? options("sales-companies")
@@ -216,7 +220,18 @@ export function OrderDrawer({
         ? options("users")
         : Promise.resolve(root.user ? [root.user] : []),
     ])
-      .then(([projectRows, companyRows, userRows]) => {
+      .then(([accounts, projectRows, companyRows, userRows]) => {
+        setFundAccounts(
+          accounts
+            .filter(
+              (x) =>
+                x.enabled &&
+                x.currency === "HKD" &&
+                x.bankName?.trim() &&
+                x.accountIdentifier?.trim(),
+            )
+            .map((x) => ({ value: x.id, label: x.name })),
+        );
         if (!active) return;
         setProjects(
           withCurrentChoice(
@@ -385,10 +400,14 @@ export function OrderDrawer({
         "initialRentReceived",
         "initialDepositReceived",
         "initialPaymentReceivedOn",
+        "initialFundAccountId",
+        "initialPaymentMethod",
+        "initialBankReference",
       ]);
       const leaseDatesChanged = form.isFieldsTouched(["startsOn", "endsOn"]);
       const saveCommission =
         !row ||
+        !commission ||
         commissionChanged ||
         (leaseDatesChanged &&
           !lockedLease &&
@@ -474,6 +493,18 @@ export function OrderDrawer({
                       values.paymentDeclaration === "UNPAID"
                         ? "0"
                         : values.initialDepositReceived || "0",
+                    fundAccountId:
+                      values.paymentDeclaration !== "UNPAID"
+                        ? values.initialFundAccountId
+                        : undefined,
+                    paymentMethod:
+                      values.paymentDeclaration !== "UNPAID"
+                        ? values.initialPaymentMethod
+                        : undefined,
+                    bankReference:
+                      values.paymentDeclaration !== "UNPAID"
+                        ? values.initialBankReference?.trim()
+                        : undefined,
                     receivedOn:
                       values.paymentDeclaration !== "UNPAID"
                         ? values.initialPaymentReceivedOn?.format("YYYY-MM-DD")
@@ -494,8 +525,28 @@ export function OrderDrawer({
         : (await api.post<Row>("/orders", payload)).data;
       root.invalidate();
       try {
-        if (values.paymentDeclaration !== "UNPAID" && voucherFile)
-          await uploadFile(order.id, voucherFile, "VOUCHER");
+        if (values.paymentDeclaration !== "UNPAID" && voucherFile) {
+          const receipt = (order.bills ?? [])
+            .flatMap((b: Row) => b.receipts ?? [])
+            .find(
+              (r: Row) =>
+                r.sourceKey?.startsWith("initial:") && r.status === "PENDING",
+            );
+          if (receipt) {
+            const data = new FormData();
+            data.append(
+              "payload",
+              JSON.stringify({
+                incomeId: receipt.voucherIncomeId || receipt.id,
+                category: "VOUCHER",
+                visibility: "SHARED",
+                title: voucherFile.name,
+              }),
+            );
+            data.append("file", voucherFile);
+            await api.post("/materials/upload", data);
+          } else await uploadFile(order.id, voucherFile, "VOUCHER");
+        }
         message.success(t(row ? "订单修改成功" : "订单创建成功"));
       } catch {
         message.warning(
@@ -510,6 +561,7 @@ export function OrderDrawer({
         message.warning(
           t("订单已创建，合同暂未生成，可在订单详情点击下载合同重试"),
         );
+      root.invalidate();
       onSaved();
     } catch (error) {
       message.error(errorMessage(error));
@@ -611,6 +663,9 @@ export function OrderDrawer({
             initialPaymentReceivedOn: row?.initialPayment?.receivedOn
               ? dayjs(row.initialPayment.receivedOn)
               : undefined,
+            initialFundAccountId: row?.initialPayment?.fundAccountId,
+            initialPaymentMethod: row?.initialPayment?.paymentMethod || "BANK",
+            initialBankReference: row?.initialPayment?.bankReference,
             salesCompanyId: row?.salesCompanyId ?? root.user?.salesCompanyId,
             salesUserId:
               row?.salesUserId ??
@@ -941,7 +996,7 @@ export function OrderDrawer({
               <Form.Item
                 name="commissionMode"
                 label={t("佣金结付方式")}
-                rules={requiresCommission ? required : undefined}
+                rules={required}
               >
                 <Select
                   options={[
@@ -958,7 +1013,7 @@ export function OrderDrawer({
                     : "佣金总额（HKD）",
                 )}
                 rules={[
-                  ...(requiresCommission ? required : []),
+                  ...required,
                   {
                     validator(_, value) {
                       return !value || Number(value) > 0
@@ -977,7 +1032,7 @@ export function OrderDrawer({
                     ? "首笔结付日期"
                     : "结付日期",
                 )}
-                rules={requiresCommission ? required : undefined}
+                rules={required}
               >
                 <DatePicker className="w-full" />
               </Form.Item>
@@ -1049,6 +1104,37 @@ export function OrderDrawer({
                     <MoneyInput disabled={lockedLease} />
                   </Form.Item>
                   <Form.Item
+                    name="initialFundAccountId"
+                    label={t("资金账户")}
+                    rules={lockedLease ? undefined : required}
+                  >
+                    <Select
+                      disabled={lockedLease}
+                      options={fundAccounts}
+                      placeholder={t("请选择收款账户")}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="initialPaymentMethod"
+                    label={t("付款方式")}
+                    rules={lockedLease ? undefined : required}
+                  >
+                    <Select
+                      disabled={lockedLease}
+                      options={[
+                        { value: "BANK", label: t("银行转账") },
+                        { value: "CASH", label: t("现金") },
+                        { value: "CHEQUE", label: t("支票") },
+                      ]}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    name="initialBankReference"
+                    label={t("银行参考号")}
+                  >
+                    <Input disabled={lockedLease} />
+                  </Form.Item>
+                  <Form.Item
                     name="initialPaymentReceivedOn"
                     label={t("到账日期")}
                     rules={lockedLease ? undefined : required}
@@ -1083,7 +1169,7 @@ export function OrderDrawer({
             {t(
               lockedLease
                 ? "订单已有收款或租期已生效，单位、租约、销售归属及首期收款仅供查看；可修改联系方式、订单备注及未付款的佣金。"
-                : "首期付款金额仅为录单填报，实际到账仍须财务核对。合同在提交订单后自动生成；签署后的合同可在订单详情补传。提交时会校验同一单位的租期是否冲突。",
+                : "首期付款会自动登记为待核对收款，财务确认后更新账单和订单状态。合同在提交订单后自动生成；签署后的合同可在订单详情补传。提交时会校验同一单位的租期是否冲突。",
             )}
           </p>
           {row && (

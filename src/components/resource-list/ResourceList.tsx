@@ -1,10 +1,11 @@
 import { RequestError as Alert } from "../feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Empty, Pagination, Space, Table } from "antd";
+import { Button, Empty, Pagination, Space, Table, Tag } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Row } from "../../shared/api";
+import { canEditFinancialRecord } from "../../shared/financial-record-actions";
 import { t } from "../../shared/i18n";
 import { shouldOpenRow } from "../../shared/row-navigation";
 import { valueView } from "../../shared/ui";
@@ -27,6 +28,7 @@ export const ResourceList = observer(function ResourceList({
   hideCreate = false,
   hideStatus = false,
   renderRowActions,
+  onViewRow,
   renderCreateEditor,
   renderEditor,
 }: ResourceListProps) {
@@ -57,12 +59,23 @@ export const ResourceList = observer(function ResourceList({
     key: c.key,
     ellipsis: true,
     render: (v: any, row: Row) =>
-      c.key === config.columns[0].key ? (
+      c.key === config.columns[0].key && onViewRow ? (
+        <span>{v || "—"}</span>
+      ) : c.key === config.columns[0].key ? (
         <Link to={`/${resource}/${row.id}`}>{v || "—"}</Link>
+      ) : c.key === "status" && resource === "incomes" && row.overdue ? (
+        <Space size={4}>
+          {valueView(c.key, v, resource)}
+          <Tag color="red">{t("逾期")}</Tag>
+        </Space>
       ) : (
         valueView(
           c.key,
-          c.key === "unitTypeCode" ? row.unitTypeName || v : v,
+          c.key === "unitTypeCode"
+            ? row.unitTypeName || v
+            : c.key === "status" && resource === "orders"
+              ? row.lifecycleStatus || v
+              : v,
           resource,
         )
       ),
@@ -72,14 +85,19 @@ export const ResourceList = observer(function ResourceList({
     key: "actions",
     fixed: "right",
     width:
-      resource === "sales-companies"
+      resource === "sales-companies" || resource === "fund-accounts"
         ? 210
         : resource === "materials"
           ? 145
           : 120,
     render: (_: any, row: Row) => (
       <Space size={10} data-row-action>
-        <Button size="small" onClick={() => navigate(`/${resource}/${row.id}`)}>
+        <Button
+          size="small"
+          onClick={() =>
+            onViewRow ? onViewRow(row) : navigate(`/${resource}/${row.id}`)
+          }
+        >
           {t("查看")}
         </Button>
         {resource === "materials" && row.storageKey ? (
@@ -92,6 +110,7 @@ export const ResourceList = observer(function ResourceList({
             {t("下载")}
           </Button>
         ) : (
+          canEditFinancialRecord(resource, row) &&
           root.canWrite(resource) &&
           config.fields.length > 0 && (
             <Button size="small" onClick={() => setEditor(row)}>
@@ -103,7 +122,10 @@ export const ResourceList = observer(function ResourceList({
       </Space>
     ),
   });
-  const newAllowed = root.canWrite(resource) && config.fields.length > 0;
+  const newAllowed =
+    !["incomes", "commissions"].includes(resource) &&
+    root.canWrite(resource) &&
+    config.fields.length > 0;
   const toolbar = (
     <ResourceFilters
       q={q}
@@ -177,9 +199,9 @@ export const ResourceList = observer(function ResourceList({
                     size="middle"
                     rowKey="id"
                     onRow={(row) => ({
-                      className: "cursor-pointer",
+                      className: onViewRow ? "" : "cursor-pointer",
                       onClick: (event) => {
-                        if (shouldOpenRow(event))
+                        if (!onViewRow && shouldOpenRow(event))
                           navigate(`/${resource}/${row.id}`);
                       },
                     })}
@@ -233,6 +255,11 @@ export const ResourceList = observer(function ResourceList({
         ) : (
           <Editor
             resource={resource}
+            lockedFields={
+              resource === "commissions"
+                ? ["orderId", "mode", "periodStart", "periodEnd"]
+                : []
+            }
             row={typeof editor === "object" ? editor : undefined}
             initial={fixed}
             onClose={() => setEditor(false)}

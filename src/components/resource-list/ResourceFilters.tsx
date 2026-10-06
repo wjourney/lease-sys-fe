@@ -83,15 +83,23 @@ export const ResourceFilters = observer(function ResourceFilters({
                             UNPAID: "待付款",
                             PAID: "已付款",
                           }
-                        : resource === "invoices"
+                        : resource === "commissions"
                           ? {
-                              ACTIVE: "有效",
+                              OPEN: "待付款",
+                              PARTIAL: "部分付款",
+                              PAID: "已付清",
+                              UNSET: "待填写",
                               VOID: "已作废",
                             }
-                          : {
-                              ACTIVE: "启用",
-                              DISABLED: "停用",
-                            },
+                          : resource === "invoices"
+                            ? {
+                                ACTIVE: "有效",
+                                VOID: "已作废",
+                              }
+                            : {
+                                ACTIVE: "启用",
+                                DISABLED: "停用",
+                              },
               ).map(([value, label]) => ({
                 value,
                 label: t(label),

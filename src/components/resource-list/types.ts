@@ -22,6 +22,7 @@ export interface ResourceListProps {
   hideCreate?: boolean;
   hideStatus?: boolean;
   renderRowActions?: (row: Row) => ReactNode;
+  onViewRow?: (row: Row) => void;
   renderCreateEditor?: (props: {
     onClose: () => void;
     onSaved: () => void;

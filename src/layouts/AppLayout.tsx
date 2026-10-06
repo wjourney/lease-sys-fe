@@ -37,6 +37,7 @@ const standaloneListPaths = new Set([
   "/invoices",
   "/materials",
   "/fund-accounts",
+  "/fund-ledger",
 ]);
 export const AppLayout = observer(function AppLayout() {
   const root = useRoot();
@@ -49,12 +50,18 @@ export const AppLayout = observer(function AppLayout() {
   const [password, setPassword] = useState(false);
   const nav = getNavigation(root);
   const key = "/" + location.pathname.split("/")[1];
-  const defaultOpenKeys =
-    key === "/settings"
-      ? ["settings"]
-      : ["/incomes", "/expenses", "/commissions", "/invoices"].includes(key)
-        ? ["finance"]
-        : [];
+  const defaultOpenKeys = ["/settings", "/fund-accounts"].includes(key)
+    ? ["settings"]
+    : [
+          "/incomes",
+          "/expenses",
+          "/commissions",
+          "/invoices",
+          "/fund-ledger",
+          "/finance-statistics",
+        ].includes(key)
+      ? ["finance"]
+      : [];
   const isRecordDetail = /^\/[^/]+\/[^/]+\/?$/.test(location.pathname);
   const isStandaloneList = standaloneListPaths.has(
     location.pathname.replace(/\/$/, ""),
@@ -62,10 +69,11 @@ export const AppLayout = observer(function AppLayout() {
   const hasViewportList = /^\/(projects|sales-companies)\/[^/]+\/?$/.test(
     location.pathname,
   );
+  const isOrderDetail = /^\/orders\/[^/]+\/?$/.test(location.pathname);
   return (
     <Layout className="app-layout min-h-screen">
       <Drawer
-        title="SUPREME BAY"
+        title={root.site.siteName}
         placement="left"
         width={260}
         open={mobileMenu}
@@ -212,7 +220,7 @@ export const AppLayout = observer(function AppLayout() {
           </div>
         </Header>
         <Content
-          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${hasViewportList ? "viewport-detail-content" : ""}`}
+          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${hasViewportList ? "viewport-detail-content" : ""} ${isOrderDetail ? "order-detail-content" : ""}`}
         >
           <Suspense
             fallback={
@@ -224,7 +232,7 @@ export const AppLayout = observer(function AppLayout() {
             <AppRoutes />
           </Suspense>
           <footer className="p-[30px] text-center text-[10px] text-[#a7b0bc]">
-            {t("SUPREME BAY · 租赁管理系统")}
+            {root.site.footer}
           </footer>
         </Content>
       </Layout>

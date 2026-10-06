@@ -7,11 +7,14 @@ export default function CommissionListPage() {
   return (
     <ResourceList
       resource="commissions"
+      hideCreate
+      onResetExtras={() => setSearch({})}
       listToolbar={
-        <div className="mb-5 flex items-center justify-between text-[11px]">
+        <div className="mb-5 flex items-center justify-between text-sm">
           <Segmented
-            value={search.get("mode") || "MONTHLY"}
+            value={search.get("mode") || ""}
             options={[
+              { label: t("全部佣金"), value: "" },
               { label: t("单月佣金"), value: "MONTHLY" },
               { label: t("年度佣金"), value: "YEARLY" },
               { label: t("一次性结付"), value: "ONE_TIME" },

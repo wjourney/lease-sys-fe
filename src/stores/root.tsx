@@ -1,7 +1,24 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { createContext, useContext } from "react";
 import { api, clearLookupCache, errorMessage, Page, Row } from "../shared/api";
+import {
+  defaultSiteConfig,
+  normalizeSiteConfig,
+  type SiteConfig,
+} from "../shared/site-config";
 export class RootStore {
+  site = { ...defaultSiteConfig };
+  setSite(value: Partial<SiteConfig>) {
+    this.site = normalizeSiteConfig(value);
+  }
+  async loadSite() {
+    try {
+      const { data } = await api.get("/site-config");
+      runInAction(() => this.setSite(data));
+    } catch {
+      /* Keep default branding when the service is unavailable. */
+    }
+  }
   user: Row | null = null;
   ready = false;
   locale: "zh_CN" | "zh_TW" = "zh_CN";

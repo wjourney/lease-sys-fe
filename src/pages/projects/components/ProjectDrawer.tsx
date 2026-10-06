@@ -13,6 +13,7 @@ import {
   projectUploadsFromMaterials,
   uploadProjectFiles,
 } from "../project-data";
+import { ProjectUnitTypesFields } from "./ProjectUnitTypesFields";
 import { ProjectBasicFields } from "./ProjectBasicFields";
 import { ProjectFilesFields } from "./ProjectFilesFields";
 import { ProjectPropertyFields } from "./ProjectPropertyFields";
@@ -182,6 +183,10 @@ export function ProjectDrawer({
           layout="vertical"
           className="space-y-4"
           initialValues={{
+            typeConfigs: [
+              { code: "LARGE", name: "大单位" },
+              { code: "SMALL", name: "小单位" },
+            ],
             salesStatus: "现售",
             buildingStatus: "现楼",
             usage: "住宅",
@@ -195,6 +200,7 @@ export function ProjectDrawer({
             onUploadChange={onUploadChange}
             isEdit={!!row}
           />
+          <ProjectUnitTypesFields />
           <ProjectPropertyFields unitCount={row?.unitCount} />
           <ProjectFilesFields
             uploads={uploads}

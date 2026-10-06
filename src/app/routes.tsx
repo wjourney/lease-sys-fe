@@ -1,6 +1,8 @@
 import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+const LedgerPage = lazy(() => import("../pages/finance/LedgerPage"));
+const StatisticsPage = lazy(() => import("../pages/finance/StatisticsPage"));
 const SettingsPage = lazy(() => import("../pages/settings"));
 const ProjectListPage = lazy(() => import("../pages/projects/list"));
 const ProjectDetailPage = lazy(() => import("../pages/projects/detail"));
@@ -25,12 +27,11 @@ const UserDetailPage = lazy(() => import("../pages/users/detail"));
 const MaterialListPage = lazy(() => import("../pages/materials/list"));
 const MaterialDetailPage = lazy(() => import("../pages/materials/detail"));
 const FundAccountListPage = lazy(() => import("../pages/fund-accounts/list"));
-const FundAccountDetailPage = lazy(
-  () => import("../pages/fund-accounts/detail"),
-);
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/fund-ledger" element={<LedgerPage />} />
+      <Route path="/finance-statistics" element={<StatisticsPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/projects" element={<ProjectListPage />} />
       <Route path="/projects/:id" element={<ProjectDetailPage />} />
@@ -51,7 +52,10 @@ export function AppRoutes() {
       <Route path="/materials" element={<MaterialListPage />} />
       <Route path="/materials/:id" element={<MaterialDetailPage />} />
       <Route path="/fund-accounts" element={<FundAccountListPage />} />
-      <Route path="/fund-accounts/:id" element={<FundAccountDetailPage />} />
+      <Route
+        path="/fund-accounts/:id"
+        element={<Navigate to="/fund-accounts" replace />}
+      />
       <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>
   );

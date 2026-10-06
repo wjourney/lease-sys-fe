@@ -45,6 +45,7 @@ export function projectFormValues(row: Row): Row {
   const extra = row.extra && typeof row.extra === "object" ? row.extra : {};
   return {
     ...extra,
+    typeConfigs: row.typeConfigs ?? [],
     name: row.name,
     nameEn: row.nameEn,
     region: row.region,
@@ -110,6 +111,16 @@ export function projectPayload(values: Row, currentExtra: Row = {}): Row {
     longitude: values.longitude ?? null,
     latitude: values.latitude ?? null,
     completionDate: values.completionDate?.format("YYYY-MM-DD") ?? null,
+    typeConfigs: (values.typeConfigs ?? []).map((item: Row) => ({
+      code: item.code,
+      name: item.name?.trim(),
+      ...Object.fromEntries(
+        ["minArea", "maxArea", "minRent", "maxRent"].map((key) => [
+          key,
+          item[key] == null ? undefined : String(item[key]),
+        ]),
+      ),
+    })),
     description: values.description || "",
     salesCanViewExactRent: !!values.salesCanViewExactRent,
     extra,

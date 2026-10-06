@@ -8,10 +8,14 @@ import { root } from "../stores/root";
 export const Session = observer(function Session() {
   useEffect(() => {
     void root.init();
+    void root.loadSite();
     const expired = () => root.clear();
     window.addEventListener("session-expired", expired);
     return () => window.removeEventListener("session-expired", expired);
   }, []);
+  useEffect(() => {
+    document.title = root.site.browserTitle;
+  }, [root.site.browserTitle]);
   if (!root.ready)
     return (
       <div className="flex h-[70vh] items-center justify-center">

@@ -1,6 +1,7 @@
 import { ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
 import { Alert, Button, Space, Tag } from "antd";
 import { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { dateText } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
@@ -17,46 +18,49 @@ export function OrderDetailHeader({
 }) {
   const { row, navigate, setTab } = useRecordDetail();
   const notice = orderNotice(row);
+  const headerHost = document.getElementById("record-detail-header");
   return (
     <div className="mx-auto mb-6 w-full max-w-[1320px]">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-2">
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined aria-hidden />}
-            aria-label={t("返回订单列表")}
-            onClick={() => navigate("/orders")}
-          />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="m-0 text-[24px] font-semibold leading-8 text-[#21324e]">
-                {t(row.unitNo || row.orderNo)}
-              </h1>
-              <Tag
-                color={
-                  row.status === "ACTIVE"
-                    ? "green"
-                    : row.status === "PENDING"
-                      ? "gold"
-                      : "default"
-                }
-                className="!m-0"
-              >
-                {t(orderLabel(row))}
-              </Tag>
-            </div>
-            <div className="mt-1 text-sm text-[#7b8a9e]">
-              {[
-                row.orderNo,
-                row.tenantName,
-                `${dateText(row.startsOn)} 至 ${dateText(row.endsOn)}`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </div>
+      {headerHost &&
+        createPortal(
+          <div className="flex min-w-0 items-center gap-3">
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined aria-hidden />}
+              aria-label={t("返回订单列表")}
+              onClick={() => navigate("/orders")}
+            />
+            <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
+              {t(row.unitNo || row.orderNo)}
+            </h1>
+          </div>,
+          headerHost,
+        )}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <Tag
+            color={
+              row.status === "ACTIVE"
+                ? "green"
+                : row.status === "PENDING"
+                  ? "gold"
+                  : "default"
+            }
+            className="!m-0"
+          >
+            {t(orderLabel(row))}
+          </Tag>
+          <div className="min-w-0 text-sm text-[#7b8a9e]">
+            {[
+              row.orderNo,
+              row.tenantName,
+              `${dateText(row.startsOn)} 至 ${dateText(row.endsOn)}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </div>
         </div>
-        <Space wrap size={8} className="max-[760px]:ml-10">
+        <Space wrap size={8}>
           {editable && (
             <Button icon={<EditOutlined aria-hidden />} onClick={onEdit}>
               {t("编辑")}

@@ -40,21 +40,31 @@ export function getNavigation(root: RootStore) {
       icon: <DollarCircleOutlined aria-hidden />,
       label: t("财务管理"),
       children: [
-        ["incomes", "收入管理"],
-        ["expenses", "支出管理"],
+        ["incomes", "账单管理"],
         ["commissions", "佣金管理"],
-        ["invoices", "发票管理"],
+        ["fund-ledger", "资金流水"],
+        ["finance-statistics", "财务统计"],
+        ["expenses", "支出管理"],
       ]
-        .filter(([resource]) => root.canRead(resource))
+        .filter(([resource]) =>
+          ["fund-ledger", "finance-statistics"].includes(resource)
+            ? root.finance
+            : root.canRead(resource),
+        )
         .map(([resource, label]) => ({ key: `/${resource}`, label: t(label) })),
     },
     {
       key: "settings",
       icon: <SettingOutlined aria-hidden />,
       label: t("系统设置"),
-      children: root.canRead("settings")
-        ? [{ key: "/settings", label: t("单位类型配置") }]
-        : [],
+      children: [
+        ...(root.canRead("fund-accounts")
+          ? [{ key: "/fund-accounts", label: t("资金账户") }]
+          : []),
+        ...(root.canWrite("settings")
+          ? [{ key: "/settings", label: t("网站配置") }]
+          : []),
+      ],
     },
   ]
     .filter(

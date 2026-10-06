@@ -3,13 +3,18 @@ import { observer } from "mobx-react-lite";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
 import { t } from "../../../../shared/i18n";
+import { Link } from "react-router-dom";
 export const CommissionActions = observer(function CommissionActions() {
   const { resource, root, row, openAction, id } = useRecordDetail();
   return (
     <>
+      {row.orderId && (
+        <Link to={`/orders/${row.orderId}`}>{t("查看来源订单")}</Link>
+      )}
       {resource === "commissions" &&
         root.finance &&
-        Number(row.remainingAmount) > 0 && (
+        row.status !== "VOID" &&
+        Number(row.availableAmount ?? row.remainingAmount) > 0 && (
           <Button
             type="primary"
             onClick={() =>
@@ -25,7 +30,7 @@ export const CommissionActions = observer(function CommissionActions() {
                 ],
                 `/commissions/${id}/payments`,
                 {
-                  amount: row.remainingAmount,
+                  amount: row.availableAmount ?? row.remainingAmount,
                   paymentMethod: "BANK",
                 },
                 {

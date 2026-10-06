@@ -1,3 +1,5 @@
+import { ReceiptActions } from "../../../../components/receipts/ReceiptActions";
+import { RegisterReceipt } from "../../../../components/receipts/RegisterReceipt";
 import { Button, Card, Space, Table, Tag } from "antd";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
@@ -8,33 +10,9 @@ import { OrderTable } from "./OrderTable";
 import { cents } from "../order-state";
 export function OrderBills() {
   const ctx = useRecordDetail();
-  const { id, row, root, openAction, run, setMaterial, modal } = ctx;
+  const { id, row, root, openAction } = ctx;
   const bills: Row[] = row.bills ?? [];
   const active = bills.filter((b) => b.status !== "VOID");
-  function receipt(b: Row) {
-    const p = row.initialPayment ?? {};
-    const filled = b.feeType === "DEPOSIT" ? p.depositReceived : p.rentReceived;
-    openAction(
-      "登记收款",
-      [
-        { key: "amount", label: "本次收款金额", type: "money" },
-        { key: "receivedOn", label: "到账日期", type: "date" },
-        ...financialFields.filter((f) => f.key !== "paidOn"),
-        { key: "payerName", label: "付款方" },
-        { key: "remark", label: "说明", type: "textarea", required: false },
-      ],
-      `/incomes/${b.id}/receipts`,
-      {
-        amount: String(
-          Math.min(Number(b.available), Number(filled) || Number(b.available)),
-        ),
-        receivedOn: p.receivedOn,
-        payerName: row.tenantName,
-        paymentMethod: "BANK",
-      },
-      { sourceKey: crypto.randomUUID() },
-    );
-  }
   const sum = (key: string, items = active) =>
     amount(items.reduce((n, b) => n + cents(b[key]), 0) / 100);
   const columns = [
@@ -56,7 +34,8 @@ export function OrderBills() {
     },
     { title: t("应收"), dataIndex: "total", render: amount },
     { title: t("已确认到账"), dataIndex: "confirmed", render: amount },
-    { title: t("待确认"), dataIndex: "pending", render: amount },
+    { title: t("待核对"), dataIndex: "pending", render: amount },
+    { title: t("押金抵扣"), dataIndex: "offset", render: amount },
     { title: t("剩余应收"), dataIndex: "remaining", render: amount },
     { title: t("到期日期"), dataIndex: "dueOn", render: dateText },
     {
@@ -72,29 +51,31 @@ export function OrderBills() {
             Number(b.available) > 0 &&
             !(b.feeType === "DEPOSIT" && row.depositSettledAt) &&
             row.status !== "CLOSED" && (
-              <Button size="small" type="primary" onClick={() => receipt(b)}>
-                {t("登记收款")}
+              <RegisterReceipt
+                bills={[b]}
+                orderId={id}
+                payerName={row.tenantName}
+              />
+            )}
+          {root.manageOrders &&
+            b.feeType === "OTHER" &&
+            b.status !== "VOID" &&
+            Number(b.confirmed) === 0 &&
+            Number(b.pending) === 0 &&
+            Number(b.offset) === 0 && (
+              <Button
+                size="small"
+                onClick={() =>
+                  openAction(
+                    "作废其他费用",
+                    [{ key: "reason", label: "作废原因", type: "textarea" }],
+                    `/orders/${id}/fees/${b.id}/void`,
+                  )
+                }
+              >
+                {t("作废")}
               </Button>
             )}
-          {root.finance && b.status !== "VOID" && b.feeType !== "DEPOSIT" && (
-            <Button
-              size="small"
-              onClick={() =>
-                openAction(
-                  "调整应收",
-                  [
-                    { key: "amount", label: "调整后的应收总额", type: "money" },
-                    { key: "reason", label: "调整原因", type: "textarea" },
-                  ],
-                  `/incomes/${b.id}/adjust`,
-                  { amount: b.total },
-                  { revision: b.revision },
-                )
-              }
-            >
-              {t("财务调整")}
-            </Button>
-          )}
         </Space>
       ),
     },
@@ -116,90 +97,11 @@ export function OrderBills() {
         },
         {
           title: t("操作"),
-          render: (_: unknown, r: Row) => (
-            <Space wrap>
-              {root.finance && r.status === "PENDING" && (
-                <>
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={() =>
-                      modal.confirm({
-                        title: t("确认已核对实际到账？"),
-                        content: amount(r.amount),
-                        onOk: () => run(`/incomes/${r.id}/confirm`),
-                      })
-                    }
-                  >
-                    {t("确认到账")}
-                  </Button>
-                  <Button
-                    size="small"
-                    onClick={() =>
-                      openAction(
-                        "驳回收款",
-                        [
-                          {
-                            key: "reason",
-                            label: "驳回原因",
-                            type: "textarea",
-                          },
-                        ],
-                        `/incomes/${r.id}/reject`,
-                      )
-                    }
-                  >
-                    {t("驳回")}
-                  </Button>
-                </>
-              )}
-              {(root.canWrite("materials") || r.status === "PENDING") && (
-                <Button
-                  size="small"
-                  onClick={() => setMaterial({ incomeId: r.id })}
-                >
-                  {t("上传凭证")}
-                </Button>
-              )}
-            </Space>
-          ),
+          render: (_: unknown, r: Row) => <ReceiptActions receipt={r} />,
         },
       ]}
     />
   );
-  const p = row.initialPayment;
-  const paymentDeclaration = p?.paid
-    ? p.paymentState === "PARTIAL"
-      ? "已填报部分付款"
-      : p.paymentState === "PAID"
-        ? "已填报首期租金及押金付款"
-        : p.rentPaid && p.depositPaid
-          ? "已填报首期租金及押金付款"
-          : p.rentPaid
-            ? "已填报首期租金付款"
-            : "已填报押金付款"
-    : "未付款";
-  const declaration =
-    p && Object.keys(p).length > 0 ? (
-      <div className="mt-2 rounded-md border border-[#e5eaf0] px-4 py-3 text-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          <strong className="text-[#263650]">{t("录单时的首期填报")}</strong>
-          <span className="text-[#8793a4]">{t(paymentDeclaration)}</span>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[#64748b]">
-          <span>
-            {t("填报租金")}：{amount(p.rentReceived ?? 0)}
-          </span>
-          <span>
-            {t("填报押金")}：{amount(p.depositReceived ?? 0)}
-          </span>
-          <span>
-            {t("填报到账日期")}：{dateText(p.receivedOn)}
-          </span>
-          <span>{t("仅为录单声明，不代表财务确认")}</span>
-        </div>
-      </div>
-    ) : undefined;
   return (
     <div className="flex flex-col gap-4">
       <OrderTable
@@ -209,12 +111,31 @@ export function OrderBills() {
         summary={
           <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-[#52627a]">
             <span>
-              {t("应收")}{" "}
-              <strong className="text-[#263650]">{sum("total")}</strong>
+              {t("押金已收")}{" "}
+              <strong>
+                {sum(
+                  "confirmed",
+                  active.filter((b) => b.feeType === "DEPOSIT"),
+                )}
+              </strong>
             </span>
             <span>
-              {t("已确认到账")}{" "}
-              <strong className="text-[#263650]">{sum("confirmed")}</strong>
+              {t("租金及其他应收")}{" "}
+              <strong className="text-[#263650]">
+                {sum(
+                  "total",
+                  active.filter((b) => b.feeType !== "DEPOSIT"),
+                )}
+              </strong>
+            </span>
+            <span>
+              {t("租金及其他已收")}{" "}
+              <strong className="text-[#263650]">
+                {sum(
+                  "confirmed",
+                  active.filter((b) => b.feeType !== "DEPOSIT"),
+                )}
+              </strong>
             </span>
             <span>
               {t("待确认到账")}{" "}
@@ -222,37 +143,60 @@ export function OrderBills() {
             </span>
           </div>
         }
+        supplementary={
+          row.initialPayment?.paid &&
+          !bills.some((b) =>
+            (b.receipts ?? []).some(
+              (r: Row) =>
+                r.sourceKey?.startsWith("initial:") ||
+                ["PENDING", "CONFIRMED"].includes(r.status),
+            ),
+          ) ? (
+            <p className="text-sm text-[#738198]">
+              {t(
+                "历史录单中曾填报付款，但当前没有有效收款记录。请核对实际到账，补齐资金账户后登记收款。",
+              )}
+            </p>
+          ) : undefined
+        }
         expandable={{
           expandedRowRender: receipts,
           rowExpandable: (b) => (b.receipts?.length ?? 0) > 0,
         }}
-        supplementary={declaration}
         actions={
-          root.canWrite("incomes") && row.status !== "CLOSED" ? (
-            <Button
-              type="primary"
-              onClick={() =>
-                openAction(
-                  "新增其他费用",
-                  [
-                    { key: "amount", label: "应收金额", type: "money" },
-                    { key: "dueOn", label: "到期日期", type: "date" },
-                    { key: "remark", label: "费用说明", type: "textarea" },
-                  ],
-                  "/incomes",
-                  {},
-                  {
-                    orderId: id,
-                    feeType: "OTHER",
-                    payerName: row.tenantName,
-                    payerEmail: row.tenantEmail || undefined,
-                  },
-                )
-              }
-            >
-              {t("新增其他费用")}
-            </Button>
-          ) : null
+          <Space>
+            {row.status !== "CLOSED" && (
+              <RegisterReceipt
+                bills={active.filter(
+                  (b) => !(b.feeType === "DEPOSIT" && row.depositSettledAt),
+                )}
+                orderId={id}
+                payerName={row.tenantName}
+              />
+            )}
+            {root.manageOrders && row.status !== "CLOSED" ? (
+              <Button
+                type="primary"
+                onClick={() =>
+                  openAction(
+                    "新增其他费用",
+                    [
+                      { key: "amount", label: "应收金额", type: "money" },
+                      { key: "dueOn", label: "到期日期", type: "date" },
+                      { key: "remark", label: "费用说明", type: "textarea" },
+                    ],
+                    `/orders/${id}/fees`,
+                    {},
+                    {
+                      sourceKey: crypto.randomUUID(),
+                    },
+                  )
+                }
+              >
+                {t("新增其他费用")}
+              </Button>
+            ) : null}
+          </Space>
         }
       />
       {(row.rentRefunds?.length ?? 0) > 0 && (

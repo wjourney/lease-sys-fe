@@ -25,6 +25,7 @@ import { OrderDrawer } from "../../pages/orders/components/OrderDrawer";
 import { ProjectDetailView } from "../../pages/projects/detail/components/ProjectDetailView";
 import { amount, api, Row } from "../../shared/api";
 import { configs } from "../../shared/config";
+import { canEditFinancialRecord } from "../../shared/financial-record-actions";
 import { t } from "../../shared/i18n";
 import { Status } from "../../shared/ui";
 import { useRoot } from "../../stores/root";
@@ -62,8 +63,14 @@ export const ResourceDetail = observer(function ResourceDetail({
     id,
     root.epoch,
   );
-  const { action, setAction, openAction, run, previewInvoice } =
-    useRecordActions(id);
+  const {
+    action,
+    setAction,
+    openAction,
+    openReceiptAction,
+    run,
+    previewInvoice,
+  } = useRecordActions(id);
   const config = configs[resource];
   if (!config) return <Empty />;
   if (error)
@@ -76,6 +83,7 @@ export const ResourceDetail = observer(function ResourceDetail({
     );
   if (!row) return <Spin />;
   const editable =
+    canEditFinancialRecord(resource, row) &&
     root.canWrite(resource) &&
     config.fields.length > 0 &&
     (resource !== "orders" || (row.actions?.edit ?? row.status !== "CLOSED"));
@@ -122,6 +130,7 @@ export const ResourceDetail = observer(function ResourceDetail({
     message,
     modal,
     openAction,
+    openReceiptAction,
     run,
     previewInvoice,
     setMaterial,
@@ -225,9 +234,14 @@ export const ResourceDetail = observer(function ResourceDetail({
                     {actions}
 
                     {root.canWrite(resource) &&
-                      !["orders", "invoices", "settings"].includes(
-                        resource,
-                      ) && (
+                      canEditFinancialRecord(resource, row) &&
+                      ![
+                        "orders",
+                        "incomes",
+                        "invoices",
+                        "settings",
+                        "commissions",
+                      ].includes(resource) && (
                         <Button
                           danger
                           icon={<DeleteOutlined aria-hidden={true} />}
@@ -316,6 +330,11 @@ export const ResourceDetail = observer(function ResourceDetail({
             <Editor
               resource={resource}
               row={row}
+              lockedFields={
+                resource === "commissions"
+                  ? ["orderId", "mode", "periodStart", "periodEnd"]
+                  : []
+              }
               onClose={() => setEdit(false)}
               onSaved={() => {
                 setEdit(false);

@@ -31,6 +31,7 @@ export const OrderActions = observer(function OrderActions() {
   }
 
   const items: MenuProps["items"] = [
+    ...(row.actions?.moveIn ? [{ key: "moveIn", label: t("办理入住") }] : []),
     ...(root.manageOrders && row.actions?.terminate
       ? [{ key: "terminate", label: t("登记退租") }]
       : []),
@@ -43,7 +44,16 @@ export const OrderActions = observer(function OrderActions() {
   ];
 
   function onMore({ key }: { key: string }) {
-    if (key === "close") {
+    if (key === "moveIn") {
+      openAction(
+        "办理入住",
+        [
+          { key: "date", label: "实际入住日期", type: "date" },
+          { key: "reason", label: "说明", type: "textarea" },
+        ],
+        `/orders/${id}/move-in`,
+      );
+    } else if (key === "close") {
       modal.confirm({
         title: t("确认关闭此订单？"),
         content: t("关闭后释放单位占用，并作废未收款的账单。"),

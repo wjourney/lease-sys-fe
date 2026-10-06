@@ -98,7 +98,7 @@ const LoginPage = observer(function LoginPage() {
             {t("账号由管理员开通。如需帮助，请联系所属公司管理员。")}
           </Text>
         </div>
-        <footer>© {t(new Date().getFullYear())} SUPREME BAY</footer>
+        <footer>{root.site.footer}</footer>
       </section>
     </div>
   );

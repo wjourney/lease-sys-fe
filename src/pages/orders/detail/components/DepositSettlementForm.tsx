@@ -168,6 +168,11 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
           <Input.TextArea rows={3} />
         </Form.Item>
       </Form>
+      <p className="text-sm text-[#738198]">
+        {t(
+          "按已确认的实收押金办理结算；尚未收取的押金余额将在结算后终止，不再催收。退款以实际登记付款为准。",
+        )}
+      </p>
       <Space direction="vertical">
         <span>
           {t("已确认实收")}：{amount(received / 100)}

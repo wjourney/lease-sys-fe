@@ -8,7 +8,7 @@ import {
   text,
 } from "../../shared/resource-config";
 export const IncomeConfig: Config = {
-  title: "收入管理",
+  title: "账单管理",
   description: "查看应收账单，登记实际收款并进行财务核对",
   fields: [
     source("orderId", "关联订单（可选）", "orders", false),
@@ -46,7 +46,7 @@ export const IncomeConfig: Config = {
     },
   ],
   columns: cols({
-    recordNo: "收入 / 账单",
+    recordNo: "账单编号",
     payerName: "付款方",
     orderNo: "关联订单",
     feeType: "类型",

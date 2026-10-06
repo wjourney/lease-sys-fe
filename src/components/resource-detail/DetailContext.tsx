@@ -23,6 +23,12 @@ export type DetailContextValue = {
     initial?: Row,
     extra?: Row,
   ) => void;
+  openReceiptAction: (
+    fields: Field[],
+    path: string,
+    initial?: Row,
+    extra?: Row,
+  ) => void;
   run: (path: string, body?: Row) => Promise<void>;
   previewInvoice: () => Promise<void>;
   setMaterial: Dispatch<SetStateAction<Row | undefined>>;

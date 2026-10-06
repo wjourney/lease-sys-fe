@@ -26,6 +26,7 @@ export const Editor = observer(function Editor({
   const root = useRoot();
   const { message } = App.useApp();
   const [form] = Form.useForm();
+  const selectedProjectId = Form.useWatch("projectId", form);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lookups, setLookups] = useState<Record<string, any[]>>({});
@@ -95,15 +96,7 @@ export const Editor = observer(function Editor({
         async (source) => {
           let data: Row[];
           if (source === "unit-types") {
-            const settings = await options("settings", {
-              key: "unit_types",
-            });
-            data = (settings[0]?.value ?? [])
-              .filter((x) => x.enabled || row?.unitTypeCode === x.code)
-              .map((x) => ({
-                value: x.code,
-                label: t(x.name),
-              }));
+            data = [];
           } else {
             const rows = await options(
               source === "sales-users" ? "users" : source!,
@@ -125,7 +118,13 @@ export const Editor = observer(function Editor({
       ),
     )
       .then((entries) => {
-        if (live) setLookups(Object.fromEntries(entries));
+        if (live)
+          setLookups((previous) => ({
+            ...previous,
+            ...Object.fromEntries(
+              entries.filter(([source]) => source !== "unit-types"),
+            ),
+          }));
       })
       .catch((e) => {
         if (live) setError(errorMessage(e));
@@ -134,6 +133,37 @@ export const Editor = observer(function Editor({
       live = false;
     };
   }, [resource, row?.id]);
+  useEffect(() => {
+    if (!fields.some((f) => f.source === "unit-types")) return;
+    let live = true;
+    setLookups((previous) => ({ ...previous, "unit-types": [] }));
+    if (selectedProjectId)
+      api
+        .get<Row>(`/projects/${selectedProjectId}`)
+        .then(({ data }) => {
+          if (!live) return;
+          const types = data.typeConfigs ?? [];
+          setLookups((previous) => ({
+            ...previous,
+            "unit-types": types.map((item: Row) => ({
+              value: item.code,
+              label: t(item.name || item.code),
+            })),
+          }));
+          if (
+            !types.some(
+              (item: Row) => item.code === form.getFieldValue("unitTypeCode"),
+            )
+          )
+            form.setFieldValue("unitTypeCode", undefined);
+        })
+        .catch((error) => {
+          if (live) setError(errorMessage(error));
+        });
+    return () => {
+      live = false;
+    };
+  }, [selectedProjectId, resource]);
   async function save() {
     try {
       const values = await form.validateFields();
@@ -217,6 +247,10 @@ export const Editor = observer(function Editor({
               rules={[
                 {
                   required: f.required,
+                  ...(f.required &&
+                  ["bankName", "accountIdentifier"].includes(f.key)
+                    ? { whitespace: true }
+                    : {}),
                   message: "请填写" + f.label,
                 },
                 ...(f.key === "password"

@@ -6,6 +6,29 @@ import {
 } from "./project-data";
 
 describe("project edit data", () => {
+  it("round-trips project types and serializes numeric bounds without changing type identity", () => {
+    const typeConfigs = [
+      {
+        code: "custom",
+        name: " 大单位 ",
+        minArea: 40,
+        maxArea: 80,
+        minRent: 10000,
+        maxRent: 20000,
+      },
+    ];
+    const values = projectFormValues({ typeConfigs });
+    expect(projectPayload(values).typeConfigs).toEqual([
+      {
+        code: "custom",
+        name: "大单位",
+        minArea: "40",
+        maxArea: "80",
+        minRent: "10000",
+        maxRent: "20000",
+      },
+    ]);
+  });
   it("restores editable fields and clears optional values without changing other metadata", () => {
     const row = {
       name: "江语城",
@@ -60,7 +83,8 @@ describe("project edit data", () => {
         id: "photo",
         category: "PHOTO",
         storageKey: "stored",
-        previewUrl: "https://example.oss-cn-shanghai.aliyuncs.com/photo?Signature=example",
+        previewUrl:
+          "https://example.oss-cn-shanghai.aliyuncs.com/photo?Signature=example",
         originalName: "项目外观.jpg",
       },
       {

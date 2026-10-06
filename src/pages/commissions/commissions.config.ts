@@ -27,7 +27,7 @@ export const CommissionConfig: Config = {
     date("periodStart", "结算开始"),
     date("periodEnd", "结算结束"),
     date("dueOn", "应付日期"),
-    money("amount", "佣金金额（可待填写）", false),
+    money("amount", "佣金金额"),
     {
       key: "remark",
       label: "备注",

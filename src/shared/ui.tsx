@@ -1,3 +1,5 @@
+import { observer } from "mobx-react-lite";
+import { useRoot } from "../stores/root";
 import { Tag, Typography } from "antd";
 import { amount, dateText } from "./api";
 import { feeLabels, roleLabels, statusLabels } from "./config";
@@ -108,25 +110,42 @@ export function valueView(key: string, value: any, resource?: string) {
   if (typeof value === "object") return JSON.stringify(value);
   return value;
 }
-export function Brand() {
+export const Brand = observer(function Brand() {
+  const { site } = useRoot();
   return (
     <div className="brand flex h-[86px] items-center gap-2.5 overflow-hidden px-[18px] text-white whitespace-nowrap [&_strong]:block [&_strong]:text-[13px] [&_strong]:tracking-[1.1px] [&_small]:mt-[5px] [&_small]:block [&_small]:text-[10px] [&_small]:tracking-[3px] [&_small]:text-[#b7c0ce]">
-      <svg width="36" height="30" viewBox="0 0 40 32" aria-hidden="true">
-        <path
-          d="M3 5v22l15-8 18 8V5L18 14z"
-          fill="none"
-          stroke="#c6a16a"
-          strokeWidth="2"
+      {site.logoUrl ? (
+        <img
+          src={site.logoUrl}
+          alt={site.siteName}
+          className="h-9 w-9 shrink-0 object-contain"
+          onError={(event) => {
+            if (!event.currentTarget.src.includes("/site-config/logo"))
+              event.currentTarget.src = `/api/v1/site-config/logo?v=${site.revision}`;
+          }}
         />
-        <path d="M3 5l15 9V4" stroke="#c6a16a" fill="none" />
-      </svg>
-      <div>
-        <strong>SUPREME BAY</strong>
-        <small>{t("租赁管理系统")}</small>
+      ) : (
+        <svg width="36" height="30" viewBox="0 0 40 32" aria-hidden="true">
+          <path
+            d="M3 5v22l15-8 18 8V5L18 14z"
+            fill="none"
+            stroke="#c6a16a"
+            strokeWidth="2"
+          />
+          <path d="M3 5l15 9V4" stroke="#c6a16a" fill="none" />
+        </svg>
+      )}
+      <div className="min-w-0">
+        <strong className="truncate" title={site.siteName}>
+          {site.siteName}
+        </strong>
+        <small className="truncate" title={site.subtitle}>
+          {site.subtitle}
+        </small>
       </div>
     </div>
   );
-}
+});
 export function BuildingArt({ index = 0 }: { index?: number }) {
   const towerClassName =
     "absolute -bottom-[14px] grid -skew-y-[5deg] gap-[5px] bg-[#e7eaec] p-[11px] shadow-[9px_0_0_#acbdc9] [&_i]:block [&_i]:min-h-2.5 [&_i]:min-w-2 [&_i]:bg-[linear-gradient(110deg,#b8cbd7,#a3b9ca)]";

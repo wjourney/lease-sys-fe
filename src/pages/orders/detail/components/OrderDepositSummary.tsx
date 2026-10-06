@@ -1,3 +1,4 @@
+import { Status } from "../../../../shared/ui";
 import { Alert, Button, Card, Space, Steps, Table, Tag } from "antd";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
@@ -147,17 +148,7 @@ export function OrderDepositSummary() {
                 { title: t("金额"), dataIndex: "amount", render: amount },
                 {
                   title: t("状态"),
-                  render: (_, receipt) => (
-                    <Tag
-                      color={receipt.status === "CONFIRMED" ? "green" : "gold"}
-                    >
-                      {t(
-                        receipt.status === "CONFIRMED"
-                          ? "已确认"
-                          : "待财务确认",
-                      )}
-                    </Tag>
-                  ),
+                  render: (_, receipt) => <Status value={receipt.status} />,
                 },
                 {
                   title: t("操作"),

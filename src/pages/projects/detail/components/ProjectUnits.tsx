@@ -5,9 +5,9 @@ import {
 } from "@ant-design/icons";
 import { Button, Card, Empty, Pagination, Select, Spin } from "antd";
 import { observer } from "mobx-react-lite";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ResourceList } from "../../../../components/resource-list/ResourceList";
-import { amount, options, type Row } from "../../../../shared/api";
+import { amount, type Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { Status } from "../../../../shared/ui";
@@ -32,27 +32,11 @@ export const ProjectUnits = observer(function ProjectUnits({
   const [unitTypeCode, setUnitTypeCode] = useState<string>();
   const [sort, setSort] = useState("default");
   const [statusFilter, setStatusFilter] = useState<ProjectUnitStatus>();
-  const [unitTypes, setUnitTypes] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const unitTypes = (stats.typeConfigs ?? []).map((item: Row) => ({
+    label: t(item.name || item.code),
+    value: item.code,
+  }));
   const [unitToDelete, setUnitToDelete] = useState<Row>();
-  useEffect(() => {
-    let active = true;
-    options("settings", { key: "unit_types" })
-      .then((rows) => {
-        if (active)
-          setUnitTypes(
-            (rows[0]?.value ?? []).map((item: Row) => ({
-              label: t(item.name),
-              value: item.code,
-            })),
-          );
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [root.epoch]);
 
   return (
     <>

@@ -1,87 +1,243 @@
-import { RequestError as Alert } from "../../components/feedback/RequestError";
-import { PlusOutlined } from "@ant-design/icons";
-import { App, Button, Card, Typography } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import { isAxiosError } from "axios";
+import { App, Button, Card, Form, Input, Result, Spin, Upload } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
-import { api, errorMessage, options, Row } from "../../shared/api";
+import { api, errorMessage } from "../../shared/api";
 import { t } from "../../shared/i18n";
+import { normalizeSiteConfig, type SiteConfig } from "../../shared/site-config";
 import { useRoot } from "../../stores/root";
-import { UnitTypesTable } from "./components/UnitTypesTable";
-const { Paragraph } = Typography;
-export const SettingsPage = observer(function SettingsPage() {
+
+export default observer(function WebsiteSettings() {
   const root = useRoot();
   const { message } = App.useApp();
-  const [setting, setSetting] = useState<Row>();
-  const [rows, setRows] = useState<Row[]>([]);
+  const [form] = Form.useForm();
+  const [saved, setSaved] = useState<SiteConfig>();
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [file, setFile] = useState<File>();
+  const [preview, setPreview] = useState<string>();
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const allowed = root.canWrite("settings");
   useEffect(() => {
-    options("settings", {
-      key: "unit_types",
-    })
-      .then((data) => {
-        setSetting(data[0]);
-        setRows(data[0]?.value ?? []);
+    if (!allowed) return;
+    let active = true;
+    setLoading(true);
+    api
+      .get("/settings/website")
+      .then(({ data }) => {
+        if (!active) return;
+        const value = normalizeSiteConfig(data);
+        setSaved(value);
+        form.setFieldsValue(value);
       })
-      .catch((e) => setError(errorMessage(e)));
-  }, [root.epoch]);
-  async function save() {
+      .catch((error) => {
+        if (!active) return;
+        const response = isAxiosError(error) ? error.response : undefined;
+        const missingEndpoint =
+          response?.status === 404 ||
+          (response?.status === 400 &&
+            response.data?.message === "无效记录 ID");
+        const hint = missingEndpoint
+          ? "网站配置服务尚未更新，请联系管理员更新服务后重试"
+          : [400, 422].includes(response?.status ?? 0)
+            ? "网站配置加载失败，请稍后重试"
+            : errorMessage(error);
+        message.error(t(hint));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [allowed, retry, form, message]);
+  useEffect(() => {
+    if (!file) {
+      setPreview(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  async function save(values: Record<string, string>) {
+    if (!saved) return;
     setSaving(true);
     try {
-      const { data } = setting
-        ? await api.patch("/settings/" + setting.id, {
-            revision: setting.revision,
-            value: rows,
-          })
-        : await api.post("/settings", { key: "unit_types", value: rows });
-      setSetting(data);
-      message.success("设置已保存");
-      root.invalidate();
-    } catch (e) {
-      setError(errorMessage(e));
+      const body = new FormData();
+      body.append(
+        "payload",
+        JSON.stringify({
+          siteName: values.siteName.trim(),
+          subtitle: values.subtitle?.trim() ?? "",
+          browserTitle: values.browserTitle.trim(),
+          footer: values.footer?.trim() ?? "",
+          revision: saved.revision,
+          removeLogo,
+        }),
+      );
+      if (file) body.append("file", file);
+      const { data } = await api.post("/settings/website", body);
+      const next = normalizeSiteConfig(data);
+      root.setSite(next);
+      setSaved(next);
+      form.setFieldsValue(next);
+      setFile(undefined);
+      setRemoveLogo(false);
+      message.success(t("网站配置已保存"));
+    } catch (error) {
+      message.error(t(errorMessage(error)));
     } finally {
       setSaving(false);
     }
   }
-  const addType = () =>
-    setRows([
-      ...rows,
-      {
-        code: "",
-        name: "",
-        sortOrder: rows.length + 1,
-        enabled: true,
-      },
-    ]);
+  if (!allowed)
+    return <Result status="403" title={t("当前账号无权修改网站配置")} />;
+  const logo = preview || (!removeLogo ? saved?.logoUrl : null);
   return (
-    <div>
-      {error && <Alert message={t(error)} type="error" />}
-      <Card
-        title={t("单位类型")}
-        extra={
-          root.canWrite("settings") ? (
-            <div className="flex flex-wrap gap-2">
-              <Button icon={<PlusOutlined aria-hidden />} onClick={addType}>
-                {t("新增类型")}
-              </Button>
-              <Button type="primary" loading={saving} onClick={save}>
-                {t("保存设置")}
-              </Button>
-            </div>
-          ) : undefined
-        }
-      >
-        <Paragraph type="secondary">
-          {t("编码用于关联具体单位。已使用的类型可以停用，历史数据仍会保留。")}
-        </Paragraph>
-        <UnitTypesTable
-          rows={rows}
-          root={root}
-          setting={setting}
-          setRows={setRows}
-        />
-      </Card>
-    </div>
+    <Card
+      title={t("网站配置")}
+      className="mx-auto max-w-[1000px]"
+      extra={
+        <Button
+          type="primary"
+          loading={saving}
+          disabled={!saved || loading}
+          onClick={() => form.submit()}
+        >
+          {t("保存配置")}
+        </Button>
+      }
+    >
+      <Spin spinning={loading}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={save}
+          disabled={!saved || saving || loading}
+        >
+          {!loading && !saved ? (
+            <Button
+              disabled={false}
+              onClick={() => setRetry((value) => value + 1)}
+            >
+              {t("重新加载")}
+            </Button>
+          ) : (
+            <>
+              <p className="mb-6 text-sm text-[#73819a]">
+                {t("保存后应用于登录页、侧栏品牌区、浏览器标题和页脚。")}
+              </p>
+              <Form.Item label={t("网站 Logo")}>
+                <div className="flex flex-wrap items-center gap-5">
+                  <div className="flex h-24 w-36 items-center justify-center rounded-lg border border-[#e0e6ed] bg-[#15243f] p-3">
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={t("网站 Logo 预览")}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-sm text-white">
+                        {t("默认标志")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Upload
+                        accept="image/png,image/jpeg,image/webp"
+                        showUploadList={false}
+                        disabled={saving}
+                        beforeUpload={(next) => {
+                          if (
+                            !["image/png", "image/jpeg", "image/webp"].includes(
+                              next.type,
+                            ) ||
+                            next.size > 2 * 1024 * 1024
+                          ) {
+                            message.error(
+                              t("请上传 2MB 以内的 PNG、JPG 或 WebP 图片"),
+                            );
+                            return Upload.LIST_IGNORE;
+                          }
+                          setFile(next);
+                          setRemoveLogo(false);
+                          return false;
+                        }}
+                      >
+                        <Button icon={<UploadOutlined />}>
+                          {t(logo ? "替换 Logo" : "上传 Logo")}
+                        </Button>
+                      </Upload>
+                      {logo && (
+                        <Button
+                          danger
+                          onClick={() => {
+                            setFile(undefined);
+                            setRemoveLogo(true);
+                          }}
+                        >
+                          {t("移除")}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-sm text-[#73819a]">
+                      {t(
+                        "支持 PNG、JPG、WebP，最大 2MB，建议使用透明背景图片。",
+                      )}
+                    </p>
+                    <p className="text-sm text-[#73819a]">
+                      {t("上传、替换或移除后，点击保存配置生效。")}
+                    </p>
+                  </div>
+                </div>
+              </Form.Item>
+              <div className="grid grid-cols-2 gap-x-6 max-[640px]:grid-cols-1">
+                <Form.Item
+                  name="siteName"
+                  label={t("网站名称")}
+                  rules={[
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: t("请填写网站名称"),
+                    },
+                  ]}
+                >
+                  <Input maxLength={60} />
+                </Form.Item>
+                <Form.Item name="subtitle" label={t("网站副标题")}>
+                  <Input maxLength={80} />
+                </Form.Item>
+                <Form.Item
+                  name="browserTitle"
+                  label={t("浏览器标题")}
+                  rules={[
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: t("请填写浏览器标题"),
+                    },
+                  ]}
+                  className="col-span-full"
+                >
+                  <Input maxLength={100} />
+                </Form.Item>
+                <Form.Item
+                  name="footer"
+                  label={t("页脚文案")}
+                  className="col-span-full"
+                >
+                  <Input maxLength={200} />
+                </Form.Item>
+              </div>
+            </>
+          )}
+        </Form>
+      </Spin>
+    </Card>
   );
 });
-export default SettingsPage;

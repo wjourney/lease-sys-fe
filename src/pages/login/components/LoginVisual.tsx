@@ -1,8 +1,10 @@
 import { observer } from "mobx-react-lite";
 import { t } from "../../../shared/i18n";
+import { useRoot } from "../../../stores/root";
 import { Brand } from "../../../shared/ui";
 
 export const LoginVisual = observer(function LoginVisual({}: {}) {
+  const { site } = useRoot();
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#15243f] max-[760px]:hidden [&_.brand]:!h-auto [&_.brand]:!px-12 [&_.brand]:!py-[35px]">
       <Brand />
@@ -24,7 +26,7 @@ export const LoginVisual = observer(function LoginVisual({}: {}) {
         <i />
       </div>
       <div className="absolute bottom-8 left-12 z-[1] text-[10px] tracking-[1px] text-[#8b9cb5]">
-        {t("SUPREME BAY · 租赁管理平台")}
+        {site.footer}
       </div>
     </section>
   );
