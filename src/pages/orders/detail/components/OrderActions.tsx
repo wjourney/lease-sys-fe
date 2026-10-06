@@ -15,8 +15,10 @@ export const OrderActions = observer(function OrderActions() {
   async function downloadContract() {
     setPreparingContract(true);
     try {
-      await api.post(`/orders/${id}/contract/ensure`);
-      root.invalidate();
+      if (!root.companyAdmin) {
+        await api.post(`/orders/${id}/contract/ensure`);
+        root.invalidate();
+      }
       const link = document.createElement("a");
       link.href = `/api/v1/orders/${id}/contract/download`;
       link.download = `${row.orderNo} 租赁合同.pdf`;
@@ -31,14 +33,16 @@ export const OrderActions = observer(function OrderActions() {
   }
 
   const items: MenuProps["items"] = [
-    ...(row.actions?.moveIn ? [{ key: "moveIn", label: t("办理入住") }] : []),
+    ...(root.manageOrders && row.actions?.moveIn
+      ? [{ key: "moveIn", label: t("办理入住") }]
+      : []),
     ...(root.manageOrders && row.actions?.terminate
       ? [{ key: "terminate", label: t("登记退租") }]
       : []),
     ...(root.manageOrders && row.actions?.handover
       ? [{ key: "handover", label: t("确认交还") }]
       : []),
-    ...(row.actions?.close
+    ...(root.canWrite("orders") && row.actions?.close
       ? [{ key: "close", label: t("关闭订单"), danger: true }]
       : []),
   ];
@@ -89,7 +93,7 @@ export const OrderActions = observer(function OrderActions() {
       >
         {t("下载合同")}
       </Button>
-      {(row.actions?.settle || row.actions?.refund) && (
+      {root.finance && (row.actions?.settle || row.actions?.refund) && (
         <Button type="primary" onClick={() => setTab("deposit")}>
           {t(row.actions?.refund ? "处理退款" : "处理押金")}
         </Button>

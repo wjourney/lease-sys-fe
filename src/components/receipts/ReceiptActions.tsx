@@ -1,7 +1,8 @@
 import { App, Button, Descriptions, Drawer, Space, Spin, Tag } from "antd";
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { api, amount, dateText, errorMessage, Row } from "../../shared/api";
+import { api, dateText, errorMessage, Row } from "../../shared/api";
+import { formatMoney } from "../../shared/money-format";
 import { Status } from "../../shared/ui";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
@@ -41,7 +42,7 @@ export const ReceiptActions = observer(function ReceiptActions({
             onClick={() =>
               modal.confirm({
                 title: t("确认已核对实际到账？"),
-                content: amount(receipt.amount),
+                content: formatMoney(receipt.amount, receipt.currency || "HKD"),
                 onOk: async () => {
                   try {
                     await api.post(`/incomes/${receipt.id}/confirm`);
@@ -63,6 +64,7 @@ export const ReceiptActions = observer(function ReceiptActions({
         </>
       )}
       {receipt.status === "PENDING" &&
+        !root.companyAdmin &&
         (root.finance || receipt.createdBy === root.user?.id) && (
           <Button size="small" onClick={() => setAction("withdraw")}>
             {t("撤回")}
@@ -73,7 +75,7 @@ export const ReceiptActions = observer(function ReceiptActions({
           {t("冲正")}
         </Button>
       )}
-      {receipt.status === "PENDING" && (
+      {receipt.status === "PENDING" && !root.companyAdmin && (
         <Button size="small" onClick={() => setUpload(true)}>
           {t("补传凭证")}
         </Button>
@@ -161,7 +163,11 @@ export const ReceiptDrawer = observer(function ReceiptDrawer({
                 label: t("关联订单"),
                 children: row.orderNo || "—",
               },
-              { key: "amount", label: t("金额"), children: amount(row.amount) },
+              {
+                key: "amount",
+                label: t("金额"),
+                children: formatMoney(row.amount, row.currency || "HKD"),
+              },
               {
                 key: "date",
                 label: t("到账日期"),
@@ -170,7 +176,7 @@ export const ReceiptDrawer = observer(function ReceiptDrawer({
               { key: "payer", label: t("付款方"), children: row.payerName },
               {
                 key: "account",
-                label: t("资金账户"),
+                label: t("平台账户"),
                 children: row.accountName || "—",
               },
               {
@@ -188,7 +194,7 @@ export const ReceiptDrawer = observer(function ReceiptDrawer({
               {
                 key: "state",
                 label: t("状态"),
-                children: <Status value={row.status} />,
+                children: <Status value={row.status} resource="receipts" />,
               },
               {
                 key: "reason",

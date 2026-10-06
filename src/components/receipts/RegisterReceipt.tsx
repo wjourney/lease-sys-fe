@@ -2,7 +2,8 @@ import { App, Button } from "antd";
 import { useState } from "react";
 import { ActionForm } from "../forms/ActionForm";
 import { financialFields } from "../resource-detail/financial-fields";
-import { amount, Row } from "../../shared/api";
+import { Row } from "../../shared/api";
+import { formatMoney } from "../../shared/money-format";
 import { t } from "../../shared/i18n";
 import { registerReceiptWithVoucher } from "../../shared/receipt-voucher";
 import { useRoot } from "../../stores/root";
@@ -21,14 +22,15 @@ export function RegisterReceipt({
   const root = useRoot();
   const { message } = App.useApp();
   const available = bills.filter(
-    (b) => b.status !== "VOID" && Number(b.available) > 0,
+    (b) =>
+      b.canRegister !== false && b.status !== "VOID" && Number(b.available) > 0,
   );
-  if (!available.length) return null;
+  if (!available.length || root.companyAdmin) return null;
   const multiple = available.length > 1;
   const fields = [
     ...available.map((b) => ({
       key: `bill_${b.id}`,
-      label: `${({ RENT: "租金", DEPOSIT: "押金", OTHER: "其他费用" } as Row)[b.feeType] || b.feeType} · ${b.recordNo}（可登记 ${amount(b.available)}）`,
+      label: `${({ RENT: "租金", DEPOSIT: "押金", OTHER: "其他费用" } as Row)[b.feeType] || b.feeType} · ${b.recordNo}（可登记 ${formatMoney(b.available, b.currency || "HKD")}）`,
       type: "money" as const,
       required: !multiple,
     })),

@@ -41,7 +41,7 @@ export function OrderBills() {
     {
       title: t("状态"),
       dataIndex: "status",
-      render: (s: string) => <Status value={s} />,
+      render: (s: string) => <Status value={s} resource="incomes" />,
     },
     {
       title: t("操作"),
@@ -154,7 +154,7 @@ export function OrderBills() {
           ) ? (
             <p className="text-sm text-[#738198]">
               {t(
-                "历史录单中曾填报付款，但当前没有有效收款记录。请核对实际到账，补齐资金账户后登记收款。",
+                "历史录单中曾填报付款，但当前没有有效收款记录。请核对实际到账，补齐平台账户后登记收款。",
               )}
             </p>
           ) : undefined

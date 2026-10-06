@@ -1,6 +1,6 @@
 import { cols, Config, text } from "../../shared/resource-config";
 export const FundAccountConfig: Config = {
-  title: "资金账户",
+  title: "平台账户",
   description: "维护业务收付款账户",
   fields: [
     text("name", "账户名称", true),

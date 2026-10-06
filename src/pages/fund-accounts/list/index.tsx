@@ -2,105 +2,62 @@ import { ResourceList } from "../../../components/resource-list/ResourceList";
 import { api, errorMessage, Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
 import { useRoot } from "../../../stores/root";
-import { App, Button, Descriptions, Drawer, Form, Input, Modal } from "antd";
-import { useState } from "react";
+import { Alert, Button, Descriptions, Drawer } from "antd";
+import { observer } from "mobx-react-lite";
+import { useEffect, useState } from "react";
 
-function DeleteFundAccountModal({
-  account,
-  onClose,
-  onDeleted,
-}: {
-  account: Row;
-  onClose: () => void;
-  onDeleted: () => void;
-}) {
-  const [form] = Form.useForm<{ reason: string }>();
-  const { message } = App.useApp();
-  const [saving, setSaving] = useState(false);
-
-  async function remove({ reason }: { reason: string }) {
-    setSaving(true);
-    try {
-      await api.delete(`/fund-accounts/${account.id}`, {
-        data: { reason: reason.trim() },
-      });
-      onDeleted();
-    } catch (cause) {
-      message.error(errorMessage(cause));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal
-      open
-      centered
-      title={t("删除资金账户")}
-      onCancel={onClose}
-      closable={!saving}
-      maskClosable={!saving}
-      keyboard={!saving}
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button onClick={onClose} disabled={saving}>
-            {t("取消")}
-          </Button>
-          <Button
-            danger
-            type="primary"
-            loading={saving}
-            onClick={() => form.submit()}
-          >
-            {t("确认删除")}
-          </Button>
-        </div>
-      }
-    >
-      <p className="text-sm text-[#52617a]">
-        {t("确定删除资金账户")}
-        <strong className="mx-1 text-[#243248]">{t(account.name)}</strong>
-        {t("吗？已关联收付款记录的账户无法删除，可在编辑中停用。")}
-      </p>
-      <Form form={form} layout="vertical" onFinish={remove}>
-        <Form.Item
-          name="reason"
-          label={t("删除原因")}
-          rules={[
-            { required: true, whitespace: true, message: t("请填写删除原因") },
-          ]}
-        >
-          <Input.TextArea rows={3} maxLength={500} showCount />
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-}
-
-export default function FundAccountListPage() {
+export default observer(function FundAccountListPage() {
   const root = useRoot();
-  const { message } = App.useApp();
   const [viewing, setViewing] = useState<Row | null>(null);
-  const [deleting, setDeleting] = useState<Row | null>(null);
-  const [listVersion, setListVersion] = useState(0);
+  const [exists, setExists] = useState<boolean>();
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const epoch = root.epoch;
+  useEffect(() => {
+    const controller = new AbortController();
+    setExists(undefined);
+    setError("");
+    api
+      .get("/fund-accounts", {
+        params: { pageSize: 1 },
+        signal: controller.signal,
+      })
+      .then(({ data }) => {
+        if (!controller.signal.aborted) setExists(data.total > 0);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(errorMessage(e));
+      });
+    return () => controller.abort();
+  }, [epoch, retry]);
 
   return (
     <>
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          action={
+            <Button onClick={() => setRetry((n) => n + 1)}>{t("重试")}</Button>
+          }
+        />
+      )}
       <ResourceList
-        key={listVersion}
         resource="fund-accounts"
         onViewRow={setViewing}
-        renderRowActions={(row) =>
-          root.canWrite("fund-accounts") ? (
-            <Button danger size="small" onClick={() => setDeleting(row)}>
-              {t("删除")}
-            </Button>
-          ) : null
+        createDisabledReason={
+          exists === undefined
+            ? error
+              ? "暂时无法确认平台账户，请重试"
+              : "正在加载平台账户"
+            : exists
+              ? "只允许创建一个资金账户，每次订单录入都是默认这一个资金账户"
+              : undefined
         }
       />
       <Drawer
         open={!!viewing}
-        title={t("资金账户信息")}
+        title={t("平台账户信息")}
         width={520}
         onClose={() => setViewing(null)}
       >
@@ -127,18 +84,6 @@ export default function FundAccountListPage() {
           </Descriptions>
         )}
       </Drawer>
-      {deleting && (
-        <DeleteFundAccountModal
-          account={deleting}
-          onClose={() => setDeleting(null)}
-          onDeleted={() => {
-            setDeleting(null);
-            root.invalidate();
-            setListVersion((version) => version + 1);
-            message.success(t("已删除"));
-          }}
-        />
-      )}
     </>
   );
-}
+});

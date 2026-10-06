@@ -1,6 +1,6 @@
 import { RequestError as Alert } from "../feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Empty, Pagination, Space, Table, Tag } from "antd";
+import { Button, Empty, Pagination, Space, Table, Tag, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -26,6 +26,7 @@ export const ResourceList = observer(function ResourceList({
   filterExtras,
   onResetExtras,
   hideCreate = false,
+  createDisabledReason,
   hideStatus = false,
   renderRowActions,
   onViewRow,
@@ -136,20 +137,33 @@ export const ResourceList = observer(function ResourceList({
       status={status}
       setStatus={setStatus}
       actions={
-        (newAllowed && !hideCreate) || resource === "materials" ? (
+        (newAllowed && !hideCreate) ||
+        (resource === "materials" && !root.companyAdmin) ? (
           <>
             {newAllowed && !hideCreate && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined aria-hidden />}
-                onClick={() => setEditor(true)}
+              <Tooltip
+                trigger={["hover", "focus"]}
+                title={
+                  createDisabledReason ? t(createDisabledReason) : undefined
+                }
               >
-                {t(
-                  embedded ? "新建" : `新建${config.title.replace("管理", "")}`,
-                )}
-              </Button>
+                <span tabIndex={createDisabledReason ? 0 : undefined}>
+                  <Button
+                    disabled={!!createDisabledReason}
+                    type="primary"
+                    icon={<PlusOutlined aria-hidden />}
+                    onClick={() => setEditor(true)}
+                  >
+                    {t(
+                      embedded
+                        ? "新建"
+                        : `新建${config.title.replace("管理", "")}`,
+                    )}
+                  </Button>
+                </span>
+              </Tooltip>
             )}
-            {resource === "materials" && (
+            {resource === "materials" && !root.companyAdmin && (
               <Button
                 type="primary"
                 icon={<PlusOutlined aria-hidden />}

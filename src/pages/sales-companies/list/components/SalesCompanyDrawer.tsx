@@ -230,7 +230,12 @@ export function SalesCompanyDrawer({
       const serviceEndsOn = (values.serviceEndsOn as Dayjs | undefined)?.format(
         "YYYY-MM-DD",
       );
-      if (serviceStartsOn && serviceEndsOn && serviceEndsOn < serviceStartsOn) {
+      if (
+        !root.companyAdmin &&
+        serviceStartsOn &&
+        serviceEndsOn &&
+        serviceEndsOn < serviceStartsOn
+      ) {
         form.setFields([
           { name: "serviceEndsOn", errors: [t("服务到期日不能早于开通时间")] },
         ]);
@@ -248,8 +253,7 @@ export function SalesCompanyDrawer({
         registrationExpiresOn: (values.registrationExpiresOn as Dayjs).format(
           "YYYY-MM-DD",
         ),
-        serviceStartsOn,
-        serviceEndsOn,
+        ...(!root.companyAdmin ? { serviceStartsOn, serviceEndsOn } : {}),
       };
       if (company) {
         savedCompany = (
@@ -495,14 +499,22 @@ export function SalesCompanyDrawer({
               label={t("开通时间")}
               className={fieldClass}
             >
-              <DatePicker className="w-full" format="YYYY-MM-DD" />
+              <DatePicker
+                disabled={root.companyAdmin}
+                className="w-full"
+                format="YYYY-MM-DD"
+              />
             </Form.Item>
             <Form.Item
               name="serviceEndsOn"
               label={t("服务到期日")}
               className={fieldClass}
             >
-              <DatePicker className="w-full" format="YYYY-MM-DD" />
+              <DatePicker
+                disabled={root.companyAdmin}
+                className="w-full"
+                format="YYYY-MM-DD"
+              />
             </Form.Item>
             <Form.Item label={t("剩余期限")} className={fieldClass}>
               <Input
@@ -517,7 +529,9 @@ export function SalesCompanyDrawer({
           </div>
           <p className="mb-0 text-xs text-[#8491a3]">
             {t(
-              "子账号数、分行数、职位数与最后修改日期由系统统计。管理员账号需在账号管理中单独创建。",
+              root.companyAdmin
+                ? "服务期限及成员账号由平台管理员维护。"
+                : "子账号数、分行数、职位数与最后修改日期由系统统计。管理员账号需在账号管理中单独创建。",
             )}
           </p>
         </section>

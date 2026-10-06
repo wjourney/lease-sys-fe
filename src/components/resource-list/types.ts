@@ -20,6 +20,7 @@ export interface ResourceListProps {
   filterExtras?: ReactNode;
   onResetExtras?: () => void;
   hideCreate?: boolean;
+  createDisabledReason?: string;
   hideStatus?: boolean;
   renderRowActions?: (row: Row) => ReactNode;
   onViewRow?: (row: Row) => void;

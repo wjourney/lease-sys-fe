@@ -1,5 +1,8 @@
 import { lazy } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { observer } from "mobx-react-lite";
+import { useRoot } from "../stores/root";
+const CompanyFinancePage = lazy(() => import("../pages/company-finance"));
 
 const LedgerPage = lazy(() => import("../pages/finance/LedgerPage"));
 const StatisticsPage = lazy(() => import("../pages/finance/StatisticsPage"));
@@ -27,9 +30,54 @@ const UserDetailPage = lazy(() => import("../pages/users/detail"));
 const MaterialListPage = lazy(() => import("../pages/materials/list"));
 const MaterialDetailPage = lazy(() => import("../pages/materials/detail"));
 const FundAccountListPage = lazy(() => import("../pages/fund-accounts/list"));
-export function AppRoutes() {
+export const AppRoutes = observer(function AppRoutes() {
+  const root = useRoot();
+  const { pathname } = useLocation();
+  if (root.companyAdmin) {
+    if (
+      /^\/(users|settings|fund-accounts|fund-ledger|finance-statistics|incomes|expenses|invoices)(\/|$)/.test(
+        pathname,
+      )
+    )
+      return <Navigate to="/projects" replace />;
+    if (/^\/commissions(\/|$)/.test(pathname))
+      return (
+        <Navigate
+          to={
+            pathname.split("/")[2]
+              ? `/company-commissions?commissionId=${encodeURIComponent(pathname.split("/")[2])}`
+              : "/company-commissions"
+          }
+          replace
+        />
+      );
+    if (pathname === "/sales-companies" && root.user?.salesCompanyId)
+      return (
+        <Navigate to={`/sales-companies/${root.user.salesCompanyId}`} replace />
+      );
+  }
   return (
     <Routes>
+      <Route
+        path="/company-finance"
+        element={
+          root.companyAdmin ? (
+            <CompanyFinancePage />
+          ) : (
+            <Navigate to="/projects" replace />
+          )
+        }
+      />
+      <Route
+        path="/company-commissions"
+        element={
+          root.companyAdmin ? (
+            <CompanyFinancePage details />
+          ) : (
+            <Navigate to="/projects" replace />
+          )
+        }
+      />
       <Route path="/fund-ledger" element={<LedgerPage />} />
       <Route path="/finance-statistics" element={<StatisticsPage />} />
       <Route path="/settings" element={<SettingsPage />} />
@@ -59,4 +107,4 @@ export function AppRoutes() {
       <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>
   );
-}
+});

@@ -6,6 +6,8 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
+  Drawer,
+  Descriptions,
   Empty,
   Image,
   Input,
@@ -77,6 +79,11 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const [created, setCreated] = useState<Row>();
   const [editingCompany, setEditingCompany] = useState(false);
   const [editingMember, setEditingMember] = useState<Row>();
+  const [viewingMember, setViewingMember] = useState<Row>();
+  const viewMember = (member: Row) =>
+    root.companyAdmin
+      ? setViewingMember(member)
+      : navigate(`/users/${member.id}`);
   const detailRequest = useRef(0);
   const memberRequest = useRef(0);
   const memberSearchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -317,7 +324,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       key: "actions",
       render: (_: unknown, member: Row) => (
         <div className="flex gap-2" data-row-action>
-          <Button size="small" onClick={() => navigate(`/users/${member.id}`)}>
+          <Button size="small" onClick={() => viewMember(member)}>
             {t("查看")}
           </Button>
           {root.canWrite("users") && (
@@ -497,7 +504,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                 onRow={(member) => ({
                   className: "cursor-pointer",
                   onClick: (event) => {
-                    if (shouldOpenRow(event)) navigate(`/users/${member.id}`);
+                    if (shouldOpenRow(event)) viewMember(member);
                   },
                 })}
                 columns={columns}
@@ -522,6 +529,48 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
           </section>
         </div>
       </Spin>
+      <Drawer
+        open={!!viewingMember}
+        title={t("员工资料")}
+        onClose={() => setViewingMember(undefined)}
+        width={520}
+      >
+        {viewingMember && (
+          <Descriptions
+            column={1}
+            items={[
+              { key: "name", label: t("姓名"), children: viewingMember.name },
+              {
+                key: "username",
+                label: t("登录账号"),
+                children: viewingMember.username,
+              },
+              {
+                key: "role",
+                label: t("角色"),
+                children: t(
+                  roleLabels[viewingMember.role] || viewingMember.role,
+                ),
+              },
+              {
+                key: "phone",
+                label: t("手机号"),
+                children: viewingMember.phone || "—",
+              },
+              {
+                key: "email",
+                label: "Email",
+                children: viewingMember.email || "—",
+              },
+              {
+                key: "status",
+                label: t("状态"),
+                children: <AccountStatusTag status={viewingMember.status} />,
+              },
+            ]}
+          />
+        )}
+      </Drawer>
       {editingCompany && (
         <SalesCompanyDrawer
           company={company}

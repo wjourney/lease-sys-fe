@@ -221,18 +221,22 @@ export function OrderDrawer({
         : Promise.resolve(root.user ? [root.user] : []),
     ])
       .then(([accounts, projectRows, companyRows, userRows]) => {
-        setFundAccounts(
-          accounts
-            .filter(
-              (x) =>
-                x.enabled &&
-                x.currency === "HKD" &&
-                x.bankName?.trim() &&
-                x.accountIdentifier?.trim(),
-            )
-            .map((x) => ({ value: x.id, label: x.name })),
-        );
         if (!active) return;
+        const availableAccounts = accounts.filter(
+          (x) =>
+            x.enabled &&
+            x.currency === "HKD" &&
+            x.bankName?.trim() &&
+            x.accountIdentifier?.trim(),
+        );
+        if (
+          availableAccounts.length === 1 &&
+          !form.getFieldValue("initialFundAccountId")
+        )
+          form.setFieldValue("initialFundAccountId", availableAccounts[0].id);
+        setFundAccounts(
+          availableAccounts.map((x) => ({ value: x.id, label: x.name })),
+        );
         setProjects(
           withCurrentChoice(
             projectRows
@@ -1105,11 +1109,11 @@ export function OrderDrawer({
                   </Form.Item>
                   <Form.Item
                     name="initialFundAccountId"
-                    label={t("资金账户")}
+                    label={t("平台账户")}
                     rules={lockedLease ? undefined : required}
                   >
                     <Select
-                      disabled={lockedLease}
+                      disabled={lockedLease || fundAccounts.length === 1}
                       options={fundAccounts}
                       placeholder={t("请选择收款账户")}
                     />

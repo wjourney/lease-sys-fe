@@ -39,10 +39,13 @@ export function Status({
         : "blue";
   let label = statusLabels[value] ?? value;
   if (resource === "orders" && value === "ACTIVE") label = "租赁中";
-  if (resource === "incomes" && value === "PAID") label = "已收齐";
+  if (resource === "incomes" && value === "PAID") label = "已结清";
+  if (resource === "incomes" && value === "PARTIAL") label = "部分结清";
+  if (resource === "receipts" && value === "PENDING") label = "待核对";
   if (resource === "expenses" && value === "PAID") label = "已付款";
   if (resource === "commissions" && ["OPEN", "UNPAID"].includes(value))
     label = "待付款";
+  if (resource === "commissions" && value === "PARTIAL") label = "部分付款";
   return (
     <Tag bordered={false} color={color}>
       {t(label || "—")}

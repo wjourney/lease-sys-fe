@@ -96,8 +96,8 @@ export default observer(function LedgerPage() {
             style={{ width: 300 }}
           />
           <Select
-            aria-label={t("资金账户")}
-            placeholder={t("全部资金账户")}
+            aria-label={t("平台账户")}
+            placeholder={t("全部平台账户")}
             allowClear
             showSearch
             optionFilterProp="label"
@@ -235,7 +235,7 @@ export default observer(function LedgerPage() {
                             `${r.direction === "IN" ? "+" : "−"}${formatMoney(r.amount, r.currency)}`,
                         },
                         {
-                          title: t("资金账户"),
+                          title: t("平台账户"),
                           dataIndex: "accountName",
                           width: 160,
                         },

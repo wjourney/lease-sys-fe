@@ -8,7 +8,7 @@ export const financialFields: Field[] = [
   },
   {
     key: "fundAccountId",
-    label: t("资金账户"),
+    label: t("平台账户"),
     source: "fund-accounts",
     type: "select",
   },

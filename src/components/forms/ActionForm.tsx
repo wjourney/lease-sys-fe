@@ -54,19 +54,17 @@ export function ActionForm({
     if (hasFundAccountField)
       options("fund-accounts")
         .then((rows) => {
-          setAccounts(
-            rows
-              .filter(
-                (r) =>
-                  r.enabled &&
-                  r.bankName?.trim() &&
-                  r.accountIdentifier?.trim(),
-              )
-              .map((r) => ({
-                value: r.id,
-                label: t(r.name),
-              })),
+          const usable = rows.filter(
+            (r) =>
+              r.enabled && r.bankName?.trim() && r.accountIdentifier?.trim(),
           );
+          if (usable.length === 1)
+            for (const field of fields.filter(
+              (f) => f.source === "fund-accounts",
+            ))
+              if (!form.getFieldValue(field.key))
+                form.setFieldValue(field.key, usable[0].id);
+          setAccounts(usable.map((r) => ({ value: r.id, label: t(r.name) })));
           setAccountsLoaded(true);
         })
         .catch((e) => setError(errorMessage(e)));
@@ -111,7 +109,7 @@ export function ActionForm({
             showIcon
             className="mb-5"
             message={t(
-              "暂无资料完整的可用资金账户，请先填写银行资料并启用账户。",
+              "暂无资料完整的可用平台账户，请先填写银行资料并启用账户。",
             )}
             action={
               root.canWrite("fund-accounts") ? (
@@ -122,7 +120,7 @@ export function ActionForm({
                     navigate("/fund-accounts");
                   }}
                 >
-                  {t("管理资金账户")}
+                  {t("管理平台账户")}
                 </Button>
               ) : undefined
             }
@@ -153,9 +151,10 @@ export function ActionForm({
                 />
               ) : f.source ? (
                 <Select
+                  disabled={accounts.length === 1}
                   options={accounts}
                   loading={!accountsLoaded && !error}
-                  notFoundContent={t("暂无资料完整的可用资金账户")}
+                  notFoundContent={t("暂无资料完整的可用平台账户")}
                 />
               ) : f.type === "select" ? (
                 <Select options={f.options} />

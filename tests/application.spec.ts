@@ -36,7 +36,7 @@ for (const username of ["admin", "operations", "finance", "company", "sales"]) {
       "销售公司",
       "账号管理",
       "文件与资料",
-      "资金账户",
+      "平台账户",
       "系统设置",
     ]) {
       if (!items.some((x) => x?.includes(label))) continue;
@@ -151,8 +151,8 @@ test("income form, inline receipt, confirmation and invoice navigation", async (
     .getByText("查看", { exact: true })
     .click();
   await page.getByRole("button", { name: "登记收款", exact: true }).click();
-  await page.getByLabel("资金账户", { exact: true }).click();
-  await page.getByTitle("公司港币账户", { exact: true }).click();
+  await expect(page.getByLabel("平台账户", { exact: true })).toBeDisabled();
+  await expect(drawer.getByText("公司港币账户", { exact: true })).toBeVisible();
   await drawer.getByRole("button", { name: "确认提交", exact: true }).click();
   await expect(drawer).toHaveCount(0);
   await page.getByRole("button", { name: "确认到账", exact: true }).click();

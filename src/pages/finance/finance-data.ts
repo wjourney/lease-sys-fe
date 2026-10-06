@@ -116,7 +116,4 @@ export type StatisticsData = {
   expenses: { feeType: string; amount: string }[];
   projects: Choice[];
 };
-export const formatMoney = (value: string | number, currency: string) =>
-  new Intl.NumberFormat("zh-HK", { style: "currency", currency }).format(
-    Number(value),
-  );
+export { formatMoney } from "../../shared/money-format";

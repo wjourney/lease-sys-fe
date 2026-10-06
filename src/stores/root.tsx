@@ -70,16 +70,24 @@ export class RootStore {
     if (this.user) this.user.avatarUrl = url;
   }
   canRead(r: string) {
+    if (this.companyAdmin && ["settings", "fund-accounts"].includes(r))
+      return false;
     return this.user?.capabilities.read.includes(r) ?? false;
   }
   canWrite(r: string) {
+    if (this.companyAdmin && r !== "sales-companies") return false;
     return this.user?.capabilities.write.includes(r) ?? false;
   }
   get finance() {
+    if (this.companyAdmin) return false;
     return !!this.user?.capabilities.finance;
   }
   get manageOrders() {
+    if (this.companyAdmin) return false;
     return !!this.user?.capabilities.manageOrders;
+  }
+  get companyAdmin() {
+    return this.user?.role === "SALES_COMPANY_ADMIN";
   }
   setLocale(v: "zh_CN" | "zh_TW") {
     this.locale = v;

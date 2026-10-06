@@ -14,7 +14,11 @@ export function getNavigation(root: RootStore) {
     {
       key: "/projects",
       icon: <ApartmentOutlined aria-hidden />,
-      label: t("项目管理"),
+      label: t(
+        ["SALES_COMPANY_ADMIN", "SALES"].includes(root.user?.role)
+          ? "项目"
+          : "项目管理",
+      ),
       resource: "projects",
     },
     {
@@ -59,7 +63,7 @@ export function getNavigation(root: RootStore) {
       label: t("系统设置"),
       children: [
         ...(root.canRead("fund-accounts")
-          ? [{ key: "/fund-accounts", label: t("资金账户") }]
+          ? [{ key: "/fund-accounts", label: t("平台账户") }]
           : []),
         ...(root.canWrite("settings")
           ? [{ key: "/settings", label: t("网站配置") }]
@@ -69,7 +73,30 @@ export function getNavigation(root: RootStore) {
   ]
     .filter(
       (item) =>
+        !root.companyAdmin ||
+        !["/users", "finance", "settings"].includes(item.key),
+    )
+    .filter(
+      (item) =>
         !("resource" in item) || !item.resource || root.canRead(item.resource),
     )
-    .filter((item) => !item.children || item.children.length);
+    .filter((item) => !item.children || item.children.length)
+    .concat(
+      root.companyAdmin
+        ? [
+            {
+              key: "/company-finance",
+              icon: <DollarCircleOutlined aria-hidden />,
+              label: t("财务统计"),
+              resource: "commissions",
+            },
+            {
+              key: "/company-commissions",
+              icon: <FileTextOutlined aria-hidden />,
+              label: t("佣金明细"),
+              resource: "commissions",
+            },
+          ]
+        : [],
+    );
 }

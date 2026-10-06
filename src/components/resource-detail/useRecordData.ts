@@ -19,14 +19,12 @@ export function useRecordData(resource: string, id: string, epoch: number) {
         api.get<Row>(`/${resource}/${id}`),
         resource === "materials"
           ? api.get(`/materials/${id}/versions`)
-          : resource === "incomes"
-            ? api.get(`/incomes/${id}/receipts`, { params: { pageSize: 100 } })
-            : Promise.resolve(undefined),
+          : Promise.resolve(undefined),
       ]);
       if (current !== request.current) return;
       setRow(record.data);
       setLogs(record.data.operations || []);
-      setReceipts(resource === "incomes" ? related?.data.items || [] : []);
+      setReceipts(resource === "incomes" ? record.data.receipts || [] : []);
       setVersions(resource === "materials" ? related?.data.items || [] : []);
     } catch (e) {
       if (current === request.current) setError(errorMessage(e));

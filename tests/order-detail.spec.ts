@@ -245,8 +245,8 @@ test("deposit settlement and partial refund are usable from the order", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: "登记退款", exact: true }).click();
   await drawer.getByLabel("本次退款金额", { exact: true }).fill("150");
-  await drawer.getByLabel("资金账户", { exact: true }).click();
-  await page.getByTitle(account.name, { exact: true }).click();
+  await expect(drawer.getByLabel("平台账户", { exact: true })).toBeDisabled();
+  await expect(drawer.getByText(account.name, { exact: true })).toBeVisible();
   await drawer.getByRole("button", { name: "确认提交", exact: true }).click();
   await expect(drawer).toHaveCount(0);
   await expect(
