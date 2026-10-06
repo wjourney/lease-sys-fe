@@ -15,7 +15,7 @@ export const OrderActions = observer(function OrderActions() {
   async function downloadContract() {
     setPreparingContract(true);
     try {
-      if (!root.companyAdmin) {
+      if (!root.salesRole) {
         await api.post(`/orders/${id}/contract/ensure`);
         root.invalidate();
       }

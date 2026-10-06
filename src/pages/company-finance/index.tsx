@@ -62,6 +62,7 @@ export default observer(function CompanyFinancePage({
   details?: boolean;
 }) {
   const root = useRoot();
+  const personal = root.user?.role === "SALES";
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams();
   const period =
@@ -75,7 +76,9 @@ export default observer(function CompanyFinancePage({
     from: search.get("from") || defaults.from,
     to: search.get("to") || defaults.to,
     currency: search.get("currency") || "HKD",
-    salesUserId: search.get("salesUserId") || undefined,
+    salesUserId: personal
+      ? root.user?.id
+      : search.get("salesUserId") || undefined,
     q: search.get("q") || undefined,
     mode: search.get("mode") || undefined,
     status: search.get("status") || undefined,
@@ -134,7 +137,13 @@ export default observer(function CompanyFinancePage({
     <section className="finance-page resource-list">
       <div className="finance-heading">
         <h1>{t(details ? "佣金明细" : "财务统计")}</h1>
-        <span>{t("仅本公司 · 按约定结付日期统计，作废佣金不计入汇总")}</span>
+        <span>
+          {t(
+            personal
+              ? "仅本人 · 按约定结付日期统计，作废佣金不计入汇总"
+              : "仅本公司 · 按约定结付日期统计，作废佣金不计入汇总",
+          )}
+        </span>
       </div>
       <div className="finance-panel finance-filters">
         <Segmented
@@ -166,17 +175,22 @@ export default observer(function CompanyFinancePage({
             }
           }}
         />
-        <Select
-          aria-label={t("销售员工")}
-          placeholder={t("全部员工")}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          style={{ width: 160 }}
-          value={params.salesUserId}
-          options={data?.employees.map((e) => ({ value: e.id, label: e.name }))}
-          onChange={(salesUserId) => change({ salesUserId })}
-        />
+        {!personal && (
+          <Select
+            aria-label={t("销售员工")}
+            placeholder={t("全部员工")}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            style={{ width: 160 }}
+            value={params.salesUserId}
+            options={data?.employees.map((e) => ({
+              value: e.id,
+              label: e.name,
+            }))}
+            onChange={(salesUserId) => change({ salesUserId })}
+          />
+        )}
         <Select
           aria-label={t("币种")}
           style={{ width: 100 }}
@@ -194,7 +208,9 @@ export default observer(function CompanyFinancePage({
               style={{ width: 220 }}
               allowClear
               value={keyword}
-              placeholder={t("佣金编号、订单编号、员工")}
+              placeholder={t(
+                personal ? "佣金编号、订单编号" : "佣金编号、订单编号、员工",
+              )}
               onChange={(e) => setKeyword(e.target.value)}
             />
             <Select
@@ -247,9 +263,18 @@ export default observer(function CompanyFinancePage({
             <>
               <div className="finance-kpis" style={{ marginBottom: 16 }}>
                 {[
-                  ["应付佣金", money(data.summary.amount)],
-                  ["已付佣金", money(data.summary.paidAmount)],
-                  ["未付佣金", money(data.summary.remainingAmount)],
+                  [
+                    personal ? "应得佣金" : "应付佣金",
+                    money(data.summary.amount),
+                  ],
+                  [
+                    personal ? "已结佣金" : "已付佣金",
+                    money(data.summary.paidAmount),
+                  ],
+                  [
+                    personal ? "待结佣金" : "未付佣金",
+                    money(data.summary.remainingAmount),
+                  ],
                   ["关联订单", data.summary.orderCount],
                 ].map(([label, value]) => (
                   <div className="finance-panel" key={label}>
@@ -361,7 +386,7 @@ export default observer(function CompanyFinancePage({
               ) : (
                 <div className="flex flex-col gap-4">
                   <div className="finance-panel">
-                    <h2>{t("月度应付佣金")}</h2>
+                    <h2>{t(personal ? "月度应得佣金" : "月度应付佣金")}</h2>
                     <div className="finance-breakdown">
                       {data.trend.map((r) => (
                         <div key={r.month}>
@@ -380,70 +405,109 @@ export default observer(function CompanyFinancePage({
                       ))}
                     </div>
                   </div>
-                  <div className="finance-panel">
-                    <h2>{t("员工佣金统计")}</h2>
-                    <Table<Row>
-                      rowKey="id"
-                      dataSource={data.staff}
-                      size="small"
-                      pagination={{ pageSize: 12, showSizeChanger: false }}
-                      scroll={{ x: 750 }}
-                      columns={[
-                        { title: t("员工"), dataIndex: "name" },
-                        { title: t("关联订单"), dataIndex: "orderCount" },
-                        ...[
-                          ["应付佣金", "amount"],
-                          ["已付佣金", "paidAmount"],
-                          ["未付佣金", "remainingAmount"],
-                        ].map(([label, key]) => ({
-                          title: t(label),
-                          dataIndex: key,
-                          render: money,
-                        })),
-                        {
-                          title: t("操作"),
-                          render: (_, r) => (
-                            <Button type="link" onClick={() => drill(r.id)}>
-                              {t("查看明细")}
-                            </Button>
-                          ),
-                        },
-                      ]}
-                    />
-                  </div>
-                  <div className="finance-panel">
-                    <h2>{t("员工每月应付佣金")}</h2>
-                    <Table<Row>
-                      rowKey="id"
-                      size="small"
-                      dataSource={data.staff}
-                      pagination={{ pageSize: 12, showSizeChanger: false }}
-                      scroll={{
-                        x: Math.max(600, 150 + data.months.length * 150),
-                      }}
-                      columns={[
-                        {
-                          title: t("员工"),
-                          dataIndex: "name",
-                          fixed: "left",
-                          width: 150,
-                        },
-                        ...data.months.map((month) => ({
-                          title: month,
-                          key: month,
-                          width: 150,
-                          render: (_: any, r: Row) => (
-                            <Button
-                              type="link"
-                              onClick={() => drill(r.id, month)}
-                            >
-                              {money(r.months[month])}
-                            </Button>
-                          ),
-                        })),
-                      ]}
-                    />
-                  </div>
+                  {personal ? (
+                    <div className="finance-panel">
+                      <h2>{t("我的月度佣金")}</h2>
+                      <Table<Row>
+                        rowKey="month"
+                        dataSource={data.trend}
+                        size="small"
+                        pagination={{ pageSize: 12, showSizeChanger: false }}
+                        scroll={{ x: 700 }}
+                        columns={[
+                          { title: t("月份"), dataIndex: "month" },
+                          { title: t("关联订单"), dataIndex: "orderCount" },
+                          ...[
+                            ["应得佣金", "amount"],
+                            ["已结佣金", "paidAmount"],
+                            ["待结佣金", "remainingAmount"],
+                          ].map(([label, key]) => ({
+                            title: t(label),
+                            dataIndex: key,
+                            render: money,
+                          })),
+                          {
+                            title: t("操作"),
+                            render: (_, r) => (
+                              <Button
+                                type="link"
+                                onClick={() => drill(root.user!.id, r.month)}
+                              >
+                                {t("查看明细")}
+                              </Button>
+                            ),
+                          },
+                        ]}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="finance-panel">
+                        <h2>{t("员工佣金统计")}</h2>
+                        <Table<Row>
+                          rowKey="id"
+                          dataSource={data.staff}
+                          size="small"
+                          pagination={{ pageSize: 12, showSizeChanger: false }}
+                          scroll={{ x: 750 }}
+                          columns={[
+                            { title: t("员工"), dataIndex: "name" },
+                            { title: t("关联订单"), dataIndex: "orderCount" },
+                            ...[
+                              ["应付佣金", "amount"],
+                              ["已付佣金", "paidAmount"],
+                              ["未付佣金", "remainingAmount"],
+                            ].map(([label, key]) => ({
+                              title: t(label),
+                              dataIndex: key,
+                              render: money,
+                            })),
+                            {
+                              title: t("操作"),
+                              render: (_, r) => (
+                                <Button type="link" onClick={() => drill(r.id)}>
+                                  {t("查看明细")}
+                                </Button>
+                              ),
+                            },
+                          ]}
+                        />
+                      </div>
+                      <div className="finance-panel">
+                        <h2>{t("员工每月应付佣金")}</h2>
+                        <Table<Row>
+                          rowKey="id"
+                          size="small"
+                          dataSource={data.staff}
+                          pagination={{ pageSize: 12, showSizeChanger: false }}
+                          scroll={{
+                            x: Math.max(600, 150 + data.months.length * 150),
+                          }}
+                          columns={[
+                            {
+                              title: t("员工"),
+                              dataIndex: "name",
+                              fixed: "left",
+                              width: 150,
+                            },
+                            ...data.months.map((month) => ({
+                              title: month,
+                              key: month,
+                              width: 150,
+                              render: (_: any, r: Row) => (
+                                <Button
+                                  type="link"
+                                  onClick={() => drill(r.id, month)}
+                                >
+                                  {money(r.months[month])}
+                                </Button>
+                              ),
+                            })),
+                          ]}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </>

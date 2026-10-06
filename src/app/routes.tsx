@@ -33,7 +33,7 @@ const FundAccountListPage = lazy(() => import("../pages/fund-accounts/list"));
 export const AppRoutes = observer(function AppRoutes() {
   const root = useRoot();
   const { pathname } = useLocation();
-  if (root.companyAdmin) {
+  if (root.salesRole) {
     if (
       /^\/(users|settings|fund-accounts|fund-ledger|finance-statistics|incomes|expenses|invoices)(\/|$)/.test(
         pathname,
@@ -61,7 +61,7 @@ export const AppRoutes = observer(function AppRoutes() {
       <Route
         path="/company-finance"
         element={
-          root.companyAdmin ? (
+          root.salesRole ? (
             <CompanyFinancePage />
           ) : (
             <Navigate to="/projects" replace />
@@ -71,7 +71,7 @@ export const AppRoutes = observer(function AppRoutes() {
       <Route
         path="/company-commissions"
         element={
-          root.companyAdmin ? (
+          root.salesRole ? (
             <CompanyFinancePage details />
           ) : (
             <Navigate to="/projects" replace />

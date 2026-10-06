@@ -337,7 +337,9 @@ export function UserDrawer({
                             { value: "SALES", label: t("销售员工") },
                           ]
                         : [
-                            ...(root.user?.role === "SUPER_ADMIN"
+                            ...(["SUPER_ADMIN", "OPERATIONS"].includes(
+                              root.user?.role,
+                            )
                               ? [
                                   {
                                     value: "SUPER_ADMIN",
@@ -522,7 +524,7 @@ export function UserDrawer({
                   disabled={
                     !!account &&
                     (account.id === root.user?.id ||
-                      root.user?.role !== "SUPER_ADMIN")
+                      !["SUPER_ADMIN", "OPERATIONS"].includes(root.user?.role))
                   }
                 />
               </Form.Item>

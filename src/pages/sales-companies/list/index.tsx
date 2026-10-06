@@ -14,7 +14,7 @@ export default function SalesCompanyListPage() {
     <>
       <ResourceList
         resource="sales-companies"
-        hideCreate={root.companyAdmin}
+        hideCreate={root.salesRole}
         renderEditor={({ row, onClose, onSaved }) => (
           <SalesCompanyDrawer
             company={row}
@@ -23,7 +23,7 @@ export default function SalesCompanyListPage() {
           />
         )}
         renderRowActions={(row) =>
-          root.canWrite("sales-companies") && !root.companyAdmin ? (
+          root.canWrite("sales-companies") && !root.salesRole ? (
             <Button size="small" danger onClick={() => setDeleting(row)}>
               {t("删除")}
             </Button>

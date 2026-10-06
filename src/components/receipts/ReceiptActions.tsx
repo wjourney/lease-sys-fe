@@ -64,7 +64,7 @@ export const ReceiptActions = observer(function ReceiptActions({
         </>
       )}
       {receipt.status === "PENDING" &&
-        !root.companyAdmin &&
+        !root.salesRole &&
         (root.finance || receipt.createdBy === root.user?.id) && (
           <Button size="small" onClick={() => setAction("withdraw")}>
             {t("撤回")}
@@ -75,7 +75,7 @@ export const ReceiptActions = observer(function ReceiptActions({
           {t("冲正")}
         </Button>
       )}
-      {receipt.status === "PENDING" && !root.companyAdmin && (
+      {receipt.status === "PENDING" && !root.salesRole && (
         <Button size="small" onClick={() => setUpload(true)}>
           {t("补传凭证")}
         </Button>

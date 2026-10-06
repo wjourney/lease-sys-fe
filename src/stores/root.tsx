@@ -70,21 +70,25 @@ export class RootStore {
     if (this.user) this.user.avatarUrl = url;
   }
   canRead(r: string) {
-    if (this.companyAdmin && ["settings", "fund-accounts"].includes(r))
+    if (this.salesRole && ["settings", "fund-accounts"].includes(r))
       return false;
     return this.user?.capabilities.read.includes(r) ?? false;
   }
   canWrite(r: string) {
+    if (this.user?.role === "SALES") return false;
     if (this.companyAdmin && r !== "sales-companies") return false;
     return this.user?.capabilities.write.includes(r) ?? false;
   }
   get finance() {
-    if (this.companyAdmin) return false;
+    if (this.salesRole || this.user?.role === "OPERATIONS") return false;
     return !!this.user?.capabilities.finance;
   }
   get manageOrders() {
-    if (this.companyAdmin) return false;
+    if (this.salesRole) return false;
     return !!this.user?.capabilities.manageOrders;
+  }
+  get salesRole() {
+    return ["SALES", "SALES_COMPANY_ADMIN"].includes(this.user?.role);
   }
   get companyAdmin() {
     return this.user?.role === "SALES_COMPANY_ADMIN";

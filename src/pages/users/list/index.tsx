@@ -110,7 +110,7 @@ const UserListPage = observer(function UserListPage() {
             <Button size="small" onClick={() => navigate(`/users/${row.id}`)}>
               {t("查看")}
             </Button>
-            {root.user?.role === "SUPER_ADMIN" && (
+            {["SUPER_ADMIN", "OPERATIONS"].includes(root.user?.role) && (
               <Tooltip title={self ? t("不能停用当前登录账号") : undefined}>
                 <span>
                   <Button

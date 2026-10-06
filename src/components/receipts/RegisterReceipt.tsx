@@ -25,7 +25,7 @@ export function RegisterReceipt({
     (b) =>
       b.canRegister !== false && b.status !== "VOID" && Number(b.available) > 0,
   );
-  if (!available.length || root.companyAdmin) return null;
+  if (!available.length || root.salesRole) return null;
   const multiple = available.length > 1;
   const fields = [
     ...available.map((b) => ({

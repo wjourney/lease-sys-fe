@@ -35,7 +35,9 @@ const UserDetailPage = observer(function UserDetailPage() {
   const [busy, setBusy] = useState(false);
   const self = row?.id === root.user?.id;
   const canWrite = root.canWrite("users");
-  const canManageStatus = root.user?.role === "SUPER_ADMIN";
+  const canManageStatus = ["SUPER_ADMIN", "OPERATIONS"].includes(
+    root.user?.role,
+  );
   const headerHost = document.getElementById("record-detail-header");
 
   async function resetPassword() {

@@ -85,7 +85,7 @@ export function OrderFiles() {
         ) : (
           <p className="m-0 px-6 py-5 text-sm text-[#8793a4]">
             {t(
-              root.companyAdmin
+              root.salesRole
                 ? "暂无合同文件，请联系平台管理员。"
                 : "暂无合同文件，可通过页面上方的“下载合同”生成。",
             )}

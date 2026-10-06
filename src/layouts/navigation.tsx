@@ -72,8 +72,11 @@ export function getNavigation(root: RootStore) {
     },
   ]
     .filter(
+      (item) => root.user?.role !== "OPERATIONS" || item.key !== "finance",
+    )
+    .filter(
       (item) =>
-        !root.companyAdmin ||
+        !root.salesRole ||
         !["/users", "finance", "settings"].includes(item.key),
     )
     .filter(
@@ -82,7 +85,7 @@ export function getNavigation(root: RootStore) {
     )
     .filter((item) => !item.children || item.children.length)
     .concat(
-      root.companyAdmin
+      root.salesRole
         ? [
             {
               key: "/company-finance",

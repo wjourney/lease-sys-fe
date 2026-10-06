@@ -138,7 +138,7 @@ export const ResourceList = observer(function ResourceList({
       setStatus={setStatus}
       actions={
         (newAllowed && !hideCreate) ||
-        (resource === "materials" && !root.companyAdmin) ? (
+        (resource === "materials" && !root.salesRole) ? (
           <>
             {newAllowed && !hideCreate && (
               <Tooltip
@@ -163,7 +163,7 @@ export const ResourceList = observer(function ResourceList({
                 </span>
               </Tooltip>
             )}
-            {resource === "materials" && !root.companyAdmin && (
+            {resource === "materials" && !root.salesRole && (
               <Button
                 type="primary"
                 icon={<PlusOutlined aria-hidden />}

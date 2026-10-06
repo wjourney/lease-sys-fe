@@ -81,7 +81,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const [editingMember, setEditingMember] = useState<Row>();
   const [viewingMember, setViewingMember] = useState<Row>();
   const viewMember = (member: Row) =>
-    root.companyAdmin
+    root.salesRole
       ? setViewingMember(member)
       : navigate(`/users/${member.id}`);
   const detailRequest = useRef(0);

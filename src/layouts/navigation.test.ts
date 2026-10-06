@@ -62,18 +62,38 @@ it("super administrator navigation and full capabilities stay available", () => 
   expect(resources.every((r) => root.canWrite(r))).toBe(true);
   expect(root.finance && root.manageOrders).toBe(true);
 });
-it("sales employee changes only the project label and retains server permissions", () => {
+it("sales employees have five menus and read-only business permissions", () => {
   const root = store("SALES");
-  root.user!.capabilities = {
-    read: ["projects", "orders"],
-    write: ["orders"],
-    finance: false,
-    manageOrders: false,
-  };
-  expect(getNavigation(root)[0].label).toBe("项目");
-  expect(root.canWrite("orders")).toBe(true);
-  expect(root.canWrite("projects")).toBe(false);
-  expect(getNavigation(root).some((i) => i.key === "/company-finance")).toBe(
-    false,
-  );
+  expect(getNavigation(root).map((i) => i.key)).toEqual([
+    "/projects",
+    "/sales-companies",
+    "/orders",
+    "/company-finance",
+    "/company-commissions",
+  ]);
+  expect(resources.some((r) => root.canWrite(r))).toBe(false);
+  expect(root.canRead("settings")).toBe(false);
+  expect(root.finance || root.manageOrders).toBe(false);
+});
+it("operations manages business and settings without finance navigation", () => {
+  const root = store("OPERATIONS");
+  expect(getNavigation(root).map((i) => i.key)).toEqual([
+    "/projects",
+    "/sales-companies",
+    "/orders",
+    "/users",
+    "settings",
+  ]);
+  for (const r of [
+    "projects",
+    "units",
+    "orders",
+    "users",
+    "sales-companies",
+    "settings",
+    "fund-accounts",
+  ])
+    expect(root.canWrite(r)).toBe(true);
+  expect(root.manageOrders).toBe(true);
+  expect(root.finance).toBe(false);
 });
