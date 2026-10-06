@@ -1,6 +1,7 @@
-import { RequestError as Alert } from "../feedback/RequestError";
+import { RequestError } from "../feedback/RequestError";
 import { UploadOutlined } from "@ant-design/icons";
 import {
+  Alert,
   App,
   Button,
   DatePicker,
@@ -101,7 +102,12 @@ export function ActionForm({
     >
       <Form form={form} layout="vertical">
         {error && (
-          <Alert message={t(error)} type="error" showIcon className="mb-5" />
+          <RequestError
+            message={t(error)}
+            type="error"
+            showIcon
+            className="mb-5"
+          />
         )}
         {hasFundAccountField && accountsLoaded && accounts.length === 0 && (
           <Alert

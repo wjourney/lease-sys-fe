@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../components/feedback/RequestError";
+import { RequestError } from "../../../components/feedback/RequestError";
 import { App, Button, Drawer, Form, Spin } from "antd";
 import type { UploadFile } from "antd";
 import { useEffect, useRef, useState } from "react";
@@ -175,7 +175,12 @@ export function ProjectDrawer({
       }
     >
       {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-4" />
+        <RequestError
+          type="error"
+          showIcon
+          message={t(error)}
+          className="mb-4"
+        />
       )}
       <Spin spinning={!loaded}>
         <Form

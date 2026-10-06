@@ -1,5 +1,4 @@
 import { UploadOutlined } from "@ant-design/icons";
-import { isAxiosError } from "axios";
 import { App, Button, Card, Form, Input, Result, Spin, Upload } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
@@ -34,17 +33,7 @@ export default observer(function WebsiteSettings() {
       })
       .catch((error) => {
         if (!active) return;
-        const response = isAxiosError(error) ? error.response : undefined;
-        const missingEndpoint =
-          response?.status === 404 ||
-          (response?.status === 400 &&
-            response.data?.message === "无效记录 ID");
-        const hint = missingEndpoint
-          ? "网站配置服务尚未更新，请联系管理员更新服务后重试"
-          : [400, 422].includes(response?.status ?? 0)
-            ? "网站配置加载失败，请稍后重试"
-            : errorMessage(error);
-        message.error(t(hint));
+        message.error(t(errorMessage(error)));
       })
       .finally(() => {
         if (active) setLoading(false);

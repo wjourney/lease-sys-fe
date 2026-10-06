@@ -1,5 +1,5 @@
+import { RequestError } from "../../components/feedback/RequestError";
 import {
-  Alert,
   Button,
   Descriptions,
   Drawer,
@@ -74,7 +74,7 @@ export const BillDrawer = observer(function BillDrawer({
       }
     >
       {error ? (
-        <Alert
+        <RequestError
           type="error"
           showIcon
           message={error}

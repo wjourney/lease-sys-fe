@@ -54,11 +54,7 @@ export function useFinanceData<T>(
       .catch((e) => {
         if (!controller.signal.aborted) {
           setData(undefined);
-          setError(
-            e.response?.status === 404
-              ? "财务报表服务尚未部署，请更新后端后重试"
-              : errorMessage(e),
-          );
+          setError(errorMessage(e));
         }
       })
       .finally(() => {

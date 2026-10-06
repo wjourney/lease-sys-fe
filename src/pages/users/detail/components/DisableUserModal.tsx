@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { api, errorMessage } from "../../../../shared/api";
@@ -76,7 +76,12 @@ export function DisableUserModal({
         </Form.Item>
       </Form>
       {error && (
-        <Alert className="mt-3" type="error" showIcon message={t(error)} />
+        <RequestError
+          className="mt-3"
+          type="error"
+          showIcon
+          message={t(error)}
+        />
       )}
     </Modal>
   );

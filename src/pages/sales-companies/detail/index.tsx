@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../components/feedback/RequestError";
+import { RequestError } from "../../../components/feedback/RequestError";
 import {
   ArrowLeftOutlined,
   PictureOutlined,
@@ -81,9 +81,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const [editingMember, setEditingMember] = useState<Row>();
   const [viewingMember, setViewingMember] = useState<Row>();
   const viewMember = (member: Row) =>
-    root.salesRole
-      ? setViewingMember(member)
-      : navigate(`/users/${member.id}`);
+    root.salesRole ? setViewingMember(member) : navigate(`/users/${member.id}`);
   const detailRequest = useRef(0);
   const memberRequest = useRef(0);
   const memberSearchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -214,7 +212,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     return <Empty description={t("暂无此模块的访问权限")} />;
   if (error)
     return (
-      <Alert
+      <RequestError
         type="error"
         showIcon
         message={t(error)}
@@ -491,7 +489,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
               </div>
             </div>
             {membersError && (
-              <Alert
+              <RequestError
                 className="mx-5 mb-4"
                 type="error"
                 showIcon

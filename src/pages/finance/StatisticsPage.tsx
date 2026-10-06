@@ -1,3 +1,4 @@
+import { RequestError } from "../../components/feedback/RequestError";
 import {
   DollarOutlined,
   FileTextOutlined,
@@ -63,7 +64,7 @@ export default observer(function StatisticsPage() {
         />
       </div>
       {error ? (
-        <Alert
+        <RequestError
           type="error"
           showIcon
           message={error}

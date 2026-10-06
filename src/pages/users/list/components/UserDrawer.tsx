@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import {
   App,
@@ -243,7 +243,12 @@ export function UserDrawer({
       }
     >
       {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-4" />
+        <RequestError
+          type="error"
+          showIcon
+          message={t(error)}
+          className="mb-4"
+        />
       )}
       <Spin spinning={loading}>
         <Form

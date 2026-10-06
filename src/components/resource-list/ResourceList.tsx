@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../feedback/RequestError";
+import { RequestError } from "../feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
 import { Button, Empty, Pagination, Space, Table, Tag, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
@@ -185,7 +185,7 @@ export const ResourceList = observer(function ResourceList({
       className={`[&_.ant-table-thead_th]:!text-[11px] [&_.ant-table-thead_th]:!font-medium [&_.ant-table-thead_th]:whitespace-nowrap [&_.ant-table-tbody_td]:text-xs [&_.ant-table-tbody_td_a]:font-medium ${embedded ? "embedded-resource-list" : "resource-list"}`}
     >
       {store.error && (
-        <Alert
+        <RequestError
           type="error"
           message={t(store.error)}
           showIcon

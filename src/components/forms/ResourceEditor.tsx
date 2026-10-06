@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../feedback/RequestError";
+import { RequestError } from "../feedback/RequestError";
 import { App, Button, Drawer, Form, Input } from "antd";
 import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
@@ -229,7 +229,12 @@ export const Editor = observer(function Editor({
         className="[&_.ant-form-item-label_label]:text-xs"
       >
         {error && (
-          <Alert type="error" showIcon message={t(error)} className="mb-5" />
+          <RequestError
+            type="error"
+            showIcon
+            message={t(error)}
+            className="mb-5"
+          />
         )}
         <div className="mb-5 bg-[#f5f7fa] px-[15px] py-3 font-semibold">
           {t("基本信息")}

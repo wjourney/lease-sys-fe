@@ -1,3 +1,4 @@
+import { RequestError } from "../../components/feedback/RequestError";
 import {
   Alert,
   Button,
@@ -252,7 +253,7 @@ export default observer(function CompanyFinancePage({
         </Button>
       </div>
       {error ? (
-        <Alert
+        <RequestError
           type="error"
           message={error}
           action={<Button onClick={reload}>{t("重试")}</Button>}
@@ -541,7 +542,7 @@ function CommissionDrawer({
   return (
     <Drawer open title={t("佣金详情")} width={760} onClose={onClose}>
       {error ? (
-        <Alert type="error" message={error} />
+        <RequestError type="error" message={error} />
       ) : (
         <Spin spinning={loading}>
           {r && (

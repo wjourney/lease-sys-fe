@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { EditOutlined } from "@ant-design/icons";
 import { Button, Modal, Spin } from "antd";
 import { useEffect, useState, type ReactNode } from "react";
@@ -116,7 +116,7 @@ export function UnitDetailModal({
       }
     >
       <div className="max-h-[72vh] min-h-40 space-y-4 overflow-y-auto pr-1">
-        {error && <Alert type="error" showIcon message={t(error)} />}
+        {error && <RequestError type="error" showIcon message={t(error)} />}
         <Spin spinning={loading}>
           {detail && (
             <div className="space-y-4">

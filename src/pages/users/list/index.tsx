@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../components/feedback/RequestError";
+import { RequestError } from "../../../components/feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
 import { App, Button, Empty, Pagination, Table, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
@@ -159,7 +159,7 @@ const UserListPage = observer(function UserListPage() {
     <>
       <ResourceListSurface>
         {store.error && (
-          <Alert
+          <RequestError
             className="mb-4"
             type="error"
             showIcon

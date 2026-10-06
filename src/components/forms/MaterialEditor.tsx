@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../feedback/RequestError";
+import { RequestError } from "../feedback/RequestError";
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, Select, Upload } from "antd";
 import { useEffect, useState } from "react";
@@ -115,7 +115,7 @@ export function MaterialEditor({
           ownerType: "projects",
         }}
       >
-        {error && <Alert message={t(error)} type="error" showIcon />}
+        {error && <RequestError message={t(error)} type="error" showIcon />}
         {!owner && !versionOf && (
           <>
             <Form.Item

@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { Button, Empty, Modal, Spin } from "antd";
 import { useState } from "react";
 import { MaterialEditor } from "../../../../components/forms/MaterialEditor";
@@ -84,7 +84,12 @@ export function ProjectMaterialsModal({
           )}
         </div>
         {error && (
-          <Alert type="error" showIcon message={t(error)} className="mb-3" />
+          <RequestError
+            type="error"
+            showIcon
+            message={t(error)}
+            className="mb-3"
+          />
         )}
         <Spin spinning={false}>
           <div className="max-h-[60vh] min-h-36 overflow-y-auto rounded-md bg-[#f5f6f8] px-4 py-3">

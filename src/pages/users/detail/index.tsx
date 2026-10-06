@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../components/feedback/RequestError";
+import { RequestError } from "../../../components/feedback/RequestError";
 import { ArrowLeftOutlined, UserOutlined } from "@ant-design/icons";
 import { App, Avatar, Button, Empty, Spin, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
@@ -77,7 +77,7 @@ const UserDetailPage = observer(function UserDetailPage() {
     return <Empty description={t("暂无此模块的访问权限")} />;
   if (error)
     return (
-      <Alert
+      <RequestError
         type="error"
         showIcon
         message={t(error)}

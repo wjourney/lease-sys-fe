@@ -1,6 +1,6 @@
+import { RequestError } from "../../../components/feedback/RequestError";
 import { SearchOutlined } from "@ant-design/icons";
 import {
-  Alert,
   Button,
   Checkbox,
   DatePicker,
@@ -225,7 +225,7 @@ export default observer(function IncomeListPage() {
           </Button>
         </div>
         {error ? (
-          <Alert
+          <RequestError
             type="error"
             showIcon
             message={error}

@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { api, errorMessage, type Row } from "../../../../shared/api";
@@ -66,7 +66,12 @@ export function UnitDeleteModal({
         {t("吗？已有订单引用的单位无法删除。")}
       </p>
       {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-4" />
+        <RequestError
+          type="error"
+          showIcon
+          message={t(error)}
+          className="mb-4"
+        />
       )}
       <Form form={form} layout="vertical" onFinish={submit}>
         <Form.Item

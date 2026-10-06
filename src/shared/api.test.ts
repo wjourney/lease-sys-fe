@@ -2,6 +2,17 @@ import { describe, expect, it } from "vitest";
 import { errorMessage } from "./api";
 
 describe("errorMessage", () => {
+  it("does not mistake missing API endpoints for deleted business data", () => {
+    const hint = errorMessage({
+      response: {
+        status: 404,
+        data: { message: "Cannot GET /api/v1/company-commissions" },
+      },
+    });
+    expect(hint).toBe("操作暂时无法完成，请稍后再试");
+    expect(errorMessage(hint)).toBe(hint);
+  });
+
   it("hides technical timeout and server errors", () => {
     expect(
       errorMessage({

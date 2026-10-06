@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { errorMessage } from "../../../../shared/api";
@@ -59,7 +59,12 @@ export function DeleteSalesCompanyModal({
         {t("吗？请填写删除原因后确认。")}
       </p>
       {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-4" />
+        <RequestError
+          type="error"
+          showIcon
+          message={t(error)}
+          className="mb-4"
+        />
       )}
       <Form form={form} layout="vertical">
         <Form.Item

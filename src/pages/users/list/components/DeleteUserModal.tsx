@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../../../../components/feedback/RequestError";
+import { RequestError } from "../../../../components/feedback/RequestError";
 import { Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 import { api, errorMessage } from "../../../../shared/api";
@@ -74,7 +74,12 @@ export function DeleteUserModal({
         </AccountActionNote>
       </div>
       {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-4" />
+        <RequestError
+          type="error"
+          showIcon
+          message={t(error)}
+          className="mb-4"
+        />
       )}
       <Form form={form} layout="vertical" onFinish={submit}>
         <Form.Item

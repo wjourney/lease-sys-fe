@@ -134,7 +134,7 @@ export function errorMessage(error: unknown): string {
     return "该记录已关联业务，无法删除。可改为停用。";
   if (status === 401) return "登录状态已失效，请重新登录";
   if (status === 403) return "当前账号没有操作权限";
-  if (status === 404) return "内容不存在或已删除，请刷新后重试";
+  if (status === 404) return "操作暂时无法完成，请稍后再试";
   if (status === 409) return "内容已被修改，请刷新后重试";
   if (status === 413) return "文件过大，请选择较小的文件";
   if (status === 400 || status === 422) return "提交的信息有误，请检查后重试";

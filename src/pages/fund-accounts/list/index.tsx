@@ -1,8 +1,9 @@
+import { RequestError } from "../../../components/feedback/RequestError";
 import { ResourceList } from "../../../components/resource-list/ResourceList";
 import { api, errorMessage, Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
 import { useRoot } from "../../../stores/root";
-import { Alert, Button, Descriptions, Drawer } from "antd";
+import { Button, Descriptions, Drawer } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 
@@ -34,7 +35,7 @@ export default observer(function FundAccountListPage() {
   return (
     <>
       {error && (
-        <Alert
+        <RequestError
           type="error"
           message={error}
           action={

@@ -1,4 +1,4 @@
-import { RequestError as Alert } from "../components/feedback/RequestError";
+import { RequestError } from "../components/feedback/RequestError";
 import { CameraOutlined, EditOutlined, UserOutlined } from "@ant-design/icons";
 import { App as AntApp, Avatar, Button, Form, Input, Modal, Spin } from "antd";
 import { observer } from "mobx-react-lite";
@@ -208,7 +208,12 @@ export const ProfileModal = observer(function ProfileModal({
       className="[&_.ant-modal-content]:!p-6 max-[700px]:[&_.ant-modal-content]:!p-4 [&_.ant-modal-close]:!h-10 [&_.ant-modal-close]:!w-10 [&_.ant-modal-close]:!rounded-md [&_.ant-modal-close]:!border [&_.ant-modal-close]:!border-[#e2e8ef] [&_.ant-modal-footer]:!mt-6"
     >
       {error && (
-        <Alert type="error" showIcon message={t(error)} className="mb-4" />
+        <RequestError
+          type="error"
+          showIcon
+          message={t(error)}
+          className="mb-4"
+        />
       )}
       <Spin spinning={loading}>
         <div className="mb-5 flex flex-wrap items-center gap-4">

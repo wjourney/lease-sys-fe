@@ -1,6 +1,6 @@
+import { RequestError } from "../../components/feedback/RequestError";
 import { SearchOutlined } from "@ant-design/icons";
 import {
-  Alert,
   Button,
   Empty,
   Input,
@@ -148,7 +148,7 @@ export default observer(function LedgerPage() {
           />
         </div>
         {error ? (
-          <Alert
+          <RequestError
             type="error"
             showIcon
             message={error}

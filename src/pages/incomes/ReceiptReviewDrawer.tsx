@@ -1,4 +1,5 @@
-import { Alert, Button, Drawer, Pagination, Table } from "antd";
+import { RequestError } from "../../components/feedback/RequestError";
+import { Button, Drawer, Pagination, Table } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -42,7 +43,7 @@ export const ReceiptReviewDrawer = observer(function ReceiptReviewDrawer({
         )}
       </p>
       {error ? (
-        <Alert
+        <RequestError
           type="error"
           message={error}
           action={<Button onClick={reload}>{t("重试")}</Button>}
