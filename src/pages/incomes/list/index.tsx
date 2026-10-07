@@ -1,3 +1,4 @@
+import { DownloadBillInvoices } from "../DownloadBillInvoices";
 import { OrderFilter } from "../../../components/filters/OrderFilter";
 import { BillBatchActions } from "../BillBatchActions";
 import { RequestError } from "../../../components/feedback/RequestError";
@@ -245,7 +246,7 @@ export default observer(function IncomeListPage() {
                         {
                           title: t("操作"),
                           fixed: "right",
-                          width: 190,
+                          width: 290,
                           render: (_, r) => (
                             <Space wrap>
                               <Button
@@ -261,6 +262,10 @@ export default observer(function IncomeListPage() {
                                   payerName={r.payerName}
                                 />
                               )}
+                              <DownloadBillInvoices
+                                bill={r}
+                                disabled={loading}
+                              />
                             </Space>
                           ),
                         },

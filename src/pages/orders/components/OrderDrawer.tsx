@@ -42,7 +42,6 @@ type OrderValues = {
   monthlyRent: string;
   depositAmount: string;
   depositPlan?: string;
-  paymentIntervalMonths: number;
   salesCompanyId?: string;
   salesUserId: string;
   paymentDeclaration: "UNPAID" | "PARTIAL" | "PAID";
@@ -200,6 +199,8 @@ export function OrderDrawer({
   );
   const commission = row?.orderCommission as Row | undefined;
   const lockedLease = !!row && row.actions?.editLease === false;
+  const paymentIntervalMonths =
+    row && row.status !== "DRAFT" ? Number(row.paymentIntervalMonths ?? 1) : 1;
   const [fundAccounts, setFundAccounts] = useState<Choice[]>([]);
   const [projects, setProjects] = useState<Choice[]>([]);
   const [units, setUnits] = useState<Choice[]>([]);
@@ -474,7 +475,7 @@ export function OrderDrawer({
             monthlyRent: values.monthlyRent ?? undefined,
             depositAmount: values.depositAmount ?? undefined,
             depositPlan: values.depositPlan ?? (row ? null : undefined),
-            paymentIntervalMonths: values.paymentIntervalMonths,
+            paymentIntervalMonths,
             rentDueDay: values.rentDueDay ?? undefined,
             ...(!row || paymentChanged
               ? {
@@ -661,7 +662,6 @@ export function OrderDrawer({
                 ? String(row.depositAmount)
                 : undefined,
             depositPlan: initialDepositPlan(row),
-            paymentIntervalMonths: row?.paymentIntervalMonths ?? 1,
             rentDueDay: row?.rentDueDay ?? dayjs().date(),
             paymentDeclaration: initialDeclaration(row?.initialPayment),
             initialRentReceived:
@@ -880,7 +880,7 @@ export function OrderDrawer({
               </Form.Item>
               <Form.Item name="depositPlan" label={t("押付方式")}>
                 <Select
-                  disabled={lockedLease}
+                  disabled={lockedLease || paymentIntervalMonths !== 1}
                   options={[
                     { value: "ONE_ONE", label: t("押一付一") },
                     { value: "TWO_ONE", label: t("押二付一") },
@@ -894,29 +894,15 @@ export function OrderDrawer({
                     );
                     if (amount !== undefined)
                       form.setFieldValue("depositAmount", amount);
-                    if (plan !== "OTHER")
-                      form.setFieldValue("paymentIntervalMonths", 1);
                   }}
-                />
-              </Form.Item>
-              <Form.Item name="paymentIntervalMonths" label={t("付款频率")}>
-                <Select
-                  disabled={
-                    lockedLease ||
-                    !row ||
-                    row.billingVersion === 2 ||
-                    depositPlan !== "OTHER"
-                  }
-                  options={[1, 2, 3, 6, 12].map((value) => ({
-                    value,
-                    label: value === 1 ? t("每月") : t(`每 ${value} 个月`),
-                  }))}
                 />
               </Form.Item>
             </div>
             <p className="mb-2 text-xs text-[#63738d]">
               {t(
-                "选择押付方式后自动计算押金；新订单按租赁月一次生成整个租期的账单，特殊押金请选择“其他”。",
+                paymentIntervalMonths !== 1
+                  ? `历史订单：租金每 ${paymentIntervalMonths} 个月支付一次，保留原账单规则。`
+                  : "租金按月支付，保存后自动生成整个租期的月账单。",
               )}
             </p>
           </Section>

@@ -393,3 +393,99 @@ test("finance filters retain date and receipt filtering without heading descript
     fullPage: true,
   });
 });
+
+for (const [invoiceCount, contentType, extension] of [
+  [1, "application/pdf", "pdf"],
+  [2, "application/zip", "zip"],
+] as const) {
+  test(`bill row downloads ${extension} and its drawer shares the action`, async ({
+    page,
+  }) => {
+    await mock(page);
+    const bill = {
+      id: billId,
+      orderId,
+      recordNo: "B001",
+      invoiceCount,
+      feeType: "RENT",
+      status: "PAID",
+      total: "100",
+      confirmed: "100",
+      remaining: "0",
+      available: "0",
+      receipts: [],
+      operations: [],
+    };
+    await page.route("**/api/v1/incomes/bills**", (route) =>
+      route.fulfill({ json: { items: [bill], total: 1 } }),
+    );
+    await page.route(`**/api/v1/incomes/${billId}`, (route) =>
+      route.fulfill({ json: bill }),
+    );
+    await page.route(`**/api/v1/invoices/bills/${billId}/download`, (route) =>
+      route.fulfill({ contentType, body: Buffer.from("mock file") }),
+    );
+    await page.goto("/incomes");
+    await expect(page.getByRole("button", { name: "导出所选" })).toHaveCount(0);
+    const row = page.locator(".ant-table-row");
+    await expect(
+      row.getByRole("button", { name: "登记收款", exact: true }),
+    ).toHaveCount(0);
+    const download = page.waitForEvent("download");
+    await row.getByRole("button", { name: "下载发票", exact: true }).click();
+    expect((await download).suggestedFilename()).toBe(`B001_发票.${extension}`);
+    await row.getByRole("button", { name: /查\s*看/ }).click();
+    await expect(
+      page
+        .locator(".ant-drawer-content")
+        .getByRole("button", { name: "下载发票", exact: true }),
+    ).toBeEnabled();
+  });
+}
+
+test("no-invoice bills disable downloads; commission list keeps only batch payment", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.goto("/incomes");
+  const button = page
+    .locator(".ant-table-row")
+    .getByRole("button", { name: "下载发票", exact: true });
+  await expect(button).toBeDisabled();
+  await button.locator("..").hover();
+  await expect(page.getByRole("tooltip")).toHaveText("暂无发票，请先登记收款");
+  await page.goto("/commissions");
+  await expect(page.getByRole("button", { name: "导出所选" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "批量登记付款（0）" }),
+  ).toBeVisible();
+});
+
+test("invoice download failure shows a toast and allows retry", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.route("**/api/v1/incomes/bills**", (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          { id: billId, recordNo: "B001", invoiceCount: 1, status: "PAID" },
+        ],
+        total: 1,
+      },
+    }),
+  );
+  await page.route(`**/api/v1/invoices/bills/${billId}/download`, (route) =>
+    route.fulfill({ status: 503, json: { message: "internal error" } }),
+  );
+  await page.goto("/incomes");
+  const button = page
+    .locator(".ant-table-row")
+    .getByRole("button", { name: "下载发票", exact: true });
+  await button.click();
+  await expect(page.locator(".ant-message")).toContainText(
+    "服务暂时不可用，请稍后再试",
+  );
+  await expect(button).toHaveAttribute("aria-busy", "false");
+  await expect(button).toBeEnabled();
+});

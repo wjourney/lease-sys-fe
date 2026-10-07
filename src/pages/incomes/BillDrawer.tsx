@@ -1,3 +1,4 @@
+import { DownloadBillInvoices } from "./DownloadBillInvoices";
 import { RequestError } from "../../components/feedback/RequestError";
 import {
   Button,
@@ -57,6 +58,7 @@ export const BillDrawer = observer(function BillDrawer({
                 payerName={row.payerName}
               />
             )}
+            <DownloadBillInvoices bill={row} disabled={loading} />
             {row.orderId && (
               <Link to={`/orders/${row.orderId}`} onClick={onClose}>
                 <Button>{t("查看订单")}</Button>

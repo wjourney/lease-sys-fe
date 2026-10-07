@@ -3,7 +3,6 @@ import { observer } from "mobx-react-lite";
 import { useRef, useState } from "react";
 import { ActionForm } from "../../components/forms/ActionForm";
 import { financialFields } from "../../components/resource-detail/financial-fields";
-import { exportRows } from "../../components/batch/export";
 import { api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
@@ -42,26 +41,6 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
     <>
       <Space wrap className="mb-4">
         <span>{t(`已选 ${rows.length} 条（当前页）`)}</span>
-        <Button
-          disabled={!rows.length}
-          onClick={() =>
-            exportRows(
-              rows,
-              [
-                ["commissionNo", "佣金编号"],
-                ["orderNo", "订单编号"],
-                ["salesName", "员工"],
-                ["amount", "应付（HKD）"],
-                ["paidAmount", "已付（HKD）"],
-                ["remainingAmount", "剩余（HKD）"],
-                ["status", "状态"],
-              ],
-              "佣金.csv",
-            )
-          }
-        >
-          {t("导出所选")}
-        </Button>
         <Button
           type="primary"
           disabled={!available.length}

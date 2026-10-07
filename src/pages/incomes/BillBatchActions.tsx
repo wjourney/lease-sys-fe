@@ -2,7 +2,7 @@ import { App, Button, Space, Table } from "antd";
 import { useRef, useState } from "react";
 import { ActionForm } from "../../components/forms/ActionForm";
 import { financialFields } from "../../components/resource-detail/financial-fields";
-import { exportRows, saveDownload } from "../../components/batch/export";
+import { saveDownload } from "../../components/batch/export";
 import { api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
@@ -66,28 +66,6 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
     <>
       <Space wrap className="mb-4">
         <span>{t(`已选 ${rows.length} 条（当前页）`)}</span>
-        <Button
-          disabled={!rows.length}
-          onClick={() =>
-            exportRows(
-              rows,
-              [
-                ["recordNo", "账单编号"],
-                ["orderNo", "订单编号"],
-                ["payerName", "付款方"],
-                ["feeType", "类型"],
-                ["total", "应收（HKD）"],
-                ["confirmed", "已收（HKD）"],
-                ["remaining", "剩余（HKD）"],
-                ["dueOn", "到期日期"],
-                ["status", "状态"],
-              ],
-              "账单.csv",
-            )
-          }
-        >
-          {t("导出所选")}
-        </Button>
         <Button
           disabled={!rows.length || rows.length > 20}
           loading={downloading}

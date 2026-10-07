@@ -149,6 +149,12 @@ test("new order accepts company name alone and shows no other required fields", 
   const drawer = page.locator(".ant-drawer-content");
   await drawer.locator("#tenantName").fill("仅名称公司");
   await expect(drawer.locator("#commissionMode")).toHaveCount(0);
+  await expect(drawer.locator("#paymentIntervalMonths")).toHaveCount(0);
+  await expect(
+    drawer.getByText("租金按月支付，保存后自动生成整个租期的月账单。", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(
     drawer.getByText("每月佣金（HKD）", { exact: true }),
   ).toBeVisible();
@@ -164,6 +170,7 @@ test("new order accepts company name alone and shows no other required fields", 
   await drawer.getByRole("button", { name: "提交订单" }).click();
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].body.tenantName).toBe("仅名称公司");
+  expect(writes[0].body.paymentIntervalMonths).toBe(1);
   expect(writes[0].body.unitId).toBeUndefined();
   expect(writes[0].body.monthlyRent).toBeUndefined();
   expect(writes[0].body.commission.amount).toBeUndefined();
@@ -202,6 +209,7 @@ test("draft edit shares optional fields, unit prefill and direct first-payment d
   await drawer.getByRole("button", { name: "保存修改" }).click();
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].body.unitId).toBe(unitId);
+  expect(writes[0].body.paymentIntervalMonths).toBe(1);
   expect(writes[0].body.initialPayment.paid).toBe(true);
   expect(writes[0].body.initialPayment.fundAccountId).toBe(accountId);
   expect(writes[0].body.salesUserId).toBeUndefined();
@@ -250,4 +258,44 @@ test("sales cannot create, edit or batch-delete orders", async ({ page }) => {
   await expect(page.getByRole("button", { name: "新建订单" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "批量删除" })).toHaveCount(0);
   await expect(page.locator(".ant-table-selection-column")).toHaveCount(0);
+});
+
+test("editing a legacy non-monthly order preserves its payment interval without a selector", async ({
+  page,
+}) => {
+  const writes = await mock(page);
+  const legacy = {
+    ...draft,
+    status: "PENDING",
+    billingVersion: 1,
+    projectId,
+    unitId,
+    paymentIntervalMonths: 3,
+    monthlyRent: "1000",
+    depositAmount: "1000",
+    depositPlan: "OTHER",
+  };
+  await page.route(`**/api/v1/orders/${id}`, async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: legacy });
+    writes.push({
+      path: `/orders/${id}`,
+      body: route.request().postDataJSON(),
+    });
+    return route.fulfill({ json: legacy });
+  });
+  await page.goto("/orders");
+  await page.getByRole("button", { name: /编\s*辑/, exact: true }).click();
+  const drawer = page.locator(".ant-drawer-content");
+  await expect(drawer.locator("#tenantName")).toHaveValue("海湾公司");
+  await expect(drawer.locator("#paymentIntervalMonths")).toHaveCount(0);
+  await expect(
+    drawer.getByText("历史订单：租金每 3 个月支付一次，保留原账单规则。", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await drawer.locator("#tenantPhone").fill("12345678");
+  await drawer.getByRole("button", { name: "保存修改" }).click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0].body.paymentIntervalMonths).toBe(3);
 });
