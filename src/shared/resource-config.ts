@@ -46,6 +46,7 @@ export const roleLabels: Record<string, string> = {
 export const statusLabels: Record<string, string> = {
   ACTIVE: "启用",
   DISABLED: "停用",
+  DRAFT: "待完善",
   PENDING: "待确认",
   OPEN: "待收款",
   PARTIAL: "部分完成",
@@ -62,8 +63,8 @@ export const statusLabels: Record<string, string> = {
   COMPLETED: "已完成",
   CLOSED: "已关闭",
   AVAILABLE: "可租",
-  LOCKED: "已锁定",
-  OCCUPIED: "出租中",
+  LOCKED: "已租",
+  OCCUPIED: "已租",
   RELEASED: "已释放",
   UNSET: "待填写",
   READY: "已生成",

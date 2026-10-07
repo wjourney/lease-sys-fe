@@ -1,8 +1,8 @@
 import { RequestError } from "../feedback/RequestError";
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Empty, Pagination, Space, Table, Tag, Tooltip } from "antd";
+import { Button, Empty, Pagination, Space, Table, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Row } from "../../shared/api";
 import { canEditFinancialRecord } from "../../shared/financial-record-actions";
@@ -20,6 +20,8 @@ export const ResourceList = observer(function ResourceList({
   resource,
   fixed = EMPTY_FILTERS,
   embedded = false,
+  syncSearch = !embedded,
+  onCreate,
   pageSize = 12,
   renderItems,
   listToolbar,
@@ -29,11 +31,13 @@ export const ResourceList = observer(function ResourceList({
   createDisabledReason,
   hideStatus = false,
   renderRowActions,
+  renderBatchActions,
   onViewRow,
   renderCreateEditor,
   renderEditor,
 }: ResourceListProps) {
   const {
+    filterKey,
     config,
     root,
     navigate,
@@ -49,9 +53,12 @@ export const ResourceList = observer(function ResourceList({
     refresh,
     searchNow,
     resetFilters,
-  } = useResourceList(resource, fixed, embedded, pageSize);
+  } = useResourceList(resource, fixed, embedded, pageSize, syncSearch);
   const [editor, setEditor] = useState<Row | boolean>(false);
   const [material, setMaterial] = useState(false);
+  const [selected, setSelected] = useState<React.Key[]>([]);
+  useEffect(() => setSelected([]), [filterKey, resource, root.epoch]);
+  const batchEnabled = !!renderBatchActions && root.canWrite(resource);
   if (!config || !root.canRead(resource))
     return <Empty description={t("暂无此模块的访问权限")} />;
   const columns: any[] = config.columns.map((c) => ({
@@ -64,11 +71,6 @@ export const ResourceList = observer(function ResourceList({
         <span>{v || "—"}</span>
       ) : c.key === config.columns[0].key ? (
         <Link to={`/${resource}/${row.id}`}>{v || "—"}</Link>
-      ) : c.key === "status" && resource === "incomes" && row.overdue ? (
-        <Space size={4}>
-          {valueView(c.key, v, resource)}
-          <Tag color="red">{t("逾期")}</Tag>
-        </Space>
       ) : (
         valueView(
           c.key,
@@ -86,7 +88,9 @@ export const ResourceList = observer(function ResourceList({
     key: "actions",
     fixed: "right",
     width:
-      resource === "sales-companies" || resource === "fund-accounts"
+      resource === "sales-companies" ||
+      resource === "fund-accounts" ||
+      resource === "orders"
         ? 210
         : resource === "materials"
           ? 145
@@ -152,7 +156,7 @@ export const ResourceList = observer(function ResourceList({
                     disabled={!!createDisabledReason}
                     type="primary"
                     icon={<PlusOutlined aria-hidden />}
-                    onClick={() => setEditor(true)}
+                    onClick={() => (onCreate ? onCreate() : setEditor(true))}
                   >
                     {t(
                       embedded
@@ -196,6 +200,12 @@ export const ResourceList = observer(function ResourceList({
       <ResourceListSurface embedded={embedded}>
         {listToolbar}
         {t(toolbar)}
+        {batchEnabled &&
+          renderBatchActions!(
+            store.loading
+              ? []
+              : store.items.filter((row) => selected.includes(row.id)),
+          )}
 
         <div className="list-results">
           {t(
@@ -212,6 +222,18 @@ export const ResourceList = observer(function ResourceList({
                   <Table
                     size="middle"
                     rowKey="id"
+                    rowSelection={
+                      batchEnabled
+                        ? {
+                            selectedRowKeys: selected,
+                            onChange: setSelected,
+                            preserveSelectedRowKeys: false,
+                            onCell: () => ({
+                              onClick: (event) => event.stopPropagation(),
+                            }),
+                          }
+                        : undefined
+                    }
                     onRow={(row) => ({
                       className: onViewRow ? "" : "cursor-pointer",
                       onClick: (event) => {

@@ -40,10 +40,9 @@ export default observer(function StatisticsPage() {
   return (
     <section className="finance-page">
       <div className="finance-heading">
-        <h1>{t("财务统计")}</h1>
         <span>
           {t(
-            "按实际收付日期统计；各币种独立计算，净流入不代表利润或银行余额。",
+            "按实际收付日期统计，金额以港元计算；净流入不代表利润或银行余额。",
           )}
         </span>
       </div>

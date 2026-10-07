@@ -62,11 +62,11 @@ export const ResourceFilters = observer(function ResourceFilters({
                 resource === "units"
                   ? {
                       AVAILABLE: "可租",
-                      LOCKED: "已锁定",
-                      OCCUPIED: "出租中",
+                      OCCUPIED: "已租",
                     }
                   : resource === "orders"
                     ? {
+                        DRAFT: "待完善",
                         PENDING: "待确认",
                         ACTIVE: "租赁中",
                         COMPLETED: "已完成",
@@ -74,9 +74,8 @@ export const ResourceFilters = observer(function ResourceFilters({
                       }
                     : resource === "incomes"
                       ? {
-                          OPEN: "待收款",
-                          PARTIAL: "部分收款",
-                          PAID: "已收齐",
+                          OPEN: "待付款",
+                          PAID: "已付款",
                         }
                       : resource === "expenses"
                         ? {

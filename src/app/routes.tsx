@@ -7,6 +7,9 @@ const CompanyFinancePage = lazy(() => import("../pages/company-finance"));
 const LedgerPage = lazy(() => import("../pages/finance/LedgerPage"));
 const StatisticsPage = lazy(() => import("../pages/finance/StatisticsPage"));
 const SettingsPage = lazy(() => import("../pages/settings"));
+const ResourceEditPage = lazy(
+  () => import("../components/record-editor/ResourceEditPage"),
+);
 const ProjectListPage = lazy(() => import("../pages/projects/list"));
 const ProjectDetailPage = lazy(() => import("../pages/projects/detail"));
 const OrderListPage = lazy(() => import("../pages/orders/list"));
@@ -82,6 +85,22 @@ export const AppRoutes = observer(function AppRoutes() {
       <Route path="/finance-statistics" element={<StatisticsPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/projects" element={<ProjectListPage />} />
+      <Route
+        path="/projects/new"
+        element={<ResourceEditPage resource="projects" />}
+      />
+      <Route
+        path="/projects/:id/edit"
+        element={<ResourceEditPage resource="projects" />}
+      />
+      <Route
+        path="/projects/:projectId/units/new"
+        element={<ResourceEditPage resource="units" />}
+      />
+      <Route
+        path="/projects/:projectId/units/:id/edit"
+        element={<ResourceEditPage resource="units" />}
+      />
       <Route path="/projects/:id" element={<ProjectDetailPage />} />
       <Route path="/orders" element={<OrderListPage />} />
       <Route path="/orders/:id" element={<OrderDetailPage />} />

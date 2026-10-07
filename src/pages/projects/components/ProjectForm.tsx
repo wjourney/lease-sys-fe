@@ -1,5 +1,7 @@
+import { RecordFormPage } from "../../../components/record-editor/RecordFormPage";
+import { useUnsavedChanges } from "../../../components/record-editor/useUnsavedChanges";
 import { RequestError } from "../../../components/feedback/RequestError";
-import { App, Button, Drawer, Form, Spin } from "antd";
+import { App, Button, Form, Spin } from "antd";
 import type { UploadFile } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage, options, Row } from "../../../shared/api";
@@ -15,14 +17,13 @@ import {
 } from "../project-data";
 import { ProjectUnitTypesFields } from "./ProjectUnitTypesFields";
 import { ProjectBasicFields } from "./ProjectBasicFields";
-import { ProjectFilesFields } from "./ProjectFilesFields";
-import { ProjectPropertyFields } from "./ProjectPropertyFields";
+import { ProjectMediaFields } from "./ProjectMediaFields";
 import type {
   ProjectUploadCategory,
   ProjectUploads,
 } from "./ProjectUploadField";
 
-export function ProjectDrawer({
+export function ProjectForm({
   row,
   onClose,
   onSaved,
@@ -37,6 +38,9 @@ export function ProjectDrawer({
   const [uploads, setUploads] = useState<ProjectUploads>(emptyProjectUploads);
   const [loaded, setLoaded] = useState(!row);
   const [saving, setSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const { markDirty, allowLeave } = useUnsavedChanges(saving);
   const [uploadProgress, setUploadProgress] = useState<{
     completed: number;
     total: number;
@@ -50,6 +54,8 @@ export function ProjectDrawer({
   useEffect(() => {
     if (!row) return;
     let active = true;
+    setLoadFailed(false);
+    setError("");
     (row.materials
       ? Promise.resolve(row.materials as Row[])
       : options("materials", { projectId: row.id })
@@ -64,17 +70,23 @@ export function ProjectDrawer({
         setLoaded(true);
       })
       .catch((cause) => {
-        if (active) setError(errorMessage(cause));
+        if (active) {
+          setError(errorMessage(cause));
+          setLoadFailed(true);
+        }
       });
     return () => {
       active = false;
     };
-  }, [row?.id]);
+  }, [row?.id, loadAttempt]);
 
   const onUploadChange = (
     category: ProjectUploadCategory,
     files: UploadFile[],
-  ) => setUploads((current) => ({ ...current, [category]: files }));
+  ) => {
+    markDirty();
+    setUploads((current) => ({ ...current, [category]: files }));
+  };
 
   function close() {
     if (saving) return;
@@ -90,7 +102,14 @@ export function ProjectDrawer({
     setError("");
     let recordSaved = false;
     try {
-      const payload = projectPayload(values, current.current?.extra);
+      const payload = projectPayload(
+        {
+          description: current.current?.description,
+          salesCanViewExactRent: current.current?.salesCanViewExactRent,
+          ...values,
+        },
+        current.current?.extra,
+      );
       const { data } = current.current
         ? await api.patch<Row>(`/projects/${current.current.id}`, {
             ...payload,
@@ -125,6 +144,7 @@ export function ProjectDrawer({
       await api.patch(`/projects/${data.id}/logos/order`, { ids: logoIds });
       message.success(row ? "项目修改已保存" : "项目创建成功");
       root.invalidate();
+      allowLeave();
       onSaved();
     } catch (cause) {
       setError(
@@ -139,23 +159,10 @@ export function ProjectDrawer({
   }
 
   return (
-    <Drawer
-      open
-      title={
-        <span className="text-xl font-semibold text-[#243248]">
-          {t(row ? "编辑项目" : "新建项目")}
-        </span>
-      }
-      width="min(880px, 100vw)"
-      closable={!saving}
-      maskClosable={!saving}
-      classNames={{
-        header: "!border-0 !px-6 !py-5 max-[640px]:!px-4",
-        body: "!px-6 !pt-0 !pb-6 max-[640px]:!px-4",
-        footer: "!border-0 !px-6 !py-3 max-[640px]:!px-4",
-      }}
-      onClose={close}
-      destroyOnClose
+    <RecordFormPage
+      title={row ? "编辑项目" : "新建项目"}
+      onBack={close}
+      saving={saving}
       footer={
         <div className="flex justify-end gap-2.5">
           <Button onClick={close} disabled={saving}>
@@ -182,37 +189,41 @@ export function ProjectDrawer({
           className="mb-4"
         />
       )}
-      <Spin spinning={!loaded}>
+      {loadFailed && (
+        <Button
+          className="mb-4"
+          onClick={() => setLoadAttempt((value) => value + 1)}
+        >
+          {t("重新加载")}
+        </Button>
+      )}
+      <Spin spinning={!loaded && !loadFailed}>
         <Form
           form={form}
           layout="vertical"
+          scrollToFirstError={{ block: "center", focus: true }}
           className="space-y-4"
           initialValues={{
             typeConfigs: [
               { code: "LARGE", name: "大单位" },
               { code: "SMALL", name: "小单位" },
             ],
-            salesStatus: "现售",
-            buildingStatus: "现楼",
             usage: "住宅",
             salesCanViewExactRent: false,
             ...(row ? projectFormValues(row) : {}),
           }}
+          disabled={!loaded || saving}
+          onValuesChange={markDirty}
           onFinish={save}
         >
-          <ProjectBasicFields
-            uploads={uploads}
-            onUploadChange={onUploadChange}
-            isEdit={!!row}
-          />
+          <ProjectBasicFields isEdit={!!row} />
           <ProjectUnitTypesFields />
-          <ProjectPropertyFields unitCount={row?.unitCount} />
-          <ProjectFilesFields
+          <ProjectMediaFields
             uploads={uploads}
             onUploadChange={onUploadChange}
           />
         </Form>
       </Spin>
-    </Drawer>
+    </RecordFormPage>
   );
 }

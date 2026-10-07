@@ -62,13 +62,18 @@ export const AppLayout = observer(function AppLayout() {
         ].includes(key)
       ? ["finance"]
       : [];
-  const isRecordDetail = /^\/[^/]+\/[^/]+\/?$/.test(location.pathname);
+  const isRecordEditor =
+    /^\/projects\/(?:new|[^/]+\/edit|[^/]+\/units\/(?:new|[^/]+\/edit))\/?$/.test(
+      location.pathname,
+    );
+  const isRecordDetail =
+    isRecordEditor || /^\/[^/]+\/[^/]+\/?$/.test(location.pathname);
   const isStandaloneList = standaloneListPaths.has(
     location.pathname.replace(/\/$/, ""),
   );
-  const hasViewportList = /^\/(projects|sales-companies)\/[^/]+\/?$/.test(
-    location.pathname,
-  );
+  const hasViewportList =
+    !isRecordEditor &&
+    /^\/(projects|sales-companies)\/[^/]+\/?$/.test(location.pathname);
   const isOrderDetail = /^\/orders\/[^/]+\/?$/.test(location.pathname);
   return (
     <Layout className="app-layout min-h-screen">
@@ -220,7 +225,7 @@ export const AppLayout = observer(function AppLayout() {
           </div>
         </Header>
         <Content
-          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${hasViewportList ? "viewport-detail-content" : ""} ${isOrderDetail ? "order-detail-content" : ""}`}
+          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${hasViewportList ? "viewport-detail-content" : ""} ${isOrderDetail ? "order-detail-content" : ""} ${isRecordEditor ? "record-editor-content" : ""}`}
         >
           <Suspense
             fallback={

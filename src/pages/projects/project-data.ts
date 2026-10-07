@@ -54,12 +54,6 @@ export function projectFormValues(row: Row): Row {
     address: row.address,
     longitude: row.longitude == null ? undefined : Number(row.longitude),
     latitude: row.latitude == null ? undefined : Number(row.latitude),
-    completionDate: row.completionDate
-      ? dayjs(String(row.completionDate).slice(0, 10))
-      : undefined,
-    developmentDate: extra.developmentDate
-      ? dayjs(extra.developmentDate)
-      : undefined,
     landLeaseEndDate: extra.landLeaseEndDate
       ? dayjs(extra.landLeaseEndDate)
       : undefined,
@@ -92,15 +86,15 @@ export function projectUploadsFromMaterials(materials: Row[]): ProjectUploads {
 export function projectPayload(values: Row, currentExtra: Row = {}): Row {
   const extra: Row = { ...currentExtra };
   for (const key of extraKeys) {
-    if (values[key] === undefined || values[key] === "") delete extra[key];
+    if (values[key] === undefined) continue;
+    if (values[key] === "") delete extra[key];
     else extra[key] = values[key];
   }
-  if (values.developmentDate)
-    extra.developmentDate = values.developmentDate.format("YYYY-MM-DD");
-  else delete extra.developmentDate;
+  delete extra.developmentDate;
   if (values.landLeaseEndDate)
     extra.landLeaseEndDate = values.landLeaseEndDate.format("YYYY-MM-DD");
-  else delete extra.landLeaseEndDate;
+  else if (Object.hasOwn(values, "landLeaseEndDate"))
+    delete extra.landLeaseEndDate;
   return {
     name: values.name,
     nameEn: values.nameEn || "",
@@ -110,12 +104,15 @@ export function projectPayload(values: Row, currentExtra: Row = {}): Row {
     address: values.address,
     longitude: values.longitude ?? null,
     latitude: values.latitude ?? null,
-    completionDate: values.completionDate?.format("YYYY-MM-DD") ?? null,
     typeConfigs: (values.typeConfigs ?? []).map((item: Row) => ({
       code: item.code,
       name: item.name?.trim(),
+      building: item.building?.trim(),
+      floor: item.floor?.trim(),
+      layout: item.layout?.trim(),
+      age: item.age,
       ...Object.fromEntries(
-        ["minArea", "maxArea", "minRent", "maxRent"].map((key) => [
+        ["area", "minRent", "maxRent"].map((key) => [
           key,
           item[key] == null ? undefined : String(item[key]),
         ]),

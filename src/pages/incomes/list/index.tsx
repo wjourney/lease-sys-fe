@@ -1,9 +1,9 @@
+import { OrderFilter } from "../../../components/filters/OrderFilter";
+import { BillBatchActions } from "../BillBatchActions";
 import { RequestError } from "../../../components/feedback/RequestError";
 import { SearchOutlined } from "@ant-design/icons";
 import {
   Button,
-  Checkbox,
-  DatePicker,
   Empty,
   Input,
   Pagination,
@@ -12,7 +12,6 @@ import {
   Spin,
   Table,
 } from "antd";
-import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -22,7 +21,6 @@ import { t } from "../../../shared/i18n";
 import { useRoot } from "../../../stores/root";
 import { formatMoney } from "../../finance/finance-data";
 import { BillDrawer, BillStatus } from "../BillDrawer";
-import { ReceiptReviewDrawer } from "../ReceiptReviewDrawer";
 import {
   BillFilters,
   BillPage,
@@ -38,8 +36,9 @@ export default observer(function IncomeListPage() {
     page: 1,
   });
   const [keyword, setKeyword] = useState("");
+  const [selected, setSelected] = useState<React.Key[]>([]);
+  useEffect(() => setSelected([]), [filters, root.epoch]);
   const [viewing, setViewing] = useState<string>();
-  const [reviewing, setReviewing] = useState(false);
   const { data, loading, error, reload } = useBillRequest<BillPage>(
     "/incomes/bills",
     filters,
@@ -75,17 +74,6 @@ export default observer(function IncomeListPage() {
     return <Empty description={t("暂无此模块的访问权限")} />;
   return (
     <section className="finance-page resource-list bills-page">
-      <div className="finance-heading bill-heading">
-        <div>
-          <h1>{t("账单管理")}</h1>
-          <span>{t("所有订单的已生成账单，未结清优先展示。")}</span>
-        </div>
-        {root.finance && (
-          <Button onClick={() => setReviewing(true)}>
-            {t("待核对收款")}（{data?.pendingCount ?? "—"}）
-          </Button>
-        )}
-      </div>
       <div className="finance-panel list-surface">
         <div className="finance-filters bill-filters">
           <label>
@@ -101,42 +89,10 @@ export default observer(function IncomeListPage() {
               style={{ width: 260 }}
             />
           </label>
-          <label>
-            {t("项目")}
-            <Select
-              aria-label={t("项目")}
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder={t("全部项目")}
-              style={{ width: 160 }}
-              value={filters.projectId}
-              onChange={(projectId) => change({ projectId, unitId: undefined })}
-              options={data?.projects.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-            />
-          </label>
-          <label>
-            {t("单位")}
-            <Select
-              aria-label={t("单位")}
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder={t("全部单位")}
-              style={{ width: 180 }}
-              value={filters.unitId}
-              onChange={(unitId) => change({ unitId })}
-              options={data?.units
-                .filter(
-                  (u) =>
-                    !filters.projectId || u.projectId === filters.projectId,
-                )
-                .map((u) => ({ value: u.id, label: u.unitNo }))}
-            />
-          </label>
+          <OrderFilter
+            value={filters.orderId}
+            onChange={(orderId) => change({ orderId })}
+          />
           <label>
             {t("类型")}
             <Select
@@ -146,10 +102,12 @@ export default observer(function IncomeListPage() {
               style={{ width: 125 }}
               value={filters.feeType}
               onChange={(feeType) => change({ feeType })}
-              options={Object.entries(billTypes).map(([value, label]) => ({
-                value,
-                label: t(label),
-              }))}
+              options={Object.entries(billTypes)
+                .filter(([value]) => value !== "OTHER")
+                .map(([value, label]) => ({
+                  value,
+                  label: t(label),
+                }))}
             />
           </label>
           <label>
@@ -160,8 +118,7 @@ export default observer(function IncomeListPage() {
               value={filters.status || ""}
               onChange={(status) => change({ status: status || undefined })}
               options={[
-                { value: "", label: t("有效账单") },
-                { value: "ALL", label: t("全部（含作废）") },
+                { value: "", label: t("全部") },
                 ...Object.entries(billStates).map(([value, label]) => ({
                   value,
                   label: t(label),
@@ -169,52 +126,6 @@ export default observer(function IncomeListPage() {
               ]}
             />
           </label>
-          <label>
-            {t("币种")}
-            <Select
-              aria-label={t("币种")}
-              value={filters.currency}
-              style={{ width: 100 }}
-              onChange={(currency) => change({ currency })}
-              options={["HKD", "CNY", "USD"].map((v) => ({
-                value: v,
-                label: v,
-              }))}
-            />
-          </label>
-          <label>
-            {t("到期日期")}
-            <DatePicker.RangePicker
-              aria-label={t("到期日期范围")}
-              value={
-                filters.from && filters.to
-                  ? [dayjs(filters.from), dayjs(filters.to)]
-                  : null
-              }
-              onChange={(v) =>
-                change({
-                  from: v?.[0]?.format("YYYY-MM-DD"),
-                  to: v?.[1]?.format("YYYY-MM-DD"),
-                })
-              }
-            />
-          </label>
-          <Checkbox
-            checked={filters.overdue === "true"}
-            onChange={(e) =>
-              change({ overdue: e.target.checked ? "true" : undefined })
-            }
-          >
-            {t("仅看逾期")}
-          </Checkbox>
-          <Checkbox
-            checked={filters.pending === "true"}
-            onChange={(e) =>
-              change({ pending: e.target.checked ? "true" : undefined })
-            }
-          >
-            {t("有待核对收款")}
-          </Checkbox>
           <Button
             onClick={() => {
               setKeyword("");
@@ -224,6 +135,15 @@ export default observer(function IncomeListPage() {
             {t("重置")}
           </Button>
         </div>
+        {!root.salesRole && (
+          <BillBatchActions
+            rows={
+              loading
+                ? []
+                : (data?.items ?? []).filter((r) => selected.includes(r.id))
+            }
+          />
+        )}
         {error ? (
           <RequestError
             type="error"
@@ -235,39 +155,19 @@ export default observer(function IncomeListPage() {
           <Spin spinning={loading}>
             {data && (
               <>
-                <div
-                  className="bill-summary"
-                  aria-label={t("筛选结果金额汇总")}
-                >
-                  <div className="bill-summary-caption">
-                    {t("当前筛选汇总 · 不含作废")}
-                  </div>
-                  {(
-                    [
-                      ["租金及其他费用", data.summary.rental],
-                      ["押金", data.summary.deposit],
-                    ] as const
-                  ).map(([label, group]) => (
-                    <div className="bill-summary-row" key={label}>
-                      <strong>{t(label)}</strong>
-                      {[
-                        ["应收", "total"],
-                        ["已确认收款", "confirmed"],
-                        ["押金抵扣", "offset"],
-                        ["剩余应收", "remaining"],
-                      ].map(([name, key]) => (
-                        <div key={key}>
-                          <span>{t(name)}</span>
-                          <b>{money(group[key as keyof typeof group])}</b>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
                 <div className="list-results">
                   <div className="list-scroll-area">
                     <Table<Row>
                       rowKey="id"
+                      rowSelection={
+                        !root.salesRole
+                          ? {
+                              selectedRowKeys: selected,
+                              onChange: setSelected,
+                              preserveSelectedRowKeys: false,
+                            }
+                          : undefined
+                      }
                       size="middle"
                       dataSource={data.items}
                       pagination={false}
@@ -324,7 +224,6 @@ export default observer(function IncomeListPage() {
                         ...[
                           ["应收", "total"],
                           ["已确认收款", "confirmed"],
-                          ["待核对", "pending"],
                           ["押金抵扣", "offset"],
                           ["剩余应收", "remaining"],
                         ].map(([title, key]) => ({
@@ -363,14 +262,6 @@ export default observer(function IncomeListPage() {
                                   payerName={r.payerName}
                                 />
                               )}
-                              {root.finance && Number(r.pending) > 0 && (
-                                <Button
-                                  size="small"
-                                  onClick={() => setViewing(r.id)}
-                                >
-                                  {t("核对收款")}
-                                </Button>
-                              )}
                             </Space>
                           ),
                         },
@@ -400,12 +291,6 @@ export default observer(function IncomeListPage() {
           key={viewing}
           id={viewing}
           onClose={() => setViewing(undefined)}
-        />
-      )}
-      {reviewing && (
-        <ReceiptReviewDrawer
-          currency={filters.currency}
-          onClose={() => setReviewing(false)}
         />
       )}
     </section>

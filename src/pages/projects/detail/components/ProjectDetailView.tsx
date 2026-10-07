@@ -11,7 +11,7 @@ import {
 import { Button, Dropdown, Modal } from "antd";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { UnitDrawer } from "../../../units/components/UnitDrawer";
+import { useLocation } from "react-router-dom";
 import { RecordHistory } from "../../../../components/resource-detail/RecordHistory";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { Row } from "../../../../shared/api";
@@ -50,7 +50,14 @@ export function ProjectDetailView({
   const [mediaCategory, setMediaCategory] = useState<ProjectMediaCategory>();
   const [showHistory, setShowHistory] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [unitEditor, setUnitEditor] = useState<Row | true>();
+  const location = useLocation();
+  const openUnitEditor = (unit?: Row) =>
+    navigate(
+      unit
+        ? `/projects/${id}/units/${unit.id}/edit`
+        : `/projects/${id}/units/new`,
+      { state: { returnTo: location.pathname + location.search } },
+    );
   const [unitDetail, setUnitDetail] = useState<Row>();
   const headerHost = document.getElementById("record-detail-header");
   const heading = (
@@ -92,7 +99,7 @@ export function ProjectDetailView({
                   className="!h-9"
                   type="primary"
                   icon={<PlusOutlined />}
-                  onClick={() => setUnitEditor(true)}
+                  onClick={() => openUnitEditor()}
                 >
                   {t("新建单位")}
                 </Button>
@@ -154,7 +161,10 @@ export function ProjectDetailView({
                   },
                 }}
               >
-                <Button className="!h-9" icon={<FileTextOutlined aria-hidden />}>
+                <Button
+                  className="!h-9"
+                  icon={<FileTextOutlined aria-hidden />}
+                >
                   {t("项目资料")} <DownOutlined aria-hidden />
                 </Button>
               </Dropdown>
@@ -170,7 +180,7 @@ export function ProjectDetailView({
           projectId={id}
           stats={row}
           onViewUnit={setUnitDetail}
-          onEditUnit={setUnitEditor}
+          onEditUnit={openUnitEditor}
           allowExactRent={
             ["SUPER_ADMIN", "OPERATIONS", "FINANCE"].includes(
               root.user?.role,
@@ -191,18 +201,7 @@ export function ProjectDetailView({
           onClose={() => setUnitDetail(undefined)}
           onEdit={(unit) => {
             setUnitDetail(undefined);
-            setUnitEditor(unit);
-          }}
-        />
-      )}
-      {unitEditor && (
-        <UnitDrawer
-          row={unitEditor === true ? undefined : unitEditor}
-          initial={{ projectId: id }}
-          onClose={() => setUnitEditor(undefined)}
-          onSaved={() => {
-            setUnitEditor(undefined);
-            root.invalidate();
+            openUnitEditor(unit);
           }}
         />
       )}

@@ -1,4 +1,4 @@
-import { cols, Config, date, status, text } from "../../shared/resource-config";
+import { cols, Config, status, text } from "../../shared/resource-config";
 export const ProjectConfig: Config = {
   title: "项目管理",
   description: "集中管理项目、房源及项目资料",
@@ -9,7 +9,6 @@ export const ProjectConfig: Config = {
     text("propertyName", "物业名称"),
     text("address", "详细地址", true),
     text("developer", "发展商"),
-    date("completionDate", "落成日期", false),
     {
       key: "description",
       label: "项目介绍",

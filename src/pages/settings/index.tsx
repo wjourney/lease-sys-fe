@@ -75,7 +75,7 @@ export default observer(function WebsiteSettings() {
       form.setFieldsValue(next);
       setFile(undefined);
       setRemoveLogo(false);
-      message.success(t("网站配置已保存"));
+      message.success(t("公司信息已保存"));
     } catch (error) {
       message.error(t(errorMessage(error)));
     } finally {
@@ -83,11 +83,11 @@ export default observer(function WebsiteSettings() {
     }
   }
   if (!allowed)
-    return <Result status="403" title={t("当前账号无权修改网站配置")} />;
+    return <Result status="403" title={t("当前账号无权修改公司信息")} />;
   const logo = preview || (!removeLogo ? saved?.logoUrl : null);
   return (
     <Card
-      title={t("网站配置")}
+      title={t("公司信息")}
       className="mx-auto max-w-[1000px]"
       extra={
         <Button

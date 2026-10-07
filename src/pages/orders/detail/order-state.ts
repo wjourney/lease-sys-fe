@@ -1,5 +1,6 @@
 import { Row } from "../../../shared/api";
 export const depositLabels: Record<string, string> = {
+  NOT_READY: "待完善租约",
   COLLECTING: "押金未收齐",
   HELD: "押金持有中",
   SETTLEMENT_PENDING: "押金待结算",
@@ -51,11 +52,16 @@ export function orderLabel(row: Row) {
         ? "已完结"
         : "待结清"
       : "待交还"
-    : ({ PENDING: "待确认", ACTIVE: "租赁中", CLOSED: "已关闭" }[
-        row.status as string
-      ] ?? row.status);
+    : ({
+        DRAFT: "待完善",
+        PENDING: "待确认",
+        ACTIVE: "租赁中",
+        CLOSED: "已关闭",
+      }[row.status as string] ?? row.status);
 }
 export function orderNotice(row: Row) {
+  if (row.status === "DRAFT")
+    return "订单资料待完善；补齐单位、租期和租金后自动生成账单。佣金资料可以稍后填写。";
   if (row.status === "CLOSED") return "订单已关闭，单位占用已释放。";
   if (row.status === "COMPLETED") {
     if (row.settlement?.complete)
@@ -75,7 +81,7 @@ export function orderNotice(row: Row) {
   if (row.status === "ACTIVE")
     return "租赁进行中；退租并交还单位后办理押金结算。";
   return row.firstPaymentStatus === "PENDING"
-    ? "首期款项已登记，等待财务核对到账；填报已付款不等于确认收齐。"
+    ? "存在历史待核对收款，请先处理；新登记收款提交后直接入账。"
     : "首期租金及约定押金确认收齐后，订单自动生效。";
 }
 export function cents(value: unknown) {

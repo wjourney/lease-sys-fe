@@ -8,7 +8,6 @@ import {
   Spin,
   Table,
   Tabs,
-  Tag,
   Timeline,
 } from "antd";
 import { observer } from "mobx-react-lite";
@@ -24,13 +23,7 @@ import { formatMoney } from "../finance/finance-data";
 import { billTypes, useBillRequest } from "./bill-data";
 
 export function BillStatus({ row }: { row: Row }) {
-  return (
-    <Space size={4} wrap>
-      <Status resource="incomes" value={row.status} />
-      {row.overdue && <Tag color="red">{t("逾期")}</Tag>}
-      {Number(row.pending) > 0 && <Tag color="blue">{t("待核对")}</Tag>}
-    </Space>
-  );
+  return <Status resource="incomes" value={row.status} />;
 }
 
 export const BillDrawer = observer(function BillDrawer({
@@ -136,7 +129,6 @@ export const BillDrawer = observer(function BillDrawer({
                 {[
                   ["应收", "total"],
                   ["已确认收款", "confirmed"],
-                  ["待核对", "pending"],
                   ["押金抵扣", "offset"],
                   ["剩余应收", "remaining"],
                 ].map(([label, key]) => (
@@ -174,7 +166,7 @@ export const BillDrawer = observer(function BillDrawer({
                             dataIndex: "receivedOn",
                             render: dateText,
                           },
-                          { title: t("平台账户"), dataIndex: "accountName" },
+                          { title: t("银行账户"), dataIndex: "accountName" },
                           {
                             title: t("付款方式"),
                             dataIndex: "paymentMethod",

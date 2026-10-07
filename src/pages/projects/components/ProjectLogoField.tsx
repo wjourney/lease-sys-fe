@@ -33,7 +33,7 @@ export function ProjectLogoField({
   const previewFile = files.find((file) => file.uid === previewId);
 
   return (
-    <div className="col-span-3 mb-4 min-w-0 max-[850px]:col-span-2 max-[560px]:col-span-1">
+    <div className="col-span-full mb-4 min-w-0">
       <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="text-xs text-[#73819a]">Logo</span>
         <span className="text-xs text-[#8995a6]">

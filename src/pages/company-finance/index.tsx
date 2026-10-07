@@ -76,7 +76,7 @@ export default observer(function CompanyFinancePage({
   const params = {
     from: search.get("from") || defaults.from,
     to: search.get("to") || defaults.to,
-    currency: search.get("currency") || "HKD",
+    currency: "HKD",
     salesUserId: personal
       ? root.user?.id
       : search.get("salesUserId") || undefined,
@@ -95,6 +95,7 @@ export default observer(function CompanyFinancePage({
     setSearch(
       (current) => {
         const next = new URLSearchParams(current);
+        next.delete("currency");
         next.set("page", "1");
         for (const [key, value] of Object.entries(values)) {
           if (value) next.set(key, String(value));
@@ -122,7 +123,6 @@ export default observer(function CompanyFinancePage({
       to: month
         ? dayjs(`${month}-01`).endOf("month").format("YYYY-MM-DD")
         : params.to,
-      currency: params.currency,
       salesUserId,
     });
     if (month) {
@@ -137,7 +137,7 @@ export default observer(function CompanyFinancePage({
   return (
     <section className="finance-page resource-list">
       <div className="finance-heading">
-        <h1>{t(details ? "佣金明细" : "财务统计")}</h1>
+        {details && <h1>{t("佣金明细")}</h1>}
         <span>
           {t(
             personal
@@ -192,16 +192,6 @@ export default observer(function CompanyFinancePage({
             onChange={(salesUserId) => change({ salesUserId })}
           />
         )}
-        <Select
-          aria-label={t("币种")}
-          style={{ width: 100 }}
-          value={params.currency}
-          options={["HKD", "CNY", "USD"].map((value) => ({
-            value,
-            label: value,
-          }))}
-          onChange={(currency) => change({ currency })}
-        />
         {details && (
           <>
             <Input

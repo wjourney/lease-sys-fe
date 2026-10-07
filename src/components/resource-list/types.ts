@@ -14,6 +14,8 @@ export interface ResourceListProps {
   resource: string;
   fixed?: Row;
   embedded?: boolean;
+  syncSearch?: boolean;
+  onCreate?: () => void;
   pageSize?: number;
   renderItems?: (props: ListViewProps) => ReactNode;
   listToolbar?: ReactNode;
@@ -22,6 +24,7 @@ export interface ResourceListProps {
   hideCreate?: boolean;
   createDisabledReason?: string;
   hideStatus?: boolean;
+  renderBatchActions?: (rows: Row[]) => ReactNode;
   renderRowActions?: (row: Row) => ReactNode;
   onViewRow?: (row: Row) => void;
   renderCreateEditor?: (props: {

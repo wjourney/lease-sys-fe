@@ -34,7 +34,6 @@ export function OrderBills() {
     },
     { title: t("应收"), dataIndex: "total", render: amount },
     { title: t("已确认到账"), dataIndex: "confirmed", render: amount },
-    { title: t("待核对"), dataIndex: "pending", render: amount },
     { title: t("押金抵扣"), dataIndex: "offset", render: amount },
     { title: t("剩余应收"), dataIndex: "remaining", render: amount },
     { title: t("到期日期"), dataIndex: "dueOn", render: dateText },
@@ -137,10 +136,6 @@ export function OrderBills() {
                 )}
               </strong>
             </span>
-            <span>
-              {t("待确认到账")}{" "}
-              <strong className="text-[#263650]">{sum("pending")}</strong>
-            </span>
           </div>
         }
         supplementary={
@@ -154,7 +149,7 @@ export function OrderBills() {
           ) ? (
             <p className="text-sm text-[#738198]">
               {t(
-                "历史录单中曾填报付款，但当前没有有效收款记录。请核对实际到账，补齐平台账户后登记收款。",
+                "历史录单中曾填报付款，但当前没有有效收款记录。请核对实际到账，补齐银行账户后登记收款。",
               )}
             </p>
           ) : undefined
@@ -174,7 +169,7 @@ export function OrderBills() {
                 payerName={row.tenantName}
               />
             )}
-            {root.manageOrders && row.status !== "CLOSED" ? (
+            {root.manageOrders && !["DRAFT", "CLOSED"].includes(row.status) ? (
               <Button
                 type="primary"
                 onClick={() =>

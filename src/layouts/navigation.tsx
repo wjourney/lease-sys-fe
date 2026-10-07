@@ -60,13 +60,13 @@ export function getNavigation(root: RootStore) {
     {
       key: "settings",
       icon: <SettingOutlined aria-hidden />,
-      label: t("系统设置"),
+      label: t("公司设置"),
       children: [
         ...(root.canRead("fund-accounts")
-          ? [{ key: "/fund-accounts", label: t("平台账户") }]
+          ? [{ key: "/fund-accounts", label: t("银行账户") }]
           : []),
         ...(root.canWrite("settings")
-          ? [{ key: "/settings", label: t("网站配置") }]
+          ? [{ key: "/settings", label: t("公司信息") }]
           : []),
       ],
     },

@@ -6,6 +6,7 @@ import {
 import { Button, Card, Empty, Pagination, Select, Spin } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ResourceList } from "../../../../components/resource-list/ResourceList";
 import { amount, type Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
@@ -29,9 +30,23 @@ export const ProjectUnits = observer(function ProjectUnits({
   onEditUnit: (unit: Row) => void;
 }) {
   const root = useRoot();
-  const [unitTypeCode, setUnitTypeCode] = useState<string>();
-  const [sort, setSort] = useState("default");
-  const [statusFilter, setStatusFilter] = useState<ProjectUnitStatus>();
+  const [search, setSearch] = useSearchParams();
+  const unitTypeCode = search.get("unitTypeCode") || undefined;
+  const sort = search.get("sort") || "default";
+  const statusFilter = ((search.get("status") === "LOCKED" ? "OCCUPIED" : search.get("status")) || undefined) as
+    ProjectUnitStatus | undefined;
+  function updateFilter(key: string, value?: string) {
+    setSearch(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (value && value !== "default") next.set(key, value);
+        else next.delete(key);
+        next.set("page", "1");
+        return next;
+      },
+      { replace: true },
+    );
+  }
   const unitTypes = (stats.typeConfigs ?? []).map((item: Row) => ({
     label: t(item.name || item.code),
     value: item.code,
@@ -51,6 +66,7 @@ export const ProjectUnits = observer(function ProjectUnits({
             ...(sort !== "default" ? { sortBy: "referenceRent", sort } : {}),
           }}
           embedded
+          syncSearch
           pageSize={12}
           hideCreate
           hideStatus
@@ -58,13 +74,11 @@ export const ProjectUnits = observer(function ProjectUnits({
             <ProjectStats
               row={stats}
               status={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(value) => updateFilter("status", value)}
             />
           }
           onResetExtras={() => {
-            setStatusFilter(undefined);
-            setUnitTypeCode(undefined);
-            setSort("default");
+            setSearch(new URLSearchParams(), { replace: true });
           }}
           filterExtras={
             <div className="flex shrink-0 items-center gap-4 text-sm text-[#718095] max-[760px]:flex-wrap">
@@ -76,7 +90,7 @@ export const ProjectUnits = observer(function ProjectUnits({
                   placeholder={t("全部类型")}
                   value={unitTypeCode}
                   options={unitTypes}
-                  onChange={setUnitTypeCode}
+                  onChange={(value) => updateFilter("unitTypeCode", value)}
                 />
               </div>
               {allowExactRent && (
@@ -90,7 +104,7 @@ export const ProjectUnits = observer(function ProjectUnits({
                       { value: "asc", label: t("价格从低到高") },
                       { value: "desc", label: t("价格从高到低") },
                     ]}
-                    onChange={setSort}
+                    onChange={(value) => updateFilter("sort", value)}
                   />
                 </div>
               )}

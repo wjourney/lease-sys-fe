@@ -1,5 +1,7 @@
+import { RecordFormPage } from "../../../components/record-editor/RecordFormPage";
+import { useUnsavedChanges } from "../../../components/record-editor/useUnsavedChanges";
 import { RequestError } from "../../../components/feedback/RequestError";
-import { App, Button, Drawer, Form, Spin } from "antd";
+import { App, Button, Form, Spin } from "antd";
 import type { UploadFile } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage, options, Row } from "../../../shared/api";
@@ -17,7 +19,7 @@ import type { UnitMedia, UnitMediaCategory } from "./UnitMediaField";
 
 type Option = { value: string; label: string };
 
-export function UnitDrawer({
+export function UnitForm({
   row,
   initial = {},
   onClose,
@@ -47,6 +49,9 @@ export function UnitDrawer({
   const [media, setMedia] = useState<UnitMedia>(emptyUnitMedia);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const { markDirty, allowLeave } = useUnsavedChanges(saving);
   const [error, setError] = useState("");
   const current = useRef<Row | null>(row ?? null);
   const uploaded = useRef(new Map<string, string>());
@@ -68,6 +73,8 @@ export function UnitDrawer({
       },
     });
     let active = true;
+    setLoadFailed(false);
+    setError("");
     Promise.all([
       options("projects"),
       row
@@ -90,15 +97,20 @@ export function UnitDrawer({
         setLoaded(true);
       })
       .catch((cause) => {
-        if (active) setError(errorMessage(cause));
+        if (active) {
+          setError(errorMessage(cause));
+          setLoadFailed(true);
+        }
       });
     return () => {
       active = false;
     };
-  }, [row?.id]);
+  }, [row?.id, loadAttempt]);
 
-  const onMediaChange = (category: UnitMediaCategory, files: UploadFile[]) =>
+  const onMediaChange = (category: UnitMediaCategory, files: UploadFile[]) => {
+    markDirty();
     setMedia((value) => ({ ...value, [category]: files }));
+  };
 
   function close() {
     if (saving) return;
@@ -113,14 +125,7 @@ export function UnitDrawer({
     setSaving(true);
     setError("");
     try {
-      if (Number(values.minRent) > Number(values.maxRent))
-        throw new Error("最低价不得高于最高价");
-      if (
-        Number(values.referenceRent) < Number(values.minRent) ||
-        Number(values.referenceRent) > Number(values.maxRent)
-      )
-        throw new Error("参考月租须介于最低价和最高价之间");
-      const payload = unitPayload(values, current.current?.extra);
+      const payload = unitPayload(values);
       const { data } = current.current
         ? await api.patch<Row>(`/units/${current.current.id}`, {
             ...payload,
@@ -132,6 +137,7 @@ export function UnitDrawer({
       await syncUnitMedia(data.id, media, uploaded.current, removed.current);
       message.success(t(row ? "单位修改已保存" : "单位创建成功"));
       root.invalidate();
+      allowLeave();
       onSaved();
     } catch (cause) {
       setError(
@@ -145,23 +151,10 @@ export function UnitDrawer({
   }
 
   return (
-    <Drawer
-      open
-      title={
-        <span className="text-xl font-semibold text-[#243248]">
-          {t(row ? "编辑单位" : "新建单位")}
-        </span>
-      }
-      width="min(880px, 100vw)"
-      onClose={close}
-      closable={!saving}
-      maskClosable={!saving}
-      destroyOnClose
-      classNames={{
-        header: "!border-0 !px-6 !py-5 max-[640px]:!px-4",
-        body: "!px-6 !pt-0 !pb-6 max-[640px]:!px-4",
-        footer: "!border-0 !px-6 !py-3 max-[640px]:!px-4",
-      }}
+    <RecordFormPage
+      title={row ? "编辑单位" : "新建单位"}
+      onBack={close}
+      saving={saving}
       footer={
         <div className="flex justify-end gap-2.5">
           <Button onClick={close} disabled={saving}>
@@ -186,35 +179,27 @@ export function UnitDrawer({
           className="mb-4"
         />
       )}
-      <Spin spinning={!loaded}>
+      {loadFailed && (
+        <Button
+          className="mb-4"
+          onClick={() => setLoadAttempt((value) => value + 1)}
+        >
+          {t("重新加载")}
+        </Button>
+      )}
+      <Spin spinning={!loaded && !loadFailed}>
         <Form
           form={form}
           layout="vertical"
+          scrollToFirstError={{ block: "center", focus: true }}
           onFinish={save}
+          disabled={!loaded || saving}
           onValuesChange={(changed) => {
-            if ("projectId" in changed)
-              form.setFieldsValue({
-                unitTypeCode: undefined,
-                area: undefined,
-                minRent: undefined,
-                maxRent: undefined,
-                referenceRent: undefined,
-              });
+            markDirty();
             if ("unitTypeCode" in changed) {
-              const config = typeConfigs.find(
-                (item) => item.code === changed.unitTypeCode,
-              );
-              if (config)
-                form.setFieldsValue({
-                  minRent: config.minRent,
-                  maxRent: config.maxRent,
-                  area:
-                    config.minArea != null &&
-                    Number(config.minArea) === Number(config.maxArea)
-                      ? Number(config.minArea)
-                      : undefined,
-                  referenceRent: config.minRent,
-                });
+              const config = typeConfigs.find((item) => item.code === changed.unitTypeCode);
+              if (config && form.getFieldValue("referenceRent") == null) form.setFieldValue("referenceRent", Number(config.minRent));
+              void form.validateFields(["referenceRent"]).catch(() => {});
             }
           }}
         >
@@ -223,14 +208,8 @@ export function UnitDrawer({
               {t("当前项目尚未配置单位类型，请先编辑项目添加类型。")}
             </p>
           )}
-          {selectedType && (
-            <p className="mb-4 text-sm text-[#73819a]">
-              {t(
-                `类型参考：面积 ${selectedType.minArea ?? "—"}–${selectedType.maxArea ?? "—"} ㎡，月租 HK$ ${selectedType.minRent ?? "—"}–${selectedType.maxRent ?? "—"}；请填写本单位的实际面积及租金。`,
-              )}
-            </p>
-          )}
           <UnitFormSections
+            selectedType={selectedType}
             projects={projects}
             unitTypes={unitTypes}
             projectLocked={!!(initial.projectId || row)}
@@ -239,6 +218,6 @@ export function UnitDrawer({
           />
         </Form>
       </Spin>
-    </Drawer>
+    </RecordFormPage>
   );
 }

@@ -16,7 +16,7 @@ export function shouldOpenRow(event: MouseEvent<HTMLElement>) {
   return !(
     target instanceof Element &&
     target.closest(
-      'a, button, input, select, textarea, [role="button"], [role="link"], [data-row-action]',
+      'a, button, input, select, textarea, label, .ant-table-selection-column, [role="button"], [role="link"], [data-row-action]',
     )
   );
 }

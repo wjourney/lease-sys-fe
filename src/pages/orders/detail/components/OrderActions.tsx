@@ -1,3 +1,4 @@
+import { OrderDeleteButton } from "../../components/OrderDeleteButton";
 import { DownloadOutlined, MoreOutlined } from "@ant-design/icons";
 import { Button, Dropdown } from "antd";
 import type { MenuProps } from "antd";
@@ -9,7 +10,7 @@ import { t } from "../../../../shared/i18n";
 
 export const OrderActions = observer(function OrderActions() {
   const [preparingContract, setPreparingContract] = useState(false);
-  const { row, root, modal, run, id, openAction, message, setTab } =
+  const { row, root, modal, run, id, openAction, message, setTab, navigate } =
     useRecordDetail();
 
   async function downloadContract() {
@@ -86,7 +87,7 @@ export const OrderActions = observer(function OrderActions() {
 
   return (
     <>
-      <Button
+      <Button disabled={row.status === "DRAFT"}
         icon={<DownloadOutlined aria-hidden />}
         loading={preparingContract}
         onClick={() => void downloadContract()}
@@ -98,6 +99,7 @@ export const OrderActions = observer(function OrderActions() {
           {t(row.actions?.refund ? "处理退款" : "处理押金")}
         </Button>
       )}
+      <OrderDeleteButton order={row} onDeleted={() => navigate("/orders", { replace: true })} />
       {items.length > 0 && (
         <Dropdown menu={{ items, onClick: onMore }} trigger={["click"]}>
           <Button icon={<MoreOutlined aria-hidden />}>{t("更多")}</Button>

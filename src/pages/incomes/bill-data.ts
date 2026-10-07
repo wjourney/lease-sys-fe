@@ -3,6 +3,7 @@ import { api, errorMessage, Row } from "../../shared/api";
 
 export type BillFilters = {
   q?: string;
+  orderId?: string;
   projectId?: string;
   unitId?: string;
   feeType?: string;
@@ -33,10 +34,8 @@ export const billTypes: Record<string, string> = {
   OTHER: "其他费用",
 };
 export const billStates: Record<string, string> = {
-  OPEN: "待收款",
-  PARTIAL: "部分结清",
-  PAID: "已结清",
-  VOID: "已作废",
+  OPEN: "待付款",
+  PAID: "已付款",
 };
 export function useBillRequest<T>(path: string, params: Row, epoch: number) {
   const [data, setData] = useState<T>();

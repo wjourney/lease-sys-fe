@@ -27,30 +27,9 @@ export function mediaFromMaterials(materials: Row[]): UnitMedia {
   return media;
 }
 
-export function unitPayload(values: Row, previousExtra: Row = {}): Row {
-  const extra = { ...previousExtra, ...values.extra };
-  for (const [key, value] of Object.entries(extra)) {
-    if (value === undefined || value === "") delete extra[key];
-    else if (key === "askingRent") extra[key] = String(value);
-  }
-  return {
-    projectId: values.projectId,
-    unitNo: values.unitNo?.trim(),
-    unitTypeCode: values.unitTypeCode,
-    building: values.extra?.phase || values.building || "",
-    floor: values.floor || "",
-    roomNo: values.roomNo || "",
-    area: String(values.area),
-    layout: values.layout || "",
-    decoration: values.decoration || "",
-    referenceRent: String(values.referenceRent),
-    minRent: String(values.minRent),
-    maxRent: String(values.maxRent),
-    minLeaseMonths: values.minLeaseMonths,
-    commissionNote: values.commissionNote || "",
-    enabled: values.enabled ?? true,
-    extra,
-  };
+export function unitPayload(values: Row): Row {
+  return { projectId: values.projectId, unitTypeCode: values.unitTypeCode,
+    roomNo: values.roomNo?.trim(), referenceRent: String(values.referenceRent) };
 }
 
 export async function syncUnitMedia(

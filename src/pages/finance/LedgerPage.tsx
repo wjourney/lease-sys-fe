@@ -62,7 +62,6 @@ export default observer(function LedgerPage() {
   return (
     <section className="finance-page resource-list">
       <div className="finance-heading">
-        <h1>{t("资金流水")}</h1>
         <span>
           {t(
             "已确认收款与实际付款自动汇总，可追溯来源，不可直接增删改。冲正作为更正记录保留。",
@@ -96,8 +95,8 @@ export default observer(function LedgerPage() {
             style={{ width: 300 }}
           />
           <Select
-            aria-label={t("平台账户")}
-            placeholder={t("全部平台账户")}
+            aria-label={t("银行账户")}
+            placeholder={t("全部银行账户")}
             allowClear
             showSearch
             optionFilterProp="label"
@@ -235,7 +234,7 @@ export default observer(function LedgerPage() {
                             `${r.direction === "IN" ? "+" : "−"}${formatMoney(r.amount, r.currency)}`,
                         },
                         {
-                          title: t("平台账户"),
+                          title: t("银行账户"),
                           dataIndex: "accountName",
                           width: 160,
                         },

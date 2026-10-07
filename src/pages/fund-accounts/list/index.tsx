@@ -49,16 +49,16 @@ export default observer(function FundAccountListPage() {
         createDisabledReason={
           exists === undefined
             ? error
-              ? "暂时无法确认平台账户，请重试"
-              : "正在加载平台账户"
+              ? "暂时无法确认银行账户，请重试"
+              : "正在加载银行账户"
             : exists
-              ? "只允许创建一个资金账户，每次订单录入都是默认这一个资金账户"
+              ? "只允许创建一个银行账户，每次订单录入默认使用该银行账户"
               : undefined
         }
       />
       <Drawer
         open={!!viewing}
-        title={t("平台账户信息")}
+        title={t("银行账户信息")}
         width={520}
         onClose={() => setViewing(null)}
       >

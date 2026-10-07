@@ -2,10 +2,11 @@ import { App as AntApp, ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import zhTW from "antd/locale/zh_TW";
 import { observer } from "mobx-react-lite";
-import { BrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { root, RootContext } from "../stores/root";
 import { Session } from "./SessionBoundary";
 import { theme } from "./theme";
+const router = createBrowserRouter([{ path: "*", element: <Session /> }]);
 export default observer(function App() {
   return (
     <RootContext.Provider value={root}>
@@ -14,9 +15,7 @@ export default observer(function App() {
         theme={theme}
       >
         <AntApp>
-          <BrowserRouter>
-            <Session />
-          </BrowserRouter>
+          <RouterProvider router={router} />
         </AntApp>
       </ConfigProvider>
     </RootContext.Provider>

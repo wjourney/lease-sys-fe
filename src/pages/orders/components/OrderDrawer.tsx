@@ -42,12 +42,7 @@ type OrderValues = {
   monthlyRent: string;
   depositAmount: string;
   depositPlan?: string;
-  firstPeriodProration: boolean;
-  lastPeriodProration: boolean;
-  billLeadDays: number;
   paymentIntervalMonths: number;
-  moveInOn?: Dayjs;
-  remark?: string;
   salesCompanyId?: string;
   salesUserId: string;
   paymentDeclaration: "UNPAID" | "PARTIAL" | "PAID";
@@ -64,7 +59,6 @@ type OrderValues = {
   commissionRemark?: string;
 };
 
-const required = [{ required: true, message: "请填写此项" }];
 const sectionClass = "rounded-lg bg-[#f5f6f8] px-4 py-3.5";
 const gridClass = "grid grid-cols-3 gap-x-3 gap-y-0 max-[760px]:grid-cols-1";
 const depositMonths: Record<string, number> = {
@@ -181,6 +175,9 @@ export function OrderDrawer({
     };
   }, [loadDetail, initialRow?.id, detailRetry]);
 
+  const [unitRows, setUnitRows] = useState<Row[]>([]);
+  const unitId = Form.useWatch("unitId", form);
+  const monthlyRent = Form.useWatch("monthlyRent", form);
   const projectId = Form.useWatch("projectId", form);
   const salesCompanyId = Form.useWatch("salesCompanyId", form);
   const tenantType = Form.useWatch("tenantType", form);
@@ -303,7 +300,8 @@ export function OrderDrawer({
     let active = true;
     options("units", { projectId })
       .then((rows) => {
-        if (active)
+        if (active) {
+          setUnitRows(rows);
           setUnits(
             withCurrentChoice(
               rows
@@ -317,6 +315,7 @@ export function OrderDrawer({
               row?.unitNo,
             ),
           );
+        }
       })
       .catch((error) => message.error(errorMessage(error)));
     return () => {
@@ -416,21 +415,11 @@ export function OrderDrawer({
         (leaseDatesChanged &&
           !lockedLease &&
           ["ONE_TIME", "RECURRING_MONTHLY"].includes(commission?.mode));
-      if (
-        saveCommission &&
-        (!values.commissionMode ||
-          !values.commissionDueOn ||
-          !values.commissionAmount ||
-          Number(values.commissionAmount) <= 0)
-      ) {
-        message.error(t("请填写佣金结付方式、金额和结付日期"));
-        return;
-      }
       const commissionPayload = saveCommission
         ? {
             mode: values.commissionMode,
-            dueOn: values.commissionDueOn.format("YYYY-MM-DD"),
-            amount: values.commissionAmount,
+            dueOn: values.commissionDueOn?.format("YYYY-MM-DD"),
+            amount: values.commissionAmount ?? undefined,
             remark: values.commissionRemark?.trim(),
           }
         : undefined;
@@ -439,12 +428,26 @@ export function OrderDrawer({
             tenantPhone: values.tenantPhone?.trim() ?? "",
             tenantEmail: values.tenantEmail?.trim() ?? "",
             tenantContactName: values.tenantContactName?.trim(),
-            remark: values.remark?.trim(),
             commission: commissionPayload,
+            ...(!row?.salesUserId
+              ? {
+                  salesUserId: values.salesUserId,
+                  salesCompanyId: values.salesCompanyId,
+                }
+              : {}),
           }
         : {
-            ...(!row
-              ? { unitId: values.unitId, salesUserId: values.salesUserId }
+            ...(!row || row.status === "DRAFT"
+              ? {
+                  projectId: values.projectId || undefined,
+                  unitId: values.unitId || undefined,
+                }
+              : {}),
+            ...(!row || row.status === "DRAFT" || !row.salesUserId
+              ? {
+                  salesUserId: values.salesUserId,
+                  salesCompanyId: values.salesCompanyId,
+                }
               : {}),
             tenantType: values.tenantType,
             tenantName: values.tenantName.trim(),
@@ -461,21 +464,15 @@ export function OrderDrawer({
                     tenantContactName: "",
                   }
                 : {}),
-            tenantPhone: values.tenantPhone.trim(),
-            tenantEmail: values.tenantEmail.trim(),
-            startsOn: values.startsOn.format("YYYY-MM-DD"),
-            endsOn: values.endsOn.format("YYYY-MM-DD"),
-            monthlyRent: values.monthlyRent,
-            depositAmount: values.depositAmount,
+            tenantPhone: values.tenantPhone?.trim(),
+            tenantEmail: values.tenantEmail?.trim(),
+            startsOn: values.startsOn?.format("YYYY-MM-DD"),
+            endsOn: values.endsOn?.format("YYYY-MM-DD"),
+            monthlyRent: values.monthlyRent ?? undefined,
+            depositAmount: values.depositAmount ?? undefined,
             depositPlan: values.depositPlan ?? (row ? null : undefined),
             paymentIntervalMonths: values.paymentIntervalMonths,
-            rentDueDay: values.rentDueDay,
-            billLeadDays: values.billLeadDays,
-            firstPeriodProration: values.firstPeriodProration,
-            lastPeriodProration: values.lastPeriodProration,
-            moveInOn:
-              values.moveInOn?.format("YYYY-MM-DD") ?? (row ? null : undefined),
-            remark: values.remark?.trim(),
+            rentDueDay: values.rentDueDay ?? undefined,
             ...(!row || paymentChanged
               ? {
                   initialPayment: {
@@ -523,7 +520,7 @@ export function OrderDrawer({
             await api.patch<Row>(`/orders/${row.id}`, {
               ...payload,
               revision: row.revision,
-              reason: values.reason?.trim(),
+              reason: values.reason?.trim() || "修改订单资料",
             })
           ).data
         : (await api.post<Row>("/orders", payload)).data;
@@ -628,6 +625,15 @@ export function OrderDrawer({
           form={form}
           layout="vertical"
           onFinish={submit}
+          onValuesChange={(changed) => {
+            if (changed.startsOn) {
+              form.setFieldValue(
+                "endsOn",
+                changed.startsOn.add(1, "year").subtract(1, "day"),
+              );
+              form.setFieldValue("rentDueDay", changed.startsOn.date());
+            }
+          }}
           requiredMark
           initialValues={{
             projectId: row?.projectId,
@@ -639,8 +645,12 @@ export function OrderDrawer({
             tenantContactName: row?.tenantContactName,
             tenantPhone: row?.tenantPhone,
             tenantEmail: row?.tenantEmail,
-            startsOn: row?.startsOn ? dayjs(row.startsOn) : undefined,
-            endsOn: row?.endsOn ? dayjs(row.endsOn) : undefined,
+            startsOn: row?.startsOn
+              ? dayjs(row.startsOn)
+              : dayjs().startOf("day"),
+            endsOn: row?.endsOn
+              ? dayjs(row.endsOn)
+              : dayjs().add(1, "year").subtract(1, "day"),
             monthlyRent:
               row?.monthlyRent != null ? String(row.monthlyRent) : undefined,
             depositAmount:
@@ -649,12 +659,7 @@ export function OrderDrawer({
                 : undefined,
             depositPlan: initialDepositPlan(row),
             paymentIntervalMonths: row?.paymentIntervalMonths ?? 1,
-            rentDueDay: row?.rentDueDay ?? 1,
-            billLeadDays: row?.billLeadDays ?? 7,
-            firstPeriodProration: row?.firstPeriodProration ?? true,
-            lastPeriodProration: row?.lastPeriodProration ?? true,
-            moveInOn: row?.moveInOn ? dayjs(row.moveInOn) : undefined,
-            remark: row?.remark,
+            rentDueDay: row?.rentDueDay ?? dayjs().date(),
             paymentDeclaration: initialDeclaration(row?.initialPayment),
             initialRentReceived:
               row?.initialPayment?.rentReceived != null
@@ -679,7 +684,7 @@ export function OrderDrawer({
                 ? String(commission.amount)
                 : undefined,
             commissionMode:
-              commission?.mode === "RECURRING_MONTHLY"
+              !commission?.mode || commission?.mode === "RECURRING_MONTHLY"
                 ? "RECURRING_MONTHLY"
                 : "ONE_TIME",
             commissionDueOn: commission?.dueOn
@@ -691,22 +696,35 @@ export function OrderDrawer({
         >
           <Section title="单位信息">
             <div className="grid grid-cols-2 gap-x-3 max-[760px]:grid-cols-1">
-              <Form.Item name="projectId" label={t("项目")} rules={required}>
+              <Form.Item name="projectId" label={t("项目")}>
                 <Select
                   showSearch
                   optionFilterProp="label"
                   options={projects}
                   placeholder={t("请选择项目")}
-                  disabled={!!row}
+                  disabled={!!row && row.status !== "DRAFT"}
                   onChange={() => form.setFieldValue("unitId", undefined)}
                 />
               </Form.Item>
-              <Form.Item name="unitId" label={t("单位")} rules={required}>
+              <Form.Item name="unitId" label={t("单位")}>
                 <Select
                   showSearch
                   optionFilterProp="label"
                   options={units}
-                  disabled={!!row || !projectId}
+                  onChange={(id) => {
+                    const unit = unitRows.find((u) => u.id === id);
+                    if (unit?.referenceRent != null) {
+                      const rent = String(unit.referenceRent);
+                      form.setFieldsValue({
+                        monthlyRent: rent,
+                        depositAmount: suggestedDeposit(
+                          rent,
+                          form.getFieldValue("depositPlan"),
+                        ),
+                      });
+                    }
+                  }}
+                  disabled={(!!row && row.status !== "DRAFT") || !projectId}
                   placeholder={t("请选择单位")}
                 />
               </Form.Item>
@@ -715,11 +733,7 @@ export function OrderDrawer({
 
           <Section title="租客信息">
             <div className={gridClass}>
-              <Form.Item
-                name="tenantType"
-                label={t("租客类型")}
-                rules={lockedLease ? undefined : required}
-              >
+              <Form.Item name="tenantType" label={t("租客类型")}>
                 <Select
                   disabled={lockedLease}
                   options={[
@@ -737,7 +751,13 @@ export function OrderDrawer({
               <Form.Item
                 name="tenantName"
                 label={t(tenantType === "PERSON" ? "租客姓名" : "公司名称")}
-                rules={lockedLease ? undefined : required}
+                rules={[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: t("请填写名称"),
+                  },
+                ]}
               >
                 <Input disabled={lockedLease} />
               </Form.Item>
@@ -745,7 +765,7 @@ export function OrderDrawer({
                 <Form.Item
                   name="registrationNoType"
                   label={t("注册号码类型")}
-                  rules={lockedLease ? undefined : required}
+
                   preserve={false}
                 >
                   <Select
@@ -766,7 +786,7 @@ export function OrderDrawer({
                         ? "公司注册号码"
                         : "商业登记号码",
                     )}
-                    rules={lockedLease ? undefined : required}
+
                     preserve={false}
                   >
                     <Input disabled={lockedLease} />
@@ -774,27 +794,20 @@ export function OrderDrawer({
                   <Form.Item
                     name="tenantContactName"
                     label={t("联系人")}
-                    rules={lockedLease ? undefined : required}
+
                     preserve={false}
                   >
                     <Input />
                   </Form.Item>
                 </>
               )}
-              <Form.Item
-                name="tenantPhone"
-                label={t("联系电话")}
-                rules={lockedLease ? undefined : required}
-              >
+              <Form.Item name="tenantPhone" label={t("联系电话")}>
                 <Input />
               </Form.Item>
               <Form.Item
                 name="tenantEmail"
                 label="Email"
-                rules={[
-                  ...(lockedLease ? [] : required),
-                  { type: "email", message: t("请输入有效的邮箱地址") },
-                ]}
+                rules={[{ type: "email", message: t("请输入有效的邮箱地址") }]}
                 className="col-span-3 max-[760px]:col-span-1"
               >
                 <Input type="email" />
@@ -804,14 +817,13 @@ export function OrderDrawer({
 
           <Section title="租赁与账单">
             <div className={gridClass}>
-              <Form.Item name="startsOn" label={t("起租日期")} rules={required}>
+              <Form.Item name="startsOn" label={t("起租日期")}>
                 <DatePicker className="w-full" disabled={lockedLease} />
               </Form.Item>
               <Form.Item
                 name="endsOn"
                 label={t("到期日期")}
                 rules={[
-                  ...required,
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (
@@ -829,15 +841,11 @@ export function OrderDrawer({
               >
                 <DatePicker className="w-full" disabled={lockedLease} />
               </Form.Item>
-              <Form.Item
-                name="rentDueDay"
-                label={t("每月交租日")}
-                rules={required}
-              >
+              <Form.Item name="rentDueDay" label={t("每月交租日")}>
                 <InputNumber
                   disabled={lockedLease}
                   min={1}
-                  max={28}
+                  max={31}
                   precision={0}
                   className="w-full"
                   addonAfter={t("日")}
@@ -847,7 +855,6 @@ export function OrderDrawer({
                 name="monthlyRent"
                 label={t("实际成交月租（HKD）")}
                 rules={[
-                  ...required,
                   {
                     validator(_, value) {
                       return !value || Number(value) > 0
@@ -869,18 +876,10 @@ export function OrderDrawer({
                   }}
                 />
               </Form.Item>
-              <Form.Item
-                name="depositAmount"
-                label={t("押金（HKD）")}
-                rules={required}
-              >
+              <Form.Item name="depositAmount" label={t("押金（HKD）")}>
                 <MoneyInput disabled={lockedLease || depositPlan !== "OTHER"} />
               </Form.Item>
-              <Form.Item
-                name="depositPlan"
-                label={t("押付方式")}
-                rules={required}
-              >
+              <Form.Item name="depositPlan" label={t("押付方式")}>
                 <Select
                   disabled={lockedLease}
                   options={[
@@ -901,13 +900,14 @@ export function OrderDrawer({
                   }}
                 />
               </Form.Item>
-              <Form.Item
-                name="paymentIntervalMonths"
-                label={t("付款频率")}
-                rules={required}
-              >
+              <Form.Item name="paymentIntervalMonths" label={t("付款频率")}>
                 <Select
-                  disabled={lockedLease || depositPlan !== "OTHER"}
+                  disabled={
+                    lockedLease ||
+                    !row ||
+                    row.billingVersion === 2 ||
+                    depositPlan !== "OTHER"
+                  }
                   options={[1, 2, 3, 6, 12].map((value) => ({
                     value,
                     label: value === 1 ? t("每月") : t(`每 ${value} 个月`),
@@ -917,48 +917,9 @@ export function OrderDrawer({
             </div>
             <p className="mb-2 text-xs text-[#63738d]">
               {t(
-                "选择押付方式后自动计算押金；特殊金额或付款频率请选择“其他”。",
+                "选择押付方式后自动计算押金；新订单按租赁月一次生成整个租期的账单，特殊押金请选择“其他”。",
               )}
             </p>
-            <details className="mt-2 text-sm text-[#52627a]" open={lockedLease}>
-              <summary className="cursor-pointer">{t("更多账单设置")}</summary>
-              <div className={`${gridClass} mt-3`}>
-                <Form.Item name="firstPeriodProration" label={t("首期不足月")}>
-                  <Select
-                    disabled={lockedLease}
-                    options={[
-                      { value: true, label: t("按天折算") },
-                      { value: false, label: t("按整月计算") },
-                    ]}
-                  />
-                </Form.Item>
-                <Form.Item name="lastPeriodProration" label={t("末期不足月")}>
-                  <Select
-                    disabled={lockedLease}
-                    options={[
-                      { value: true, label: t("按天折算") },
-                      { value: false, label: t("按整月计算") },
-                    ]}
-                  />
-                </Form.Item>
-                <Form.Item name="billLeadDays" label={t("账单提前生成")}>
-                  <InputNumber
-                    disabled={lockedLease}
-                    min={0}
-                    max={60}
-                    precision={0}
-                    className="w-full"
-                    addonAfter={t("天")}
-                  />
-                </Form.Item>
-                <Form.Item name="moveInOn" label={t("办理入住日期")}>
-                  <DatePicker className="w-full" disabled={lockedLease} />
-                </Form.Item>
-                <Form.Item name="remark" label={t("订单备注")}>
-                  <Input />
-                </Form.Item>
-              </div>
-            </details>
           </Section>
 
           <Section title="销售归属">
@@ -972,19 +933,18 @@ export function OrderDrawer({
                   optionFilterProp="label"
                   options={companies}
                   onChange={() => form.setFieldValue("salesUserId", undefined)}
-                  disabled={!!row || !!root.user?.salesCompanyId}
+                  disabled={
+                    (!!row?.salesUserId && row.status !== "DRAFT") ||
+                    !!root.user?.salesCompanyId
+                  }
                 />
               </Form.Item>
-              <Form.Item
-                name="salesUserId"
-                label={t("销售员工")}
-                rules={lockedLease ? undefined : required}
-              >
+              <Form.Item name="salesUserId" label={t("销售员工")}>
                 <Select
                   showSearch
                   optionFilterProp="label"
                   options={availableSalesUsers}
-                  disabled={!!row}
+                  disabled={!!row?.salesUserId && row.status !== "DRAFT"}
                   onChange={(id: string) => {
                     const user = salesUsers.find((item) => item.id === id);
                     if (user?.salesCompanyId)
@@ -997,11 +957,7 @@ export function OrderDrawer({
 
           <Section title="订单佣金">
             <div className={gridClass}>
-              <Form.Item
-                name="commissionMode"
-                label={t("佣金结付方式")}
-                rules={required}
-              >
+              <Form.Item name="commissionMode" label={t("佣金结付方式")}>
                 <Select
                   options={[
                     { value: "ONE_TIME", label: t("一次性结付") },
@@ -1017,7 +973,6 @@ export function OrderDrawer({
                     : "佣金总额（HKD）",
                 )}
                 rules={[
-                  ...required,
                   {
                     validator(_, value) {
                       return !value || Number(value) > 0
@@ -1036,7 +991,6 @@ export function OrderDrawer({
                     ? "首笔结付日期"
                     : "结付日期",
                 )}
-                rules={required}
               >
                 <DatePicker className="w-full" />
               </Form.Item>
@@ -1062,12 +1016,12 @@ export function OrderDrawer({
             </p>
           </Section>
 
-          <Section title="首期收款填报">
+          <Section title="首期收款">
             <div className={gridClass}>
               <Form.Item
                 name="paymentDeclaration"
                 label={t("首期付款情况")}
-                rules={required}
+
                 className={
                   !hasInitialPayment
                     ? "col-span-3 max-[760px]:col-span-1"
@@ -1075,13 +1029,42 @@ export function OrderDrawer({
                 }
               >
                 <Select
-                  disabled={lockedLease}
+                  disabled={
+                    lockedLease || !unitId || !(Number(monthlyRent) > 0)
+                  }
                   options={[
                     { value: "UNPAID", label: t("未付款") },
                     { value: "PARTIAL", label: t("部分付款") },
                     { value: "PAID", label: t("已付首期租金及押金") },
                   ]}
                   onChange={(state: OrderValues["paymentDeclaration"]) => {
+                    if (state !== "UNPAID") {
+                      const start = form.getFieldValue("startsOn") ?? dayjs();
+                      const end =
+                        form.getFieldValue("endsOn") ??
+                        start.add(1, "year").subtract(1, "day");
+                      const next = start.add(1, "month");
+                      const rent = Number(form.getFieldValue("monthlyRent"));
+                      const firstRent =
+                        end.isBefore(next.subtract(1, "day")) &&
+                        (row?.lastPeriodProration ?? true)
+                          ? (rent * (end.diff(start, "day") + 1)) /
+                            next.diff(start, "day")
+                          : rent;
+                      form.setFieldsValue({
+                        initialPaymentReceivedOn: dayjs(),
+                        ...(state === "PAID"
+                          ? {
+                              initialRentReceived: firstRent.toFixed(2),
+                              initialDepositReceived: String(
+                                form.getFieldValue("depositAmount") ??
+                                  monthlyRent ??
+                                  0,
+                              ),
+                            }
+                          : {}),
+                      });
+                    }
                     if (state === "UNPAID") {
                       form.setFieldsValue({
                         initialRentReceived: undefined,
@@ -1107,22 +1090,14 @@ export function OrderDrawer({
                   >
                     <MoneyInput disabled={lockedLease} />
                   </Form.Item>
-                  <Form.Item
-                    name="initialFundAccountId"
-                    label={t("平台账户")}
-                    rules={lockedLease ? undefined : required}
-                  >
+                  <Form.Item name="initialFundAccountId" label={t("银行账户")}>
                     <Select
                       disabled={lockedLease || fundAccounts.length === 1}
                       options={fundAccounts}
                       placeholder={t("请选择收款账户")}
                     />
                   </Form.Item>
-                  <Form.Item
-                    name="initialPaymentMethod"
-                    label={t("付款方式")}
-                    rules={lockedLease ? undefined : required}
-                  >
+                  <Form.Item name="initialPaymentMethod" label={t("付款方式")}>
                     <Select
                       disabled={lockedLease}
                       options={[
@@ -1141,7 +1116,6 @@ export function OrderDrawer({
                   <Form.Item
                     name="initialPaymentReceivedOn"
                     label={t("到账日期")}
-                    rules={lockedLease ? undefined : required}
                   >
                     <DatePicker className="w-full" disabled={lockedLease} />
                   </Form.Item>
@@ -1173,11 +1147,11 @@ export function OrderDrawer({
             {t(
               lockedLease
                 ? "订单已有收款或租期已生效，单位、租约、销售归属及首期收款仅供查看；可修改联系方式、订单备注及未付款的佣金。"
-                : "首期付款会自动登记为待核对收款，财务确认后更新账单和订单状态。合同在提交订单后自动生成；签署后的合同可在订单详情补传。提交时会校验同一单位的租期是否冲突。",
+                : "仅名称必填。资料不足时保存为待完善订单，不占用单位；补齐单位、租期和租金后生成账单。佣金资料可后补。登记首期付款直接入账，无需财务核对。",
             )}
           </p>
           {row && (
-            <Form.Item name="reason" label={t("修改原因")} rules={required}>
+            <Form.Item name="reason" label={t("修改原因")}>
               <Input.TextArea rows={2} maxLength={500} />
             </Form.Item>
           )}

@@ -26,7 +26,7 @@ export default function ExpenseDetailPage() {
                     render: dateText,
                   },
                   { title: t("付款金额"), dataIndex: "amount", render: amount },
-                  { title: t("平台账户"), dataIndex: "accountName" },
+                  { title: t("银行账户"), dataIndex: "accountName" },
                   {
                     title: t("方式"),
                     dataIndex: "paymentMethod",

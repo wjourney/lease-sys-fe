@@ -15,13 +15,12 @@ import {
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { NavigateFunction } from "react-router-dom";
+import { NavigateFunction, useLocation } from "react-router-dom";
 import { api, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { shouldOpenRow } from "../../../../shared/row-navigation";
 import { BuildingArt } from "../../../../shared/ui";
 import { ListStore, useRoot } from "../../../../stores/root";
-import { ProjectDrawer } from "../../components/ProjectDrawer";
 import { ProjectDeleteModal } from "../../detail/components/ProjectDeleteModal";
 const { Title } = Typography;
 export const ProjectGrid = observer(function ProjectGrid({
@@ -37,7 +36,7 @@ export const ProjectGrid = observer(function ProjectGrid({
 }) {
   const root = useRoot();
   const { message } = App.useApp();
-  const [editing, setEditing] = useState<Row>();
+  const location = useLocation();
   const [deleting, setDeleting] = useState<Row>();
   return (
     <>
@@ -81,11 +80,7 @@ export const ProjectGrid = observer(function ProjectGrid({
                     <b>{t(row.unitCount)}</b>
                   </span>
                   <span>
-                    {t("已锁定")}
-                    <b>{t(row.lockedCount)}</b>
-                  </span>
-                  <span>
-                    {t("出租中")}
+                    {t("已租")}
                     <b>{t(row.occupiedCount)}</b>
                   </span>
                 </div>
@@ -103,7 +98,13 @@ export const ProjectGrid = observer(function ProjectGrid({
                         size="small"
                         className="flex-1"
                         icon={<EditOutlined aria-hidden />}
-                        onClick={() => setEditing(row)}
+                        onClick={() =>
+                          navigate(`/projects/${row.id}/edit`, {
+                            state: {
+                              returnTo: location.pathname + location.search,
+                            },
+                          })
+                        }
                       >
                         {t("编辑")}
                       </Button>
@@ -140,13 +141,6 @@ export const ProjectGrid = observer(function ProjectGrid({
           />
         </div>
       </Spin>
-      {editing && (
-        <ProjectDrawer
-          row={editing}
-          onClose={() => setEditing(undefined)}
-          onSaved={() => setEditing(undefined)}
-        />
-      )}
       {deleting && (
         <ProjectDeleteModal
           open

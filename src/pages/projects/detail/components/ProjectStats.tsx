@@ -1,7 +1,7 @@
 import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 
-export type ProjectUnitStatus = "AVAILABLE" | "LOCKED" | "OCCUPIED";
+export type ProjectUnitStatus = "AVAILABLE" | "OCCUPIED";
 
 export function ProjectStats({
   row,
@@ -26,13 +26,7 @@ export function ProjectStats({
       color: "bg-[#52c52e]",
     },
     {
-      label: "已锁定",
-      value: row.lockedCount ?? 0,
-      status: "LOCKED",
-      color: "bg-[#ffb62c]",
-    },
-    {
-      label: "出租中",
+      label: "已租",
       value: row.occupiedCount ?? 0,
       status: "OCCUPIED",
       color: "bg-[#2878f0]",

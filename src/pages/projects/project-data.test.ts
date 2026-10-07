@@ -11,8 +11,7 @@ describe("project edit data", () => {
       {
         code: "custom",
         name: " 大单位 ",
-        minArea: 40,
-        maxArea: 80,
+        building: "A座", floor: "12", area: 48, layout: "两房", age: 5,
         minRent: 10000,
         maxRent: 20000,
       },
@@ -22,8 +21,7 @@ describe("project edit data", () => {
       {
         code: "custom",
         name: "大单位",
-        minArea: "40",
-        maxArea: "80",
+        building: "A座", floor: "12", area: "48", layout: "两房", age: 5,
         minRent: "10000",
         maxRent: "20000",
       },
@@ -40,7 +38,7 @@ describe("project edit data", () => {
       extra: { developmentDate: "2020-01-01", customNote: "保留" },
     };
     const values = projectFormValues(row);
-    expect(values.completionDate.format("YYYY-MM-DD")).toBe("2023-01-01");
+    expect(values).not.toHaveProperty("completionDate");
     expect(values.longitude).toBe(114.2);
     const payload = projectPayload(
       {
@@ -51,7 +49,7 @@ describe("project edit data", () => {
       },
       row.extra,
     );
-    expect(payload.completionDate).toBeNull();
+    expect(payload).not.toHaveProperty("completionDate");
     expect(payload.longitude).toBeNull();
     expect(payload.extra).toEqual({ customNote: "保留" });
     expect(payload).not.toHaveProperty("code");

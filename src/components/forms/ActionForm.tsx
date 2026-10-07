@@ -26,6 +26,7 @@ export function ActionForm({
   onSubmit,
   onClose,
   voucher = false,
+  children,
 }: {
   title: string;
   fields: Field[];
@@ -33,6 +34,7 @@ export function ActionForm({
   onSubmit: (v: Row, file?: File) => Promise<any>;
   onClose: () => void;
   voucher?: boolean;
+  children?: React.ReactNode;
 }) {
   const { message } = App.useApp();
   const [form] = Form.useForm();
@@ -90,17 +92,22 @@ export function ActionForm({
       open
       title={t(title)}
       width={520}
-      onClose={onClose}
+      onClose={() => !saving && onClose()}
+      closable={!saving}
+      maskClosable={!saving}
       footer={
         <div className="flex justify-end gap-2.5 p-[5px]">
-          <Button onClick={onClose}>{t("取消")}</Button>
+          <Button disabled={saving} onClick={onClose}>
+            {t("取消")}
+          </Button>
           <Button type="primary" loading={saving} onClick={submit}>
             {t("确认提交")}
           </Button>
         </div>
       }
     >
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" disabled={saving}>
+        {children}
         {error && (
           <RequestError
             message={t(error)}
@@ -115,7 +122,7 @@ export function ActionForm({
             showIcon
             className="mb-5"
             message={t(
-              "暂无资料完整的可用平台账户，请先填写银行资料并启用账户。",
+              "暂无资料完整的可用银行账户，请先填写银行资料并启用账户。",
             )}
             action={
               root.canWrite("fund-accounts") ? (
@@ -126,7 +133,7 @@ export function ActionForm({
                     navigate("/fund-accounts");
                   }}
                 >
-                  {t("管理平台账户")}
+                  {t("管理银行账户")}
                 </Button>
               ) : undefined
             }
@@ -160,7 +167,7 @@ export function ActionForm({
                   disabled={accounts.length === 1}
                   options={accounts}
                   loading={!accountsLoaded && !error}
-                  notFoundContent={t("暂无资料完整的可用平台账户")}
+                  notFoundContent={t("暂无资料完整的可用银行账户")}
                 />
               ) : f.type === "select" ? (
                 <Select options={f.options} />

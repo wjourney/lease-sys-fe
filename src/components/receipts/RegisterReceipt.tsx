@@ -103,7 +103,7 @@ export function RegisterReceipt({
             root.invalidate();
             if (result.voucherFailed)
               message.warning(t("收款已登记，凭证上传失败，请在收款记录补传"));
-            else message.success(t("收款已登记，等待财务核对"));
+            else message.success(t("收款已入账"));
           }}
         />
       )}

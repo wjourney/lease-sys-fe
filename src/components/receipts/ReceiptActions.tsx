@@ -176,7 +176,7 @@ export const ReceiptDrawer = observer(function ReceiptDrawer({
               { key: "payer", label: t("付款方"), children: row.payerName },
               {
                 key: "account",
-                label: t("平台账户"),
+                label: t("银行账户"),
                 children: row.accountName || "—",
               },
               {

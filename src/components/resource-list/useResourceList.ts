@@ -9,6 +9,7 @@ export function useResourceList(
   fixed: Row,
   embedded: boolean,
   pageSize: number,
+  syncSearch = !embedded,
 ) {
   const config = configs[resource],
     root = useRoot(),
@@ -28,13 +29,15 @@ export function useResourceList(
   const [localPagination, setLocalPagination] = useState({ fixedKey, page: 1 });
   const setLocalPage = (value: number) =>
     setLocalPagination({ fixedKey, page: value });
-  const page = embedded
+  const page = !syncSearch
     ? localPagination.fixedKey === fixedKey
       ? localPagination.page
       : 1
     : Number(search.get("page") || 1);
-  const query = embedded ? embeddedQuery : urlQuery;
-  const filter = embedded ? embeddedStatus : search.get("status") || undefined;
+  const query = !syncSearch ? embeddedQuery : urlQuery;
+  const filter = !syncSearch
+    ? embeddedStatus
+    : search.get("status") || undefined;
   const status = filter;
   const key = JSON.stringify({
     ...Object.fromEntries(search.entries()),
@@ -45,15 +48,15 @@ export function useResourceList(
     status: fixed.status ?? filter,
   });
   useEffect(() => {
-    if (embedded) return;
+    if (!syncSearch) return;
     clearTimeout(keywordTimer.current);
     setDraftQuery(urlQuery);
-  }, [embedded, urlQuery]);
+  }, [syncSearch, urlQuery]);
   useEffect(() => () => clearTimeout(keywordTimer.current), []);
   const applyFilters = useCallback(
     (nextQuery: string, nextStatus?: string) => {
       const trimmedQuery = nextQuery.trim();
-      if (embedded) {
+      if (!syncSearch) {
         setEmbeddedQuery(trimmedQuery);
         setEmbeddedStatus(nextStatus || undefined);
         setLocalPagination({ fixedKey, page: 1 });
@@ -72,7 +75,7 @@ export function useResourceList(
         );
       }
     },
-    [embedded, fixedKey, setSearch],
+    [syncSearch, fixedKey, setSearch],
   );
   function setQ(value: string) {
     setDraftQuery(value);
@@ -98,7 +101,7 @@ export function useResourceList(
     applyFilters("", undefined);
   }
   function changePage(value: number) {
-    if (embedded) setLocalPage(value);
+    if (!syncSearch) setLocalPage(value);
     else
       setSearch((current) => {
         const next = new URLSearchParams(current);
@@ -121,6 +124,7 @@ export function useResourceList(
   }, [load]);
   const refresh = () => load(true);
   return {
+    filterKey: key,
     config,
     root,
     navigate,

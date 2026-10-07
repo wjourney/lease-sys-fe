@@ -17,8 +17,7 @@ test("project types are edited within projects and unit choices use their projec
       {
         code: "LARGE",
         name: "海景大单位",
-        minArea: "40",
-        maxArea: "80",
+        building: "A座", floor: "12", area: "48", layout: "两房", age: 5,
         minRent: "10000",
         maxRent: "20000",
       },
@@ -64,24 +63,27 @@ test("project types are edited within projects and unit choices use their projec
   });
   await page.goto("/projects");
   await page.getByRole("button", { name: /新建项目/ }).click();
-  const drawer = page.getByRole("dialog");
-  await expect(drawer.getByText("项目单位类型", { exact: true })).toBeVisible();
-  await expect(drawer.locator('input[value="大单位"]')).toBeVisible();
-  await expect(drawer.locator('input[value="小单位"]')).toBeVisible();
-  await drawer.locator("#typeConfigs_0_minArea").scrollIntoViewIfNeeded();
+  const editor = page.locator(".record-form-page");
+  await expect(page).toHaveURL(/\/projects\/new$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(editor.getByText("项目单位类型", { exact: true })).toBeVisible();
+  await expect(editor.locator('input[value="大单位"]')).toBeVisible();
+  await expect(editor.locator('input[value="小单位"]')).toBeVisible();
+  await editor.locator("#typeConfigs_0_area").scrollIntoViewIfNeeded();
   await page.screenshot({
     path: "/tmp/lease-project-unit-types.png",
     animations: "disabled",
   });
-  await drawer.getByRole("button", { name: /取\s*消/ }).click();
+  await editor.getByRole("button", { name: /取\s*消/ }).click();
   await page.goto("/projects/project");
   await page.getByRole("button", { name: /新建单位/ }).click();
-  await drawer.locator("#unitTypeCode").click();
+  await editor.locator("#unitTypeCode").click();
   await page.getByText("海景大单位", { exact: true }).last().click();
-  await expect(drawer.locator("#minRent")).toHaveValue("10000.00");
-  await expect(drawer.locator("#maxRent")).toHaveValue("20000.00");
-  await expect(drawer.locator("#area")).toHaveValue("");
-  await expect(drawer.getByText(/类型参考：面积 40–80/)).toBeVisible();
+  await expect(editor.locator("#referenceRent")).toHaveValue("10000.00");
+  await expect(editor.locator("#area")).toHaveCount(0);
+  await expect(editor.locator("#floor")).toHaveCount(0);
+  await expect(editor.getByText("48 ㎡", { exact: true })).toBeVisible();
+  await expect(editor.getByText("类型资料（自动带入）")).toBeVisible();
   expect(calls.some((path) => path.startsWith("/settings"))).toBe(false);
   await expect(page.getByText("单位类型配置", { exact: true })).toHaveCount(0);
 });

@@ -9,7 +9,7 @@ import {
 } from "../../shared/resource-config";
 export const IncomeConfig: Config = {
   title: "账单管理",
-  description: "查看应收账单，登记实际收款并进行财务核对",
+  description: "查看应收账单，登记实际收款并直接入账",
   fields: [
     source("orderId", "关联订单（可选）", "orders", false),
     source("projectId", "关联项目（可选）", "projects", false),

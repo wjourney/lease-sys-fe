@@ -42,8 +42,8 @@ export function OrderBasicInfo() {
   const leaseRows: [string, unknown][] = [
     ["项目 / 单位", [row.projectName, row.unitNo].filter(Boolean).join(" · ")],
     ["租期", `${dateText(row.startsOn)} 至 ${dateText(row.endsOn)}`],
-    ["实际成交月租", amount(row.monthlyRent)],
-    ["约定押金", amount(row.depositAmount)],
+    ["实际成交月租", row.monthlyRent == null ? "—" : amount(row.monthlyRent)],
+    ["约定押金", row.depositAmount == null ? "—" : amount(row.depositAmount)],
   ];
   const extraRows: [string, unknown][] = [
     ["押付方式", option("depositPlan")],
@@ -52,7 +52,7 @@ export function OrderBasicInfo() {
       row.paymentIntervalMonths ? `每 ${row.paymentIntervalMonths} 个月` : "—",
     ],
     ["每月交租日", row.rentDueDay ? `${row.rentDueDay} 日` : "—"],
-    ["账单提前生成", row.billLeadDays != null ? `${row.billLeadDays} 天` : "—"],
+    ["账单生成方式", row.billingVersion === 2 ? "整租期按月生成" : "历史周期出账"],
     ["首期不足月", row.firstPeriodProration ? "按天折算" : "按整月计算"],
     ["末期不足月", row.lastPeriodProration ? "按天折算" : "按整月计算"],
     ["办理入住日期", dateText(row.moveInOn)],

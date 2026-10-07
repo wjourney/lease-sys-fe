@@ -19,8 +19,7 @@ import {
 import { observer } from "mobx-react-lite";
 import { ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, useParams } from "react-router-dom";
-import { ProjectDrawer } from "../../pages/projects/components/ProjectDrawer";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { OrderDrawer } from "../../pages/orders/components/OrderDrawer";
 import { ProjectDetailView } from "../../pages/projects/detail/components/ProjectDetailView";
 import { amount, api, Row } from "../../shared/api";
@@ -54,6 +53,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   const root = useRoot();
   const { message, modal } = App.useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const [edit, setEdit] = useState(false);
   const [tab, setTab] = useState<string>();
   const [material, setMaterial] = useState<Row>();
@@ -177,7 +177,11 @@ export const ResourceDetail = observer(function ResourceDetail({
         {resource === "projects" ? (
           <ProjectDetailView
             fields={fields}
-            onEdit={() => setEdit(true)}
+            onEdit={() =>
+              navigate(`/projects/${id}/edit`, {
+                state: { returnTo: location.pathname + location.search },
+              })
+            }
             onDelete={async (reason) => {
               await api.delete(`/projects/${id}`, { data: { reason } });
               message.success(t("已删除"));
@@ -308,16 +312,7 @@ export const ResourceDetail = observer(function ResourceDetail({
           </>
         )}
         {edit &&
-          (resource === "projects" ? (
-            <ProjectDrawer
-              row={row}
-              onClose={() => setEdit(false)}
-              onSaved={() => {
-                setEdit(false);
-                void load();
-              }}
-            />
-          ) : resource === "orders" ? (
+          (resource === "orders" ? (
             <OrderDrawer
               row={row}
               onClose={() => setEdit(false)}

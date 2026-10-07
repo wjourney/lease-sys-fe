@@ -46,13 +46,6 @@ export function FinanceFilters({
         }}
       />
       <Select
-        aria-label={t("币种")}
-        value={value.currency}
-        onChange={(currency) => onChange({ currency, accountId: undefined })}
-        options={["HKD", "CNY", "USD"].map((v) => ({ value: v, label: v }))}
-        style={{ width: 96 }}
-      />
-      <Select
         aria-label={t("项目")}
         placeholder={t("全部项目")}
         allowClear

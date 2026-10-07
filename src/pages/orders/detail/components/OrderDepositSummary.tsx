@@ -29,6 +29,12 @@ export function OrderDepositSummary() {
   const [settling, setSettling] = useState(false);
   const [showDeductions, setShowDeductions] = useState(false);
   const d = row.deposit;
+  if (row.status === "DRAFT")
+    return (
+      <Card title={t("押金管理")}>
+        {t("完善单位和租金后生成押金账单，再登记实际收款。")}
+      </Card>
+    );
   if (!d)
     return (
       <div className="grid items-start gap-4 lg:grid-cols-2">
@@ -108,15 +114,17 @@ export function OrderDepositSummary() {
             <div className="grid grid-cols-2 gap-5">
               <Figure label="约定押金" value={d.agreed} />
               <Figure label="已确认收取" value={d.received} />
-              <Figure label="待确认收款" value={d.pending} />
+              {Number(d.pending) > 0 && (
+                <Figure label="历史待确认收款" value={d.pending} />
+              )}
               <Figure label="当前持有" value={d.held} />
             </div>
             <p className="mb-0 mt-5 border-t border-[#edf0f4] pt-4 text-sm text-[#738198]">
               {t(
                 d.state === "COLLECTING" && Number(d.pending) === 0
-                  ? "请先在押金账单登记收款，财务确认后更新已收金额。"
+                  ? "请在押金账单登记实际收款，提交后直接入账。"
                   : Number(d.pending) > 0
-                    ? "录单填报不代表财务确认到账；请先核对待确认收款。"
+                    ? "存在历史待确认记录，请先处理；新登记收款直接入账。"
                     : d.state === "SETTLEMENT_PENDING"
                       ? "单位已交还，请核对扣款并办理押金结算。"
                       : "租赁结束并确认交还后，可办理押金结算与退款。",
