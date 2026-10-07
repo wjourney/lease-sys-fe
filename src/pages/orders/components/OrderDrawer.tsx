@@ -53,7 +53,6 @@ type OrderValues = {
   initialPaymentMethod?: string;
   initialBankReference?: string;
   reason?: string;
-  commissionMode: "ONE_TIME" | "RECURRING_MONTHLY";
   commissionDueOn: Dayjs;
   commissionAmount: string;
   commissionRemark?: string;
@@ -186,7 +185,12 @@ export function OrderDrawer({
   const hasInitialPayment =
     paymentDeclaration === "PARTIAL" || paymentDeclaration === "PAID";
   const depositPlan = Form.useWatch("depositPlan", form);
-  const commissionMode = Form.useWatch("commissionMode", form);
+  // Historical agreements keep their mode when editing; new and draft orders
+  // always create a monthly schedule.
+  const commissionMode =
+    row?.status !== "DRAFT" && row?.orderCommission?.mode
+      ? row.orderCommission.mode
+      : "RECURRING_MONTHLY";
   const commissionAmount = Form.useWatch("commissionAmount", form);
   const startsOn = Form.useWatch("startsOn", form);
   const endsOn = Form.useWatch("endsOn", form);
@@ -393,7 +397,6 @@ export function OrderDrawer({
     setLoading(true);
     try {
       const commissionChanged = form.isFieldsTouched([
-        "commissionMode",
         "commissionDueOn",
         "commissionAmount",
         "commissionRemark",
@@ -417,7 +420,7 @@ export function OrderDrawer({
           ["ONE_TIME", "RECURRING_MONTHLY"].includes(commission?.mode));
       const commissionPayload = saveCommission
         ? {
-            mode: values.commissionMode,
+            mode: commissionMode,
             dueOn: values.commissionDueOn?.format("YYYY-MM-DD"),
             amount: values.commissionAmount ?? undefined,
             remark: values.commissionRemark?.trim(),
@@ -683,10 +686,6 @@ export function OrderDrawer({
               commission?.amount != null
                 ? String(commission.amount)
                 : undefined,
-            commissionMode:
-              !commission?.mode || commission?.mode === "RECURRING_MONTHLY"
-                ? "RECURRING_MONTHLY"
-                : "ONE_TIME",
             commissionDueOn: commission?.dueOn
               ? dayjs(commission.dueOn)
               : undefined,
@@ -957,14 +956,6 @@ export function OrderDrawer({
 
           <Section title="订单佣金">
             <div className={gridClass}>
-              <Form.Item name="commissionMode" label={t("佣金结付方式")}>
-                <Select
-                  options={[
-                    { value: "ONE_TIME", label: t("一次性结付") },
-                    { value: "RECURRING_MONTHLY", label: t("按月结付") },
-                  ]}
-                />
-              </Form.Item>
               <Form.Item
                 name="commissionAmount"
                 label={t(

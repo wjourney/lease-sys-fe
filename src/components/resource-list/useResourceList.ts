@@ -38,14 +38,23 @@ export function useResourceList(
   const filter = !syncSearch
     ? embeddedStatus
     : search.get("status") || undefined;
-  const status = filter;
+  const status =
+    resource === "commissions"
+      ? ["OPEN", "PARTIAL", "UNSET"].includes(filter || "")
+        ? "OPEN"
+        : filter === "PAID"
+          ? "PAID"
+          : undefined
+      : filter;
+  const urlFilters = Object.fromEntries(search.entries());
+  if (resource === "commissions") delete urlFilters.mode;
   const key = JSON.stringify({
-    ...Object.fromEntries(search.entries()),
+    ...urlFilters,
     ...fixed,
     page,
     pageSize,
     q: query,
-    status: fixed.status ?? filter,
+    status: fixed.status ?? status,
   });
   useEffect(() => {
     if (!syncSearch) return;

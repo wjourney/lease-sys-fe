@@ -47,6 +47,7 @@ export const ResourceFilters = observer(function ResourceFilters({
           placeholder={t("搜索编号、名称或关键词")}
         />
       </div>
+      {resource === "commissions" && extraFilters}
       {!hideStatus &&
         !["materials", "settings", "fund-accounts"].includes(resource) && (
           <div
@@ -55,7 +56,8 @@ export const ResourceFilters = observer(function ResourceFilters({
             <label>{t("状态")}</label>
             <Select
               allowClear
-              placeholder={t("全部状态")}
+              aria-label={t(resource === "commissions" ? "佣金状态" : "状态")}
+              placeholder={t(resource === "commissions" ? "全部" : "全部状态")}
               value={status}
               onChange={setStatus}
               options={Object.entries(
@@ -85,10 +87,7 @@ export const ResourceFilters = observer(function ResourceFilters({
                         : resource === "commissions"
                           ? {
                               OPEN: "待付款",
-                              PARTIAL: "部分付款",
-                              PAID: "已付清",
-                              UNSET: "待填写",
-                              VOID: "已作废",
+                              PAID: "已付款",
                             }
                           : resource === "invoices"
                             ? {
@@ -106,7 +105,7 @@ export const ResourceFilters = observer(function ResourceFilters({
             />
           </div>
         )}
-      {extraFilters}
+      {resource !== "commissions" && extraFilters}
       {actions && (
         <div className="flex shrink-0 flex-wrap gap-2 max-[760px]:w-full">
           {actions}

@@ -148,6 +148,10 @@ test("new order accepts company name alone and shows no other required fields", 
   await page.getByRole("button", { name: "新建订单" }).click();
   const drawer = page.locator(".ant-drawer-content");
   await drawer.locator("#tenantName").fill("仅名称公司");
+  await expect(drawer.locator("#commissionMode")).toHaveCount(0);
+  await expect(
+    drawer.getByText("每月佣金（HKD）", { exact: true }),
+  ).toBeVisible();
   await expect(drawer.locator("label.ant-form-item-required")).toHaveCount(1);
   await expect(drawer.getByText("更多账单设置", { exact: true })).toHaveCount(
     0,
@@ -163,6 +167,7 @@ test("new order accepts company name alone and shows no other required fields", 
   expect(writes[0].body.unitId).toBeUndefined();
   expect(writes[0].body.monthlyRent).toBeUndefined();
   expect(writes[0].body.commission.amount).toBeUndefined();
+  expect(writes[0].body.commission.mode).toBe("RECURRING_MONTHLY");
   expect(writes[0].body.initialPayment.paid).toBe(false);
 });
 

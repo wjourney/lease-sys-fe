@@ -45,9 +45,12 @@ export function Status({
     label = "待付款";
   if (resource === "receipts" && value === "PENDING") label = "待核对";
   if (resource === "expenses" && value === "PAID") label = "已付款";
-  if (resource === "commissions" && ["OPEN", "UNPAID"].includes(value))
+  if (
+    resource === "commissions" &&
+    ["OPEN", "UNPAID", "PARTIAL", "UNSET"].includes(value)
+  )
     label = "待付款";
-  if (resource === "commissions" && value === "PARTIAL") label = "部分付款";
+  if (resource === "commissions" && value === "PAID") label = "已付款";
   return (
     <Tag bordered={false} color={color}>
       {t(label || "—")}

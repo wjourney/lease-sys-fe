@@ -228,3 +228,25 @@ test("commission order selection survives reloading its URL", async ({
       .filter({ hasText: "R001 · 海湾公司" }),
   ).toBeVisible();
 });
+
+test("commission page ignores obsolete mode filters and combines partial payments under pending", async ({
+  page,
+}) => {
+  const requests = await mock(page);
+  await page.goto("/commissions?mode=ONE_TIME&status=PARTIAL");
+  await expect(page.locator(".ant-segmented")).toHaveCount(0);
+  await expect
+    .poll(() => requests.filter((r) => r.path === "/commissions").length)
+    .toBeGreaterThan(0);
+  const query = requests.filter((r) => r.path === "/commissions").at(-1)!.query;
+  expect(query.get("mode")).toBe(null);
+  expect(query.get("status")).toBe("OPEN");
+  await page
+    .locator(".ant-select")
+    .filter({ has: page.getByRole("combobox", { name: "佣金状态" }) })
+    .click();
+  const options = page.locator(
+    ".ant-select-dropdown:visible .ant-select-item-option-content",
+  );
+  await expect(options).toHaveText(["待付款", "已付款"]);
+});
