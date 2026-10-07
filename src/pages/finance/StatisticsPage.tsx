@@ -39,13 +39,6 @@ export default observer(function StatisticsPage() {
   if (!root.finance) return <Empty description={t("暂无此模块的访问权限")} />;
   return (
     <section className="finance-page">
-      <div className="finance-heading">
-        <span>
-          {t(
-            "按实际收付日期统计，金额以港元计算；净流入不代表利润或银行余额。",
-          )}
-        </span>
-      </div>
       <div className="finance-panel">
         <FinanceFilters
           value={filters}

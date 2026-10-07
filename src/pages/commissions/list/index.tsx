@@ -1,3 +1,4 @@
+import { RegisterCommissionPayment } from "../RegisterCommissionPayment";
 import { OrderFilter } from "../../../components/filters/OrderFilter";
 import { CommissionBatchActions } from "../CommissionBatchActions";
 import { useSearchParams } from "react-router-dom";
@@ -8,6 +9,7 @@ export default function CommissionListPage() {
     <ResourceList
       resource="commissions"
       hideCreate
+      renderRowActions={(row) => <RegisterCommissionPayment row={row} />}
       renderBatchActions={(rows) => <CommissionBatchActions rows={rows} />}
       filterExtras={
         <OrderFilter

@@ -420,3 +420,32 @@
   border-top: 1px solid #e0e6ed;
   padding: 14px 20px;
 }
+
+/* Shared finance filters: time controls, then aligned search controls. */
+.finance-filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.finance-filter-period .ant-picker {
+  flex: 0 1 320px;
+}
+.finance-filter-fields > .ant-select {
+  flex: 1 1 150px;
+  max-width: 240px;
+}
+.finance-filter-fields > .ant-input-affix-wrapper {
+  flex: 2 1 280px;
+}
+.finance-filter-reset {
+  margin-left: auto;
+}
+@media (max-width: 760px) {
+  .finance-filter-fields > .ant-select {
+    max-width: none;
+  }
+}
+.finance-filter-panel > .finance-filters + .finance-filters {
+  margin-top: 0;
+}

@@ -250,3 +250,146 @@ test("commission page ignores obsolete mode filters and combines partial payment
   );
   await expect(options).toHaveText(["待付款", "已付款"]);
 });
+
+test("single commission payment records the selected balance and refreshes the list", async ({
+  page,
+}) => {
+  const requests = await mock(page);
+  await page.goto("/commissions");
+  const row = page.locator(".ant-table-row").filter({ hasText: "C001" });
+  await row.getByRole("button", { name: "登记付款", exact: true }).click();
+  const drawer = page.locator(".ant-drawer-content");
+  await expect(drawer.getByText("登记佣金付款", { exact: true })).toBeVisible();
+  await expect(drawer.locator("#fundAccountId")).toBeDisabled();
+  const before = requests.filter((r) => r.path === "/commissions").length;
+  await drawer.getByRole("button", { name: "确认提交" }).click();
+  await expect(drawer).toHaveCount(0);
+  const payment = requests.find((r) => r.path.endsWith("/payments"));
+  expect(payment?.path).toBe(`/commissions/${ids[0]}/payments`);
+  expect(payment?.body).toMatchObject({
+    amount: "100",
+    fundAccountId: accountId,
+    paymentMethod: "BANK",
+  });
+  expect(payment?.body.sourceKey).toBeTruthy();
+  await expect
+    .poll(() => requests.filter((r) => r.path === "/commissions").length)
+    .toBeGreaterThan(before);
+});
+
+test("reserved pending bill shows disabled receipt action with reason and a compact detail drawer", async ({
+  page,
+}) => {
+  await mock(page);
+  const bill = {
+    id: billId,
+    orderId,
+    recordNo: "B002",
+    feeType: "RENT",
+    status: "OPEN",
+    total: "100",
+    confirmed: "0",
+    pending: "100",
+    remaining: "100",
+    available: "0",
+    canRegister: false,
+    registrationBlockedReason:
+      "已有收款记录待处理，请在账单详情的收款记录中核对，避免重复登记",
+    receipts: [],
+    offsets: [],
+    operations: [],
+  };
+  await page.route("**/api/v1/incomes/bills**", (route) =>
+    route.fulfill({ json: { items: [bill], total: 1 } }),
+  );
+  await page.route(`**/api/v1/incomes/${billId}`, (route) =>
+    route.fulfill({ json: bill }),
+  );
+  await page.goto("/incomes");
+  const row = page.locator(".ant-table-row");
+  await expect(
+    row.getByRole("button", { name: "登记收款", exact: true }),
+  ).toBeDisabled();
+  await row
+    .getByRole("button", { name: "登记收款", exact: true })
+    .locator("..")
+    .hover();
+  await expect(page.getByRole("tooltip")).toContainText("已有收款记录待处理");
+  await row.getByRole("button", { name: /查\s*看/ }).click();
+  const drawer = page.locator(".ant-drawer-content");
+  await expect(drawer.getByText("账单详情", { exact: true })).toBeVisible();
+  await expect(drawer.getByRole("tab")).toHaveText([
+    "收款记录（0）",
+    "操作记录",
+  ]);
+  await expect(drawer.getByText("押金抵扣", { exact: true })).toHaveCount(0);
+  await expect(
+    drawer.getByRole("button", { name: "登记收款", exact: true }),
+  ).toBeDisabled();
+});
+
+test("finance filters retain date and receipt filtering without heading descriptions", async ({
+  page,
+}) => {
+  const requests = await mock(page);
+  await page.route("**/api/v1/finance/**", (route) => {
+    const url = new URL(route.request().url());
+    requests.push({
+      path: url.pathname.replace("/api/v1", ""),
+      query: url.searchParams,
+      body: undefined,
+    });
+    return route.fulfill({
+      json: {
+        items: [],
+        total: 0,
+        summary: {
+          incoming: "0",
+          outgoing: "0",
+          corrections: "0",
+          net: "0",
+          income: "0",
+          depositReceived: "0",
+          depositRefunded: "0",
+          commissionPaid: "0",
+          orderCount: 0,
+          commissionCount: 0,
+          commissionDue: "0",
+          unsetCommissionCount: 0,
+        },
+        accounts: [],
+        projects: [],
+        trend: [],
+        expenses: [],
+      },
+    });
+  });
+  await page.goto("/fund-ledger");
+  await expect(page.locator(".finance-heading")).toHaveCount(0);
+  await expect(page.locator(".finance-filter-panel")).toBeVisible();
+  await page.getByRole("textbox", { name: "流水关键词" }).fill("R001");
+  await expect
+    .poll(() =>
+      requests
+        .filter((r) => r.path === "/finance/ledger")
+        .at(-1)
+        ?.query.get("q"),
+    )
+    .toBe("R001");
+  await page.getByRole("button", { name: /重\s*置/ }).click();
+  await expect(page.getByRole("textbox", { name: "流水关键词" })).toHaveValue(
+    "",
+  );
+  await page.screenshot({
+    path: "/tmp/lease-finance-ledger.png",
+    fullPage: true,
+  });
+  await page.goto("/finance-statistics");
+  await expect(page.locator(".finance-heading")).toHaveCount(0);
+  await expect(page.locator(".finance-filter-panel")).toBeVisible();
+  await expect(page.locator(".finance-kpis")).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/lease-finance-statistics.png",
+    fullPage: true,
+  });
+});

@@ -61,13 +61,6 @@ export default observer(function LedgerPage() {
   if (!root.finance) return <Empty description={t("暂无此模块的访问权限")} />;
   return (
     <section className="finance-page resource-list">
-      <div className="finance-heading">
-        <span>
-          {t(
-            "已确认收款与实际付款自动汇总，可追溯来源，不可直接增删改。冲正作为更正记录保留。",
-          )}
-        </span>
-      </div>
       <div className="finance-panel list-surface">
         <FinanceFilters
           value={filters}
@@ -83,8 +76,7 @@ export default observer(function LedgerPage() {
             setKeyword("");
             setFilters({ ...periodDates("month"), currency: "HKD", page: 1 });
           }}
-        />
-        <div className="finance-filters">
+        >
           <Input
             aria-label={t("流水关键词")}
             allowClear
@@ -145,7 +137,7 @@ export default observer(function LedgerPage() {
               label: t(label),
             }))}
           />
-        </div>
+        </FinanceFilters>
         {error ? (
           <RequestError
             type="error"

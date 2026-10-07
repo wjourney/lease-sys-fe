@@ -1,4 +1,4 @@
-import { App, Button } from "antd";
+import { App, Button, Tooltip } from "antd";
 import { useState } from "react";
 import { ActionForm } from "../forms/ActionForm";
 import { financialFields } from "../resource-detail/financial-fields";
@@ -25,7 +25,25 @@ export function RegisterReceipt({
     (b) =>
       b.canRegister !== false && b.status !== "VOID" && Number(b.available) > 0,
   );
-  if (!available.length || root.salesRole) return null;
+  if (root.salesRole) return null;
+  if (!available.length) {
+    const bill = bills.length === 1 ? bills[0] : undefined;
+    if (!bill || ["PAID", "VOID"].includes(bill.status)) return null;
+    const reason =
+      bill.registrationBlockedReason ||
+      (Number(bill.pending) > 0
+        ? "已有收款记录待处理，请在账单详情的收款记录中核对，避免重复登记"
+        : "当前账单不可登记收款，请查看账单详情或刷新后重试");
+    return (
+      <Tooltip title={t(reason)}>
+        <span>
+          <Button size="small" disabled>
+            {t("登记收款")}
+          </Button>
+        </span>
+      </Tooltip>
+    );
+  }
   const multiple = available.length > 1;
   const fields = [
     ...available.map((b) => ({

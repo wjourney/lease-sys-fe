@@ -50,7 +50,7 @@ export const BillDrawer = observer(function BillDrawer({
       footer={
         row && !error ? (
           <Space>
-            {!loading && row.canRegister && (
+            {!loading && (
               <RegisterReceipt
                 bills={[row]}
                 orderId={row.orderId}
@@ -129,7 +129,6 @@ export const BillDrawer = observer(function BillDrawer({
                 {[
                   ["应收", "total"],
                   ["已确认收款", "confirmed"],
-                  ["押金抵扣", "offset"],
                   ["剩余应收", "remaining"],
                 ].map(([label, key]) => (
                   <div key={key}>
@@ -196,40 +195,6 @@ export const BillDrawer = observer(function BillDrawer({
                               <ReceiptActions receipt={receipt} />
                             ),
                           },
-                        ]}
-                      />
-                    ),
-                  },
-                  {
-                    key: "offsets",
-                    label: t("抵扣记录"),
-                    children: (
-                      <Table<Row>
-                        rowKey="id"
-                        size="small"
-                        pagination={false}
-                        dataSource={row.offsets || []}
-                        columns={[
-                          {
-                            title: t("日期"),
-                            dataIndex: "date",
-                            render: dateText,
-                          },
-                          {
-                            title: t("抵扣金额"),
-                            dataIndex: "amount",
-                            render: money,
-                          },
-                          {
-                            title: t("来源"),
-                            render: () => (
-                              <Link to={`/orders/${row.orderId}`}>
-                                {t("本订单押金结算")}
-                              </Link>
-                            ),
-                          },
-                          { title: t("操作人"), dataIndex: "actorName" },
-                          { title: t("说明"), dataIndex: "reason" },
                         ]}
                       />
                     ),

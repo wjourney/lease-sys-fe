@@ -90,7 +90,8 @@ export const ResourceList = observer(function ResourceList({
     width:
       resource === "sales-companies" ||
       resource === "fund-accounts" ||
-      resource === "orders"
+      resource === "orders" ||
+      resource === "commissions"
         ? 210
         : resource === "materials"
           ? 145

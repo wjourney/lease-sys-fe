@@ -224,7 +224,6 @@ export default observer(function IncomeListPage() {
                         ...[
                           ["应收", "total"],
                           ["已确认收款", "confirmed"],
-                          ["押金抵扣", "offset"],
                           ["剩余应收", "remaining"],
                         ].map(([title, key]) => ({
                           title: t(title),
@@ -255,7 +254,7 @@ export default observer(function IncomeListPage() {
                               >
                                 {t("查看")}
                               </Button>
-                              {!loading && r.canRegister && (
+                              {!loading && (
                                 <RegisterReceipt
                                   bills={[r]}
                                   orderId={r.orderId}
