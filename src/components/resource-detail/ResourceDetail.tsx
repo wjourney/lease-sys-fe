@@ -165,7 +165,7 @@ export const ResourceDetail = observer(function ResourceDetail({
         />
       ),
     });
-  if (resource !== "users")
+  if (resource !== "users" && resource !== "projects")
     tabs.push({
       key: "logs",
       label: t("操作记录"),
@@ -176,7 +176,6 @@ export const ResourceDetail = observer(function ResourceDetail({
       <Spin spinning={loading}>
         {resource === "projects" ? (
           <ProjectDetailView
-            fields={fields}
             onEdit={() =>
               navigate(`/projects/${id}/edit`, {
                 state: { returnTo: location.pathname + location.search },

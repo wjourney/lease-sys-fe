@@ -290,6 +290,7 @@ test("project detail opens its saved location on a map", async ({ page }) => {
     longitude: "114.16940000",
   });
   await page.goto("/projects/project");
+  await expect(page.getByRole("button", { name: "操作记录" })).toHaveCount(0);
   await page.getByRole("button", { name: "查看地图" }).click();
   await expect(page.getByRole("dialog")).toContainText("22.319300");
   await expect(page.getByRole("dialog")).toContainText("114.169400");

@@ -4,15 +4,13 @@ import {
   DownOutlined,
   EditOutlined,
   FileTextOutlined,
-  HistoryOutlined,
   PictureOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { Button, Dropdown, Modal } from "antd";
+import { Button, Dropdown } from "antd";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
-import { RecordHistory } from "../../../../components/resource-detail/RecordHistory";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
@@ -38,18 +36,15 @@ const mediaTitles: Record<ProjectMediaCategory, string> = {
 };
 
 export function ProjectDetailView({
-  fields,
   onEdit,
   onDelete,
 }: {
-  fields: { key: string; label: string }[];
   onEdit: () => void;
   onDelete: (reason: string) => Promise<void>;
 }) {
-  const { row, id, root, navigate, logs } = useRecordDetail();
+  const { row, id, root, navigate } = useRecordDetail();
   const [section, setSection] = useState<Section>();
   const [mediaCategory, setMediaCategory] = useState<ProjectMediaCategory>();
-  const [showHistory, setShowHistory] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const location = useLocation();
   const openUnitEditor = (unit?: Row) =>
@@ -131,15 +126,6 @@ export function ProjectDetailView({
                     {t("删除项目")}
                   </Button>
                 </>
-              )}
-              {root.canWrite("projects") && (
-                <Button
-                  className="!h-9"
-                  icon={<HistoryOutlined aria-hidden />}
-                  onClick={() => setShowHistory(true)}
-                >
-                  {t("操作记录")}
-                </Button>
               )}
               <Dropdown
                 menu={{
@@ -246,19 +232,6 @@ export function ProjectDetailView({
         }
         onClose={() => setMediaCategory(undefined)}
       />
-      <Modal
-        open={showHistory}
-        title={t("操作记录")}
-        width={760}
-        onCancel={() => setShowHistory(false)}
-        footer={
-          <Button onClick={() => setShowHistory(false)}>{t("关闭")}</Button>
-        }
-      >
-        <div className="max-h-[65vh] overflow-y-auto pt-2">
-          <RecordHistory logs={logs} fields={fields} onlyUpdates inModal />
-        </div>
-      </Modal>
     </>
   );
 }
