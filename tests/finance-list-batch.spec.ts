@@ -277,6 +277,32 @@ test("single commission payment records the selected balance and refreshes the l
     .toBeGreaterThan(before);
 });
 
+test("commission payment method stays in the payment drawer", async ({ page }) => {
+  await mock(page);
+  await page.goto("/commissions");
+  const row = page.locator(".ant-table-row").filter({ hasText: "C001" });
+  await row.getByRole("button", { name: "登记付款", exact: true }).click();
+  const drawer = page.locator(".ant-drawer-content");
+  await drawer.getByText("银行转账", { exact: true }).click();
+  await page.locator(".ant-select-dropdown:visible").getByTitle("现金").click();
+  await expect(page).toHaveURL(/\/commissions$/);
+  await expect(drawer.getByText("登记佣金付款", { exact: true })).toBeVisible();
+  await expect(drawer.locator(".ant-select-selection-item[title='现金']")).toBeVisible();
+});
+
+test("bill receipt payment method stays in the receipt drawer", async ({ page }) => {
+  await mock(page);
+  await page.goto("/incomes");
+  const row = page.locator(".ant-table-row").filter({ hasText: "B001" });
+  await row.getByRole("button", { name: "登记收款", exact: true }).click();
+  const drawer = page.locator(".ant-drawer-content");
+  await drawer.getByText("银行转账", { exact: true }).click();
+  await page.locator(".ant-select-dropdown:visible").getByTitle("现金").click();
+  await expect(page).toHaveURL(/\/incomes$/);
+  await expect(drawer.getByText("登记收款", { exact: true })).toBeVisible();
+  await expect(drawer.locator(".ant-select-selection-item[title='现金']")).toBeVisible();
+});
+
 test("reserved pending bill shows disabled receipt action with reason and a compact detail drawer", async ({
   page,
 }) => {

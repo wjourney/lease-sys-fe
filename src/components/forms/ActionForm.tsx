@@ -106,7 +106,12 @@ export function ActionForm({
         </div>
       }
     >
-      <Form form={form} layout="vertical" disabled={saving}>
+      <Form
+        form={form}
+        layout="vertical"
+        disabled={saving}
+        onClick={(event) => event.stopPropagation()}
+      >
         {children}
         {error && (
           <RequestError
