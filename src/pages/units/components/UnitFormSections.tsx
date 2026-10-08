@@ -1,5 +1,6 @@
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { unitTypeDetails } from "../unit-type-display";
-import { Collapse, Descriptions, Form, Input, Select } from "antd";
+import { Collapse, Form, Input, Select, Tooltip } from "antd";
 import type { UploadFile } from "antd";
 import { type Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
@@ -21,11 +22,12 @@ export function UnitFormSections({
   onMediaChange: (category: UnitMediaCategory, files: UploadFile[]) => void;
 }) {
   const required = [{ required: true, message: t("请填写此项") }];
+  const typeHint = "以上资料由项目的单位类型统一配置，在此不可修改。";
   return (
     <div className="space-y-4">
       <section className="rounded-lg border border-[#e0e6ed] bg-white p-6">
         <h2 className="mb-4 text-sm font-semibold">{t("单位信息（必填）")}</h2>
-        <div className="grid grid-cols-2 gap-x-6 max-[640px]:grid-cols-1">
+        <div className="grid grid-cols-3 gap-x-5 max-[1100px]:grid-cols-2 max-[640px]:grid-cols-1">
           <Form.Item name="projectId" label={t("所属项目")} rules={required}>
             <Select options={projects} disabled={projectLocked} />
           </Form.Item>
@@ -44,22 +46,34 @@ export function UnitFormSections({
           </Form.Item>
         </div>
         {selectedType && (
-          <div className="mt-2 rounded-md bg-[#f5f7fa] p-5">
-            <h3 className="mb-4 text-sm font-semibold">
-              {t("类型资料（自动带入）")}
-            </h3>
-            <Descriptions
-              column={{ xs: 1, sm: 2, md: 2 }}
-              items={unitTypeDetails(selectedType).map(([label, value]) => ({
-                key: label,
-                label: t(label),
-                children: value ?? "—",
-              }))}
-            />
-            <p className="mb-0 text-sm text-[#73819a]">
-              {t("以上资料由项目的单位类型统一配置，在此不可修改。")}
-            </p>
-          </div>
+          <section className="overflow-hidden rounded-lg border border-[#e0e6ed] bg-[#f8fafc]">
+            <div className="flex items-center gap-2 border-b border-[#e0e6ed] px-4 py-3">
+              <h3 className="m-0 text-sm font-semibold text-[#26334a]">
+                {t("类型资料（自动带入）")}
+              </h3>
+              <Tooltip title={t(typeHint)}>
+                <button
+                  type="button"
+                  aria-label={t("查看类型资料说明")}
+                  className="flex h-5 w-5 cursor-help items-center justify-center rounded-full border-0 bg-transparent p-0 text-[#8291a5] hover:text-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d]"
+                >
+                  <InfoCircleOutlined aria-hidden />
+                </button>
+              </Tooltip>
+            </div>
+            <dl className="m-0 grid grid-cols-3 gap-px bg-[#e7edf3] max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
+              {unitTypeDetails(selectedType).map(([label, value]) => (
+                <div key={label} className="min-w-0 bg-[#f8fafc] px-4 py-3">
+                  <dt className="text-xs leading-5 text-[#75839a]">
+                    {t(label)}
+                  </dt>
+                  <dd className="m-0 mt-1 break-words text-sm font-medium leading-5 text-[#26334a]">
+                    {value ?? "—"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         )}
       </section>
       <Collapse
