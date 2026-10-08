@@ -104,6 +104,14 @@ export function ProjectDetailView({
                   {t("新建单位")}
                 </Button>
               )}
+              {root.canWrite("units") && (
+                <Button
+                  className="!h-9"
+                  onClick={() => navigate(`/projects/${id}/units/batch`)}
+                >
+                  {t("批量创建单位")}
+                </Button>
+              )}
               {root.canWrite("projects") && (
                 <>
                   <Button

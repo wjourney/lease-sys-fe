@@ -2,6 +2,9 @@ import { lazy } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { useRoot } from "../stores/root";
+const BatchCreateUnitsPage = lazy(
+  () => import("../pages/units/BatchCreateUnitsPage"),
+);
 const CompanyFinancePage = lazy(() => import("../pages/company-finance"));
 
 const LedgerPage = lazy(() => import("../pages/finance/LedgerPage"));
@@ -100,6 +103,10 @@ export const AppRoutes = observer(function AppRoutes() {
       <Route
         path="/projects/:projectId/units/:id/edit"
         element={<ResourceEditPage resource="units" />}
+      />
+      <Route
+        path="/projects/:projectId/units/batch"
+        element={<BatchCreateUnitsPage />}
       />
       <Route path="/projects/:id" element={<ProjectDetailPage />} />
       <Route path="/orders" element={<OrderListPage />} />

@@ -63,7 +63,7 @@ export const AppLayout = observer(function AppLayout() {
       ? ["finance"]
       : [];
   const isRecordEditor =
-    /^\/projects\/(?:new|[^/]+\/edit|[^/]+\/units\/(?:new|[^/]+\/edit))\/?$/.test(
+    /^\/projects\/(?:new|[^/]+\/edit|[^/]+\/units\/(?:new|batch|[^/]+\/edit))\/?$/.test(
       location.pathname,
     );
   const isRecordDetail =
