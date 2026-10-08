@@ -16,8 +16,8 @@ function display(value: unknown) {
 
 function DetailField({ label, value }: { label: string; value: unknown }) {
   return (
-    <div className="flex min-w-0 gap-3 text-[13px] leading-6">
-      <dt className="w-[104px] shrink-0 text-[#7d8a9d]">{t(label)}</dt>
+    <div className="flex min-w-0 gap-3 text-[14px] leading-6">
+      <dt className="w-[96px] shrink-0 text-[#7d8a9d]">{t(label)}</dt>
       <dd className="m-0 min-w-0 break-words text-[#26334a]">
         {display(value)}
       </dd>
@@ -33,11 +33,11 @@ function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg bg-[#f5f6f8] p-5 max-[600px]:p-4">
-      <h3 className="mb-4 mt-0 text-sm font-semibold text-[#26334a]">
+    <section className="rounded-lg border border-[#e0e6ed] bg-white p-4">
+      <h3 className="mb-4 mt-0 text-[14px] font-semibold text-[#26334a]">
         {t(title)}
       </h3>
-      <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 max-[600px]:grid-cols-1">
+      <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 max-[680px]:grid-cols-1">
         {children}
       </dl>
     </section>
@@ -86,11 +86,32 @@ export function UnitDetailModal({
   }, [unit.id, root.epoch]);
 
   const extra = detail?.extra || {};
+  const money = (value: unknown) =>
+    value === null || value === undefined || value === ""
+      ? undefined
+      : amount(value);
+  const notes = [
+    ["装修情况", detail?.decoration],
+    ["现况", extra.currentState],
+    ["用途", extra.usage],
+    [
+      "最短租期",
+      detail?.minLeaseMonths != null
+        ? `${detail.minLeaseMonths} 个月`
+        : undefined,
+    ],
+    ["租金周期", extra.rentCycle],
+    ["佣金说明", detail?.commissionNote],
+    ["售楼处 / 物业资料", extra.salesOfficeNote],
+    ["开单 / 入票退票方法", extra.signingGuideNote],
+  ].filter(
+    ([, value]) => value !== null && value !== undefined && value !== "",
+  );
   return (
     <Modal
       open
       centered
-      width={900}
+      width={980}
       title={
         <div className="flex flex-wrap items-center gap-3 pr-8">
           <span>
@@ -120,9 +141,38 @@ export function UnitDetailModal({
         <Spin spinning={loading}>
           {detail && (
             <div className="space-y-4">
-              <p className="m-0 text-[13px] text-[#7d8a9d]">
-                {t("所属项目")}：{t(detail.projectName || projectName)}
-              </p>
+              <DetailSection title="单位资料">
+                <DetailField
+                  label="所属项目"
+                  value={detail.projectName || projectName}
+                />
+                <DetailField label="单位编号" value={detail.unitNo} />
+                <DetailField
+                  label="单位类型"
+                  value={detail.unitTypeName || detail.unitTypeCode}
+                />
+                <DetailField
+                  label="期 / 座"
+                  value={extra.phase || detail.building}
+                />
+                <DetailField label="楼层" value={detail.floor} />
+                <DetailField label="房号" value={detail.roomNo} />
+                <DetailField
+                  label="实用面积"
+                  value={detail.area != null ? `${detail.area} ㎡` : undefined}
+                />
+                <DetailField label="间隔" value={detail.layout} />
+              </DetailSection>
+              <DetailSection title="租金信息">
+                {allowExactRent && (
+                  <DetailField
+                    label="月租价格"
+                    value={money(detail.referenceRent)}
+                  />
+                )}
+                <DetailField label="最低价" value={money(detail.minRent)} />
+                <DetailField label="最高价" value={money(detail.maxRent)} />
+              </DetailSection>
               {root.canRead("materials") && (
                 <UnitDetailMedia
                   materials={(detail.materials || []).filter(
@@ -134,77 +184,17 @@ export function UnitDetailModal({
                   )}
                 />
               )}
-              <DetailSection title="单位定位">
-                <DetailField label="单位名称 / 编号" value={detail.unitNo} />
-                <DetailField
-                  label="单位类型"
-                  value={detail.unitTypeName || detail.unitTypeCode}
-                />
-                <DetailField
-                  label="期 / 座"
-                  value={extra.phase || detail.building}
-                />
-                <DetailField label="楼层" value={detail.floor} />
-                <DetailField label="室号" value={detail.roomNo} />
-                <DetailField
-                  label="启用状态"
-                  value={detail.enabled ? "启用" : "停用"}
-                />
-              </DetailSection>
-              <DetailSection title="物业属性">
-                <DetailField
-                  label="实用面积"
-                  value={detail.area != null ? `${detail.area} ㎡` : undefined}
-                />
-                <DetailField label="间隔" value={detail.layout} />
-                <DetailField label="装修情况" value={detail.decoration} />
-                <DetailField label="现况" value={extra.currentState} />
-                <DetailField label="用途" value={extra.usage} />
-              </DetailSection>
-              <DetailSection title="价格与租赁条件">
-                {allowExactRent && detail.referenceRent != null && (
-                  <DetailField
-                    label="具体参考月租"
-                    value={amount(detail.referenceRent)}
-                  />
-                )}
-                <DetailField label="最低价" value={amount(detail.minRent)} />
-                <DetailField label="最高价" value={amount(detail.maxRent)} />
-                {allowExactRent && (
-                  <>
+              {notes.length > 0 && (
+                <DetailSection title="补充说明">
+                  {notes.map(([label, value]) => (
                     <DetailField
-                      label="定价"
-                      value={
-                        extra.askingRent != null
-                          ? amount(extra.askingRent)
-                          : undefined
-                      }
+                      key={label}
+                      label={String(label)}
+                      value={value}
                     />
-                    <DetailField label="折扣方案一" value={extra.discountOne} />
-                    <DetailField label="折扣方案二" value={extra.discountTwo} />
-                  </>
-                )}
-                <DetailField
-                  label="最短租期"
-                  value={
-                    detail.minLeaseMonths != null
-                      ? `${detail.minLeaseMonths} 个月`
-                      : undefined
-                  }
-                />
-                <DetailField label="租金周期" value={extra.rentCycle} />
-                <DetailField label="佣金说明" value={detail.commissionNote} />
-              </DetailSection>
-              <DetailSection title="媒体与开单资料">
-                <DetailField
-                  label="售楼处 / 物业资料"
-                  value={extra.salesOfficeNote}
-                />
-                <DetailField
-                  label="开单 / 入票退票方法"
-                  value={extra.signingGuideNote}
-                />
-              </DetailSection>
+                  ))}
+                </DetailSection>
+              )}
             </div>
           )}
         </Spin>

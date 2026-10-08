@@ -1,78 +1,154 @@
 import {
   FileTextOutlined,
   PictureOutlined,
-  PlayCircleOutlined,
+  PlayCircleFilled,
 } from "@ant-design/icons";
 import { useState, type ReactNode } from "react";
 import type { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
-import { MediaCategory, MediaGalleryModal } from "./MediaGalleryModal";
+import { MediaGalleryModal, type MediaCategory } from "./MediaGalleryModal";
+
+const mediaUrl = (item: Row) =>
+  item.previewUrl ||
+  item.downloadUrl ||
+  `/api/v1/materials/${item.id}/download`;
+
+function MediaSection({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <section className="min-w-0 rounded-lg border border-[#e0e6ed] bg-white p-4">
+      <h3 className="m-0 mb-3 text-[14px] font-semibold text-[#26334a]">
+        {t(title)}（{count}）
+      </h3>
+      {children}
+    </section>
+  );
+}
 
 export function UnitDetailMedia({ materials }: { materials: Row[] }) {
-  const [open, setOpen] = useState<MediaCategory>();
-  const categories: {
-    key: MediaCategory;
-    title: string;
-    icon: ReactNode;
-    countLabel: string;
-  }[] = [
-    {
-      key: "PHOTO",
-      title: "单位图片",
-      icon: <PictureOutlined aria-hidden />,
-      countLabel: "张",
-    },
-    {
-      key: "VIDEO",
-      title: "单位视频",
-      icon: <PlayCircleOutlined aria-hidden />,
-      countLabel: "个",
-    },
-    {
-      key: "PROJECT_FILE",
-      title: "单位文件",
-      icon: <FileTextOutlined aria-hidden />,
-      countLabel: "份",
-    },
-  ];
-  const chosen = materials.filter((item) => item.category === open);
+  const [preview, setPreview] = useState<{
+    category: MediaCategory;
+    index: number;
+  }>();
+  const photos = materials.filter((item) => item.category === "PHOTO");
+  const videos = materials.filter((item) => item.category === "VIDEO");
+  const files = materials.filter((item) => item.category === "PROJECT_FILE");
+  const selectedItems =
+    preview?.category === "PHOTO"
+      ? photos
+      : preview?.category === "VIDEO"
+        ? videos
+        : files;
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-3 max-[600px]:grid-cols-1">
-        {categories.map((category) => {
-          const count = materials.filter(
-            (item) => item.category === category.key,
-          ).length;
-          return (
-            <button
-              key={category.key}
-              type="button"
-              onClick={() => setOpen(category.key)}
-              className="flex min-h-16 items-center justify-between gap-3 rounded-lg border border-[#dfe6ee] bg-[#f5f6f8] px-4 text-left text-[#1b355d] transition-colors enabled:hover:border-[#a6b8cf] enabled:hover:bg-[#eef3fa] disabled:cursor-default focus-visible:outline-2 focus-visible:outline-[#192d4c]"
-            >
-              <span className="flex min-w-0 items-center gap-2 font-medium">
-                <span className="text-lg" aria-hidden>
-                  {category.icon}
-                </span>
-                <span>{t(category.title)}</span>
-              </span>
-              <span className="shrink-0 text-xs text-[#7d8a9d]">
-                {count
-                  ? t(`${count} ${category.countLabel} · 预览`)
-                  : t("暂无")}
-              </span>
-            </button>
-          );
-        })}
+      <div className="space-y-3">
+        {(
+          [
+            ["PHOTO", "单位图片", photos],
+            ["VIDEO", "单位视频", videos],
+          ] as const
+        ).map(([category, title, items]) => (
+          <MediaSection key={category} title={title} count={items.length}>
+            {items.length ? (
+              <div className="flex flex-wrap gap-2">
+                {items.map((item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setPreview({ category, index })}
+                    aria-label={t(`查看第 ${index + 1} 个${title}`)}
+                    className="group relative h-[84px] w-[112px] shrink-0 overflow-hidden rounded-md border border-[#dfe6ee] bg-[#f3f6f9] hover:border-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d]"
+                  >
+                    {category === "PHOTO" ? (
+                      <img
+                        src={mediaUrl(item)}
+                        alt={t(item.originalName || `单位图片 ${index + 1}`)}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <>
+                        <video
+                          src={mediaUrl(item)}
+                          preload="metadata"
+                          muted
+                          aria-hidden
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
+                          <PlayCircleFilled
+                            className="text-3xl drop-shadow"
+                            aria-hidden
+                          />
+                        </span>
+                      </>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-20 items-center justify-center gap-2 rounded-md bg-[#f6f8fa] text-[13px] text-[#8390a3]">
+                {category === "PHOTO" ? (
+                  <PictureOutlined aria-hidden />
+                ) : (
+                  <PlayCircleFilled aria-hidden />
+                )}
+                {t(`暂无${title}`)}
+              </div>
+            )}
+          </MediaSection>
+        ))}
+        <MediaSection title="单位文件" count={files.length}>
+          {files.length ? (
+            <div className="grid grid-cols-2 gap-2 max-[600px]:grid-cols-1">
+              {files.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() =>
+                    setPreview({ category: "PROJECT_FILE", index })
+                  }
+                  title={t(item.originalName || item.title || "文件")}
+                  className="flex min-w-0 items-center gap-2 rounded-md border border-[#dfe6ee] px-3 py-2.5 text-left text-[13px] text-[#26334a] hover:border-[#17355d] hover:bg-[#f6f8fa] focus-visible:outline-2 focus-visible:outline-[#17355d]"
+                >
+                  <FileTextOutlined
+                    className="shrink-0 text-[#6681a4]"
+                    aria-hidden
+                  />
+                  <span className="truncate">
+                    {t(item.originalName || item.title || "文件")}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-16 items-center justify-center gap-2 rounded-md bg-[#f6f8fa] text-[13px] text-[#8390a3]">
+              <FileTextOutlined aria-hidden />
+              {t("暂无单位文件")}
+            </div>
+          )}
+        </MediaSection>
       </div>
       <MediaGalleryModal
-        category={open}
+        category={preview?.category}
         title={
-          categories.find((item) => item.key === open)?.title || "单位资料"
+          preview?.category === "PHOTO"
+            ? "单位图片"
+            : preview?.category === "VIDEO"
+              ? "单位视频"
+              : "单位文件"
         }
-        items={chosen}
-        onClose={() => setOpen(undefined)}
+        items={selectedItems}
+        initialIndex={preview?.index || 0}
+        onClose={() => setPreview(undefined)}
       />
     </>
   );

@@ -1,4 +1,5 @@
 import {
+  AppstoreAddOutlined,
   ArrowLeftOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -130,7 +131,10 @@ export function ProjectDetailView({
                 >
                   {t("新建单位")}
                 </Button>
-                <Button onClick={() => navigate(`/projects/${id}/units/batch`)}>
+                <Button
+                  icon={<AppstoreAddOutlined aria-hidden />}
+                  onClick={() => navigate(`/projects/${id}/units/batch`)}
+                >
                   {t("批量创建单位")}
                 </Button>
               </div>
