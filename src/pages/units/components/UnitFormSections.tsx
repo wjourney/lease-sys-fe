@@ -24,7 +24,7 @@ export function UnitFormSections({
   return (
     <div className="space-y-4">
       <section className="rounded-lg border border-[#e0e6ed] bg-white p-6">
-        <h2 className="mb-4 text-sm font-semibold">{t("单位信息")}</h2>
+        <h2 className="mb-4 text-sm font-semibold">{t("单位信息（必填）")}</h2>
         <div className="grid grid-cols-2 gap-x-6 max-[640px]:grid-cols-1">
           <Form.Item name="projectId" label={t("所属项目")} rules={required}>
             <Select options={projects} disabled={projectLocked} />

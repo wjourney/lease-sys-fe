@@ -12,7 +12,7 @@ export function ProjectUnitTypesFields({
   const required = [{ required: true, message: t("请填写此项") }];
   return (
     <section className="rounded-lg border border-[#e0e6ed] bg-white p-6 max-[640px]:p-4">
-      <h2 className="mb-2 text-sm font-semibold">{t("项目单位类型")}</h2>
+      <h2 className="mb-2 text-sm font-semibold">{t("项目单位类型（必填）")}</h2>
       <p className="mb-4 text-sm text-[#73819a]">
         {t(
           "每个类型固定期/座、楼层、面积等信息，创建单位时自动带入。不同楼层或户型请分别配置；已有单位使用的类型不能删除。",

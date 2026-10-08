@@ -16,7 +16,10 @@ import {
   uploadProjectFiles,
 } from "../project-data";
 import { ProjectUnitTypesFields } from "./ProjectUnitTypesFields";
-import { ProjectBasicFields } from "./ProjectBasicFields";
+import {
+  ProjectBasicFields,
+  ProjectOptionalFields,
+} from "./ProjectBasicFields";
 import { ProjectMediaFields } from "./ProjectMediaFields";
 import type {
   ProjectUploadCategory,
@@ -216,9 +219,13 @@ export function ProjectForm({
           onValuesChange={markDirty}
           onFinish={save}
         >
-          <ProjectBasicFields isEdit={!!row} onLocationChange={markDirty} />
+          <ProjectBasicFields />
           <ProjectUnitTypesFields
             usage={row?.unitTypeUsage as Record<string, number> | undefined}
+          />
+          <ProjectOptionalFields
+            isEdit={!!row}
+            onLocationChange={markDirty}
           />
           <ProjectMediaFields
             uploads={uploads}

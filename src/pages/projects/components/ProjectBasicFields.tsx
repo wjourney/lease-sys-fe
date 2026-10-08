@@ -8,24 +8,15 @@ const regionOptions = ["港岛", "九龙", "新界", "离岛"].map((value) => ({
   label: t(value),
 }));
 
-export function ProjectBasicFields({
-  isEdit,
-  onLocationChange,
-}: {
-  isEdit?: boolean;
-  onLocationChange: () => void;
-}) {
+export function ProjectBasicFields() {
   return (
-    <ProjectCreateSection title="基本资料">
+    <ProjectCreateSection title="基本资料（必填）">
       <Form.Item
         name="name"
         label={t("项目中文名称")}
         rules={[{ required: true, message: "请输入项目中文名称" }]}
       >
         <Input placeholder={t("请输入项目中文名称")} />
-      </Form.Item>
-      <Form.Item name="nameEn" label={t("项目英文名称")}>
-        <Input placeholder={t("请输入项目英文名称")} />
       </Form.Item>
       <Form.Item
         name="region"
@@ -38,6 +29,29 @@ export function ProjectBasicFields({
           placeholder={t("请选择区域")}
           options={regionOptions}
         />
+      </Form.Item>
+      <Form.Item
+        name="address"
+        label={t("详细地址")}
+        rules={[{ required: true, message: "请输入详细地址" }]}
+      >
+        <Input placeholder={t("请输入详细地址")} />
+      </Form.Item>
+    </ProjectCreateSection>
+  );
+}
+
+export function ProjectOptionalFields({
+  isEdit,
+  onLocationChange,
+}: {
+  isEdit?: boolean;
+  onLocationChange: () => void;
+}) {
+  return (
+    <ProjectCreateSection title="补充资料（选填）">
+      <Form.Item name="nameEn" label={t("项目英文名称")}>
+        <Input placeholder={t("请输入项目英文名称")} />
       </Form.Item>
       <Form.Item name="propertyName" label={t("物业名称")}>
         <Input placeholder={t("请输入物业名称")} />
@@ -70,13 +84,6 @@ export function ProjectBasicFields({
       </Form.Item>
       <Form.Item name="mtrStation" label={t("港铁站")}>
         <Input placeholder={t("请输入附近港铁站")} />
-      </Form.Item>
-      <Form.Item
-        name="address"
-        label={t("详细地址")}
-        rules={[{ required: true, message: "请输入详细地址" }]}
-      >
-        <Input placeholder={t("请输入详细地址")} />
       </Form.Item>
       <ProjectLocationField onChange={onLocationChange} />
       <Form.Item name="usage" label={t("用途")}>

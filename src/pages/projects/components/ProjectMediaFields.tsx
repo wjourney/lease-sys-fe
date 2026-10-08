@@ -18,7 +18,7 @@ export function ProjectMediaFields({
   ) => void;
 }) {
   return (
-    <ProjectCreateSection title="项目图片与展示资料">
+    <ProjectCreateSection title="项目图片与展示资料（选填）">
       <ProjectImageField
         files={uploads.PHOTO}
         onChange={(files) => onUploadChange("PHOTO", files)}
