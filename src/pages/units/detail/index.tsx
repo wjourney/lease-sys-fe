@@ -1,11 +1,12 @@
-import { EditOutlined } from "@ant-design/icons";
-import { Button, Result, Spin } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, Result, Spin, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { RecordFormPage } from "../../../components/record-editor/RecordFormPage";
 import { RequestError } from "../../../components/feedback/RequestError";
 import { UnitDetailMedia } from "../../projects/detail/components/UnitDetailMedia";
+import { UnitDeleteModal } from "../../projects/detail/components/UnitDeleteModal";
 import { amount, api, errorMessage, type Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
 import { Status } from "../../../shared/ui";
@@ -62,6 +63,7 @@ export default observer(function UnitDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [showDelete, setShowDelete] = useState(false);
   const backTo = unitListReturnTo(projectId, location.state?.returnTo);
   const detailPath = unitDetailPath(projectId, id);
   const back = () => navigate(backTo, { replace: true });
@@ -164,16 +166,36 @@ export default observer(function UnitDetailPage() {
         <div className="space-y-4 pb-6">
           <div className="flex flex-wrap items-center gap-3">
             {root.canWrite("units") && (
-              <Button
-                icon={<EditOutlined aria-hidden />}
-                onClick={() =>
-                  navigate(`${detailPath}/edit`, {
-                    state: { returnTo: detailPath, listReturnTo: backTo },
-                  })
-                }
-              >
-                {t("编辑单位")}
-              </Button>
+              <>
+                <Button
+                  icon={<EditOutlined aria-hidden />}
+                  onClick={() =>
+                    navigate(`${detailPath}/edit`, {
+                      state: { returnTo: detailPath, listReturnTo: backTo },
+                    })
+                  }
+                >
+                  {t("编辑单位")}
+                </Button>
+                <Tooltip
+                  title={
+                    detail.occupancyStatus === "OCCUPIED"
+                      ? t("已租单位不能删除")
+                      : undefined
+                  }
+                >
+                  <span>
+                    <Button
+                      danger
+                      icon={<DeleteOutlined aria-hidden />}
+                      disabled={detail.occupancyStatus === "OCCUPIED"}
+                      onClick={() => setShowDelete(true)}
+                    >
+                      {t("删除单位")}
+                    </Button>
+                  </span>
+                </Tooltip>
+              </>
             )}
           </div>
           <div className="grid grid-cols-[minmax(0,0.46fr)_minmax(0,0.54fr)] items-start gap-4 max-[960px]:grid-cols-1">
@@ -224,6 +246,17 @@ export default observer(function UnitDetailPage() {
               )}
             </div>
           </div>
+          {showDelete && (
+            <UnitDeleteModal
+              unit={detail}
+              onClose={() => setShowDelete(false)}
+              onDeleted={() => {
+                setShowDelete(false);
+                root.invalidate();
+                back();
+              }}
+            />
+          )}
         </div>
       )}
     </RecordFormPage>

@@ -3,7 +3,7 @@ import {
   EditOutlined,
   PictureOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Empty, Pagination, Select, Spin } from "antd";
+import { Button, Card, Empty, Pagination, Select, Spin, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -216,15 +216,26 @@ const UnitGrid = observer(function UnitGrid({
                     >
                       {t("编辑")}
                     </Button>
-                    <Button
-                      size="small"
-                      className="flex-1"
-                      danger
-                      icon={<DeleteOutlined aria-hidden />}
-                      onClick={() => onDeleteUnit(unit)}
+                    <Tooltip
+                      title={
+                        unit.occupancyStatus === "OCCUPIED"
+                          ? t("已租单位不能删除")
+                          : undefined
+                      }
                     >
-                      {t("删除")}
-                    </Button>
+                      <span className="flex-1" data-row-action>
+                        <Button
+                          size="small"
+                          className="w-full"
+                          danger
+                          disabled={unit.occupancyStatus === "OCCUPIED"}
+                          icon={<DeleteOutlined aria-hidden />}
+                          onClick={() => onDeleteUnit(unit)}
+                        >
+                          {t("删除")}
+                        </Button>
+                      </span>
+                    </Tooltip>
                   </>
                 )}
               </div>
