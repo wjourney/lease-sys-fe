@@ -11,9 +11,14 @@ describe("project edit data", () => {
       {
         code: "custom",
         name: " 大单位 ",
-        building: "A座", floor: "12", area: 48, layout: "两房", age: 5,
+        building: "A座",
+        floor: "12",
+        area: 48,
+        layout: "两房",
+        age: 5,
         minRent: 10000,
         maxRent: 20000,
+        referenceRent: 15000,
       },
     ];
     const values = projectFormValues({ typeConfigs });
@@ -21,9 +26,14 @@ describe("project edit data", () => {
       {
         code: "custom",
         name: "大单位",
-        building: "A座", floor: "12", area: "48", layout: "两房", age: 5,
+        building: "A座",
+        floor: "12",
+        area: "48",
+        layout: "两房",
+        age: 5,
         minRent: "10000",
         maxRent: "20000",
+        referenceRent: "15000",
       },
     ]);
   });

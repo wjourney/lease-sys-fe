@@ -5,7 +5,6 @@ export type BatchUnitRow = {
   key: string;
   roomNo: string;
   unitTypeCode: string;
-  referenceRent: string;
 };
 export const BATCH_UNIT_LIMIT = 100;
 export function parseRoomNumbers(text: string) {
@@ -46,12 +45,6 @@ export function validateBatchRows(rows: BatchUnitRow[], types: Row[]) {
     else if (unitTypeProblems(type).length)
       errors[row.key] =
         `请先编辑项目完善类型资料：${unitTypeProblems(type).join("、")}`;
-    else if (
-      !/^\d{1,12}(\.\d{1,2})?$/.test(row.referenceRent) ||
-      Number(row.referenceRent) < Number(type.minRent) ||
-      Number(row.referenceRent) > Number(type.maxRent)
-    )
-      errors[row.key] = "月租须在类型价格范围内，最多两位小数";
     if (type && room) {
       const identity = JSON.stringify([
         type.building,

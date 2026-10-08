@@ -8,7 +8,8 @@ test("project types are edited within projects and unit choices use their projec
     code: "P001",
     region: "港岛",
     address: "海湾路",
-    unitCount: 0,
+    unitCount: 1,
+    unitTypeUsage: { LARGE: 1 },
     lockedCount: 0,
     occupiedCount: 0,
     availableCount: 0,
@@ -17,9 +18,14 @@ test("project types are edited within projects and unit choices use their projec
       {
         code: "LARGE",
         name: "海景大单位",
-        building: "A座", floor: "12", area: "48", layout: "两房", age: 5,
+        building: "A座",
+        floor: "12",
+        area: "48",
+        layout: "两房",
+        age: 5,
         minRent: "10000",
         maxRent: "20000",
+        referenceRent: "15000",
       },
     ],
   };
@@ -75,11 +81,19 @@ test("project types are edited within projects and unit choices use their projec
     animations: "disabled",
   });
   await editor.getByRole("button", { name: /取\s*消/ }).click();
+  await page.goto("/projects/project/edit");
+  const deleteType = editor.getByRole("button", { name: "删除类型" });
+  await expect(deleteType).toBeDisabled();
+  await deleteType.locator("..").hover();
+  await expect(page.getByText("已有单位使用该类型，无法删除")).toBeVisible();
   await page.goto("/projects/project");
   await page.getByRole("button", { name: /新建单位/ }).click();
   await editor.locator("#unitTypeCode").click();
   await page.getByText("海景大单位", { exact: true }).last().click();
-  await expect(editor.locator("#referenceRent")).toHaveValue("10000.00");
+  await expect(editor.locator("#referenceRent")).toHaveCount(0);
+  await expect(
+    editor.getByText("HK$ 15,000.00", { exact: true }),
+  ).toBeVisible();
   await expect(editor.locator("#area")).toHaveCount(0);
   await expect(editor.locator("#floor")).toHaveCount(0);
   await expect(editor.getByText("48 ㎡", { exact: true })).toBeVisible();

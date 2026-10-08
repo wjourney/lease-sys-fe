@@ -196,11 +196,6 @@ export function UnitForm({
           disabled={!loaded || saving}
           onValuesChange={(changed) => {
             markDirty();
-            if ("unitTypeCode" in changed) {
-              const config = typeConfigs.find((item) => item.code === changed.unitTypeCode);
-              if (config && form.getFieldValue("referenceRent") == null) form.setFieldValue("referenceRent", Number(config.minRent));
-              void form.validateFields(["referenceRent"]).catch(() => {});
-            }
           }}
         >
           {loaded && !typeConfigs.length && (

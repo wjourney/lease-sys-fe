@@ -217,7 +217,9 @@ export function ProjectForm({
           onFinish={save}
         >
           <ProjectBasicFields isEdit={!!row} />
-          <ProjectUnitTypesFields />
+          <ProjectUnitTypesFields
+            usage={row?.unitTypeUsage as Record<string, number> | undefined}
+          />
           <ProjectMediaFields
             uploads={uploads}
             onUploadChange={onUploadChange}

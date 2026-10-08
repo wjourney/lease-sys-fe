@@ -24,7 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RecordFormPage } from "../../components/record-editor/RecordFormPage";
 import { useUnsavedChanges } from "../../components/record-editor/useUnsavedChanges";
-import { api, errorMessage, type Row } from "../../shared/api";
+import { amount, api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
 import {
@@ -64,7 +64,6 @@ const BatchEditor = observer(function BatchEditor({
   const [reload, setReload] = useState(0);
   const [rows, setRows] = useState<BatchUnitRow[]>([]);
   const [typeCode, setTypeCode] = useState<string>();
-  const [rent, setRent] = useState<string | null>(null);
   const [roomText, setRoomText] = useState("");
   const [prefix, setPrefix] = useState("");
   const [start, setStart] = useState<number | null>(1);
@@ -125,7 +124,11 @@ const BatchEditor = observer(function BatchEditor({
       ) {
         attempt.current = saved;
         setRows(
-          saved.rows.map((row) => ({ ...row, key: crypto.randomUUID() })),
+          saved.rows.map((row) => ({
+            roomNo: row.roomNo,
+            unitTypeCode: row.unitTypeCode,
+            key: crypto.randomUUID(),
+          })),
         );
         setUncertain(true);
         markDirty();
@@ -143,8 +146,8 @@ const BatchEditor = observer(function BatchEditor({
     attempt.current = null;
   }
   function addRooms(rooms: string[]) {
-    if (!typeCode || rent == null) {
-      message.warning(t("请先选择单位类型并填写月租价格"));
+    if (!typeCode) {
+      message.warning(t("请先选择单位类型"));
       return;
     }
     if (unitTypeProblems(selectedType).length) {
@@ -165,7 +168,6 @@ const BatchEditor = observer(function BatchEditor({
         key: crypto.randomUUID(),
         roomNo,
         unitTypeCode: typeCode,
-        referenceRent: rent,
       })),
     ]);
     setRoomText("");
@@ -188,10 +190,9 @@ const BatchEditor = observer(function BatchEditor({
     const payload = attempt.current ?? {
       requestId: crypto.randomUUID(),
       projectId,
-      rows: rows.map(({ roomNo, unitTypeCode, referenceRent }) => ({
+      rows: rows.map(({ roomNo, unitTypeCode }) => ({
         roomNo: roomNo.trim(),
         unitTypeCode,
-        referenceRent,
       })),
     };
     attempt.current = payload;
@@ -336,7 +337,7 @@ const BatchEditor = observer(function BatchEditor({
               </Empty>
             ) : (
               <>
-                <div className="mb-5 grid grid-cols-2 gap-5 max-[640px]:grid-cols-1">
+                <div className="mb-5 max-w-[480px]">
                   <label>
                     <span className="mb-2 block">{t("默认单位类型")}</span>
                     <Select
@@ -348,28 +349,6 @@ const BatchEditor = observer(function BatchEditor({
                       onChange={(value) => {
                         markDirty();
                         setTypeCode(value);
-                        setRent(
-                          String(
-                            types.find((type) => type.code === value)
-                              ?.minRent ?? "",
-                          ),
-                        );
-                      }}
-                    />
-                  </label>
-                  <label>
-                    <span className="mb-2 block">{t("默认月租（HKD）")}</span>
-                    <InputNumber
-                      aria-label={t("默认月租（HKD）")}
-                      stringMode
-                      className="!w-full"
-                      disabled={disabled}
-                      value={rent}
-                      min="0"
-                      precision={2}
-                      onChange={(value) => {
-                        markDirty();
-                        setRent(value);
                       }}
                     />
                   </label>
@@ -550,20 +529,14 @@ const BatchEditor = observer(function BatchEditor({
                 {
                   title: t("月租（HKD）"),
                   width: 140,
-                  render: (_, row, i) => (
-                    <InputNumber
-                      aria-label={t(`第 ${i + 1} 行月租`)}
-                      stringMode
-                      className="!w-full"
-                      disabled={disabled}
-                      value={row.referenceRent || null}
-                      min="0"
-                      precision={2}
-                      onChange={(value) =>
-                        patchRow(row.key, { referenceRent: value ?? "" })
-                      }
-                    />
-                  ),
+                  render: (_, row) => {
+                    const type = types.find(
+                      (item) => item.code === row.unitTypeCode,
+                    );
+                    return type?.referenceRent == null
+                      ? "—"
+                      : amount(type.referenceRent);
+                  },
                 },
                 {
                   title: t("校验"),

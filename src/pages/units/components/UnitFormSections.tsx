@@ -1,5 +1,5 @@
 import { unitTypeDetails } from "../unit-type-display";
-import { Collapse, Descriptions, Form, Input, InputNumber, Select } from "antd";
+import { Collapse, Descriptions, Form, Input, Select } from "antd";
 import type { UploadFile } from "antd";
 import { type Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
@@ -41,29 +41,6 @@ export function UnitFormSections({
             ]}
           >
             <Input placeholder={t("例如：1201")} />
-          </Form.Item>
-          <Form.Item
-            name="referenceRent"
-            label={t("月租价格（HKD）")}
-            dependencies={["unitTypeCode"]}
-            rules={[
-              ...required,
-              {
-                validator: async (_, value) => {
-                  if (
-                    value != null &&
-                    selectedType &&
-                    (Number(value) < Number(selectedType.minRent) ||
-                      Number(value) > Number(selectedType.maxRent))
-                  )
-                    throw new Error(
-                      t("价格须介于所选类型的最低价和最高价之间"),
-                    );
-                },
-              },
-            ]}
-          >
-            <InputNumber className="!w-full" min={0} precision={2} />
           </Form.Item>
         </div>
         {selectedType && (

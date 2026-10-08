@@ -28,8 +28,11 @@ export function mediaFromMaterials(materials: Row[]): UnitMedia {
 }
 
 export function unitPayload(values: Row): Row {
-  return { projectId: values.projectId, unitTypeCode: values.unitTypeCode,
-    roomNo: values.roomNo?.trim(), referenceRent: String(values.referenceRent) };
+  return {
+    projectId: values.projectId,
+    unitTypeCode: values.unitTypeCode,
+    roomNo: values.roomNo?.trim(),
+  };
 }
 
 export async function syncUnitMedia(

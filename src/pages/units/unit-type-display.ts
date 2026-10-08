@@ -35,6 +35,12 @@ export function unitTypeProblems(type?: Row): string[] {
     Number(type.maxRent) < Number(type.minRent)
   )
     missing.push("价格范围");
+  if (
+    !hasNumber(type.referenceRent) ||
+    Number(type.referenceRent) < Number(type.minRent) ||
+    Number(type.referenceRent) > Number(type.maxRent)
+  )
+    missing.push("月租价格");
   return missing;
 }
 export function typePriceRange(type: Row) {
@@ -55,5 +61,9 @@ export function unitTypeDetails(type: Row) {
     ["间隔", typeValue(type.layout)],
     ["楼龄", typeValue(type.age, " 年")],
     ["价格范围", typePriceRange(type)],
+    [
+      "月租价格（HKD）",
+      hasNumber(type.referenceRent) ? amount(type.referenceRent) : "待完善",
+    ],
   ];
 }

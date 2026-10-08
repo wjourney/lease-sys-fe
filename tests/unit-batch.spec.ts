@@ -14,6 +14,7 @@ const project = {
       age: 3,
       minRent: "100",
       maxRent: "200",
+      referenceRent: "150",
     },
     {
       code: "S",
@@ -25,6 +26,7 @@ const project = {
       age: 2,
       minRent: "50",
       maxRent: "100",
+      referenceRent: "70",
     },
   ],
 };
@@ -112,9 +114,9 @@ test("paste preserves leading zeroes, preview checks server and creates minimal 
     ["01", "02", "03"].map((roomNo) => ({
       roomNo,
       unitTypeCode: "L",
-      referenceRent: "100",
     })),
   );
+  expect(writes[1].body.rows[0]).not.toHaveProperty("referenceRent");
 });
 test("generator, duplicate errors, per-row type prices, removal and limit", async ({
   page,
@@ -129,10 +131,6 @@ test("generator, duplicate errors, per-row type prices, removal and limit", asyn
     page.getByRole("button", { name: "确认批量创建" }),
   ).toBeDisabled();
   await page.getByRole("textbox", { name: "第 2 行房号" }).fill("02");
-  await page.getByRole("spinbutton", { name: "第 2 行月租" }).fill("999");
-  await expect(
-    page.getByText("月租须在类型价格范围内，最多两位小数"),
-  ).toBeVisible();
   const typeSelect = page.getByRole("combobox", { name: "第 2 行类型" });
   await typeSelect
     .locator("xpath=ancestor::div[contains(@class, 'ant-select-selector')]")
@@ -143,7 +141,9 @@ test("generator, duplicate errors, per-row type prices, removal and limit", asyn
     .filter({ has: page.locator(`[id="${listId}"]`) })
     .getByTitle("小单位 · B座 / 4楼")
     .click();
-  await page.getByRole("spinbutton", { name: "第 2 行月租" }).fill("70");
+  await expect(
+    page.getByRole("spinbutton", { name: "第 2 行月租" }),
+  ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "确认批量创建" }),
   ).toBeEnabled();

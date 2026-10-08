@@ -112,7 +112,7 @@ export function projectPayload(values: Row, currentExtra: Row = {}): Row {
       layout: item.layout?.trim(),
       age: item.age,
       ...Object.fromEntries(
-        ["area", "minRent", "maxRent"].map((key) => [
+        ["area", "minRent", "maxRent", "referenceRent"].map((key) => [
           key,
           item[key] == null ? undefined : String(item[key]),
         ]),

@@ -18,9 +18,14 @@ const project = {
     {
       code: "LARGE",
       name: "大单位",
-      building: "A座", floor: "12", area: "48", layout: "两房", age: 5,
+      building: "A座",
+      floor: "12",
+      area: "48",
+      layout: "两房",
+      age: 5,
       minRent: "10000",
       maxRent: "20000",
+      referenceRent: "15000",
     },
   ],
 };
@@ -194,9 +199,14 @@ test("create project submits through the independent page", async ({
   await page.getByTitle("港岛", { exact: true }).click();
   for (const index of [0, 1]) {
     for (const [field, value] of Object.entries({
-      building: "A座", floor: "12", area: "48", layout: "两房", age: 5,
+      building: "A座",
+      floor: "12",
+      area: "48",
+      layout: "两房",
+      age: 5,
       minRent: "10000",
       maxRent: "20000",
+      referenceRent: "15000",
     })) {
       await page.locator(`#typeConfigs_${index}_${field}`).fill(String(value));
     }
@@ -218,14 +228,10 @@ test("new unit keeps project selected and supports narrow-screen creation", asyn
   await page.goto("/projects/project/units/new");
   await expect(page.locator("#projectId")).toBeDisabled();
   await expect(page.locator(".record-form-page")).toContainText("海湾项目");
-  
+
   await page.locator("#unitTypeCode").click();
   await page.getByText("大单位", { exact: true }).last().click();
-  for (const [field, value] of Object.entries({
-    roomNo: "1202", referenceRent: "15000",
-  })) {
-    await page.locator(`#${field}`).fill(String(value));
-  }
+  await page.locator("#roomNo").fill("1202");
   const geometry = await page.evaluate(() => ({
     height: innerHeight,
     width: innerWidth,
@@ -245,4 +251,5 @@ test("new unit keeps project selected and supports narrow-screen creation", asyn
     method: "POST",
     body: { roomNo: "1202", projectId: "project", unitTypeCode: "LARGE" },
   });
+  expect(writes[0].body).not.toHaveProperty("referenceRent");
 });

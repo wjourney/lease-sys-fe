@@ -27,6 +27,7 @@ describe("legacy unit type presentation", () => {
       "间隔",
       "实用面积",
       "楼龄",
+      "月租价格",
     ]);
     expect(
       validateBatchRows(
@@ -35,7 +36,6 @@ describe("legacy unit type presentation", () => {
             key: "1",
             unitTypeCode: "ROOM",
             roomNo: "01",
-            referenceRent: "1000",
           },
         ],
         [legacy],
@@ -50,6 +50,7 @@ describe("legacy unit type presentation", () => {
       area: "30",
       age: 0,
       layout: "一房",
+      referenceRent: "1000",
     };
     expect(unitTypeProblems(type)).toEqual([]);
     expect(unitTypeLabel(type)).toBe("单间 · A座 / 3楼");
