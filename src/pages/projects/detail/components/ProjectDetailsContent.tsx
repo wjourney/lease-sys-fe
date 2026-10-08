@@ -1,10 +1,8 @@
 import {
   EnvironmentOutlined,
   FileOutlined,
-  LeftOutlined,
   PictureOutlined,
   PlayCircleFilled,
-  RightOutlined,
 } from "@ant-design/icons";
 import { Button, Spin } from "antd";
 import { lazy, Suspense, useState } from "react";
@@ -53,6 +51,69 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ProjectMediaStrip({
+  items,
+  category,
+  onOpen,
+}: {
+  items: Row[];
+  category: "PHOTO" | "VIDEO";
+  onOpen: (index: number) => void;
+}) {
+  const isVideo = category === "VIDEO";
+  const label = isVideo ? "视频" : "图片";
+  if (!items.length) {
+    return (
+      <div className="flex h-24 items-center justify-center gap-2 rounded-md border border-dashed border-[#dbe4ee] bg-[#f6f8fa] text-[#8390a3]">
+        {isVideo ? (
+          <PlayCircleFilled className="text-xl" aria-hidden />
+        ) : (
+          <PictureOutlined className="text-xl" aria-hidden />
+        )}
+        {t(`暂无项目${label}`)}
+      </div>
+    );
+  }
+  return (
+    <div className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+      {items.map((item, index) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onOpen(index)}
+          aria-label={t(`查看第 ${index + 1} 个项目${label}`)}
+          className="relative h-[90px] w-[120px] shrink-0 overflow-hidden rounded-md border border-[#e1e8f0] bg-[#f3f6f9] transition-colors hover:border-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d]"
+        >
+          {isVideo ? (
+            <>
+              <video
+                src={mediaUrl(item)}
+                preload="metadata"
+                muted
+                aria-hidden
+                className="h-full w-full object-cover opacity-80"
+              />
+              <span className="absolute inset-0 flex items-center justify-center text-white">
+                <PlayCircleFilled
+                  className="text-3xl drop-shadow"
+                  aria-hidden
+                />
+              </span>
+            </>
+          ) : (
+            <img
+              src={mediaUrl(item)}
+              alt={t(item.originalName || `项目图片 ${index + 1}`)}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ProjectDetailsContent({
   row,
   allowExactRent,
@@ -71,13 +132,11 @@ export function ProjectDetailsContent({
   const types: Row[] = Array.isArray(row.typeConfigs) ? row.typeConfigs : [];
   const extra: Row = row.extra || {};
   const location = projectLocation(row.latitude, row.longitude);
-  const [photoIndex, setPhotoIndex] = useState(0);
   const [media, setMedia] = useState<{
     category: MediaCategory;
     index: number;
   }>();
   const [showMap, setShowMap] = useState(false);
-  const selectedPhoto = photos[Math.min(photoIndex, photos.length - 1)];
   const detailRows: [string, unknown][] = [
     ["项目中文名称", row.name],
     ["区域", row.region],
@@ -96,134 +155,69 @@ export function ProjectDetailsContent({
 
   return (
     <div className="space-y-6 pb-6">
-      <div className="grid grid-cols-3 gap-6 max-[1350px]:grid-cols-2 max-[800px]:grid-cols-1">
-        <section className="min-w-0">
-          <SectionTitle>
-            {t("项目图片")}（{photos.length}）
-          </SectionTitle>
-          {selectedPhoto ? (
-            <>
-              <div className="relative max-w-[440px] overflow-hidden rounded-md border border-[#e1e8f0] bg-[#f3f6f9]">
-                <button
-                  type="button"
-                  className="block h-[210px] w-full cursor-zoom-in"
-                  aria-label={t(`查看第 ${photoIndex + 1} 张项目图片`)}
-                  onClick={() =>
-                    setMedia({ category: "PHOTO", index: photoIndex })
-                  }
-                >
-                  <img
-                    src={mediaUrl(selectedPhoto)}
-                    alt={t(
-                      selectedPhoto.originalName ||
-                        `项目图片 ${photoIndex + 1}`,
-                    )}
-                    className="h-full w-full object-cover"
-                  />
-                </button>
-                {photos.length > 1 && (
-                  <>
-                    <Button
-                      shape="circle"
-                      icon={<LeftOutlined />}
-                      aria-label={t("上一张")}
-                      className="!absolute left-2 top-1/2 -translate-y-1/2"
-                      onClick={() =>
-                        setPhotoIndex(
-                          (index) =>
-                            (index - 1 + photos.length) % photos.length,
-                        )
-                      }
-                    />
-                    <Button
-                      shape="circle"
-                      icon={<RightOutlined />}
-                      aria-label={t("下一张")}
-                      className="!absolute right-2 top-1/2 -translate-y-1/2"
-                      onClick={() =>
-                        setPhotoIndex((index) => (index + 1) % photos.length)
-                      }
-                    />
-                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#152743cc] px-3 py-0.5 text-[14px] text-white">
-                      {photoIndex + 1} / {photos.length}
-                    </span>
-                  </>
-                )}
-              </div>
-              {photos.length > 1 && (
-                <div className="mt-2 flex max-w-[440px] gap-2 overflow-x-auto pb-1">
-                  {photos.map((photo, index) => (
-                    <button
-                      key={photo.id}
-                      type="button"
-                      onClick={() => setPhotoIndex(index)}
-                      aria-label={t(`选择第 ${index + 1} 张项目图片`)}
-                      aria-pressed={photoIndex === index}
-                      className={`h-16 w-20 shrink-0 overflow-hidden rounded border-2 ${photoIndex === index ? "border-[#17355d]" : "border-transparent"}`}
-                    >
-                      <img
-                        src={mediaUrl(photo)}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex h-[210px] max-w-[440px] flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#dbe4ee] bg-[#f6f8fa] text-[#8390a3]">
-              <PictureOutlined className="text-3xl" aria-hidden />
-              {t("暂无项目图片")}
-            </div>
-          )}
-          <div className="mt-4 border-t border-[#e4eaf1] pt-4">
+      <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6 max-[850px]:grid-cols-1">
+        <div className="min-w-0 space-y-5">
+          <section className="min-w-0">
+            <SectionTitle>
+              {t("项目图片")}（{photos.length}）
+            </SectionTitle>
+            <ProjectMediaStrip
+              items={photos}
+              category="PHOTO"
+              onOpen={(index) => setMedia({ category: "PHOTO", index })}
+            />
+          </section>
+          <section className="min-w-0">
             <SectionTitle>
               {t("项目视频")}（{videos.length}）
             </SectionTitle>
-            {videos.length ? (
-              <div className="flex max-w-[440px] flex-col gap-2">
-                {videos.map((video, index) => (
-                  <button
-                    key={video.id}
-                    type="button"
-                    onClick={() => setMedia({ category: "VIDEO", index })}
-                    className="relative h-[210px] w-full overflow-hidden rounded-md bg-[#172b47] text-white"
-                  >
-                    <video
-                      src={mediaUrl(video)}
-                      preload="metadata"
-                      muted
-                      aria-hidden
-                      className="absolute inset-0 h-full w-full object-cover opacity-70"
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center text-white">
-                      <PlayCircleFilled className="text-3xl" aria-hidden />
-                    </span>
-                    <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#14243fdd] to-transparent px-3 pb-2 pt-5 text-left text-[14px] text-white">
-                      {t(
-                        video.title ||
-                          video.originalName ||
-                          `项目视频 ${index + 1}`,
-                      )}
-                    </span>
-                  </button>
-                ))}
+            <ProjectMediaStrip
+              items={videos}
+              category="VIDEO"
+              onOpen={(index) => setMedia({ category: "VIDEO", index })}
+            />
+          </section>
+          <section className="min-w-0 border-t border-[#e4eaf1] pt-5">
+            <SectionTitle>{t("项目位置")}</SectionTitle>
+            {location ? (
+              <div className="relative">
+                <Suspense
+                  fallback={
+                    <div className="flex h-72 items-center justify-center rounded-md bg-[#f3f6f9]">
+                      <Spin />
+                    </div>
+                  }
+                >
+                  <ProjectLocationMap
+                    latitude={location.latitude}
+                    longitude={location.longitude}
+                    compact
+                  />
+                </Suspense>
+                <Button
+                  className="!absolute bottom-3 right-3 !z-[500]"
+                  icon={<EnvironmentOutlined />}
+                  onClick={() => setShowMap(true)}
+                >
+                  {t("查看地图")}
+                </Button>
               </div>
             ) : (
-              <p className="m-0 text-sm text-[#8390a3]">{t("暂无项目视频")}</p>
+              <div className="flex h-72 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#dbe4ee] bg-[#f6f8fa] text-[#8390a3]">
+                <EnvironmentOutlined className="text-3xl" aria-hidden />
+                {t("尚未设置项目位置")}
+              </div>
             )}
-          </div>
-        </section>
+          </section>
+        </div>
 
-        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[800px]:border-l-0 max-[800px]:pl-0">
+        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[850px]:border-l-0 max-[850px]:pl-0">
           <SectionTitle>{t("基本资料")}</SectionTitle>
-          <dl className="m-0 border-t border-[#e4eaf1] text-[14px]">
+          <dl className="m-0 grid grid-cols-2 border-t border-[#e4eaf1] text-[14px] max-[1200px]:grid-cols-1">
             {detailRows.map(([label, value]) => (
               <div
                 key={label}
-                className="grid grid-cols-[110px_minmax(0,1fr)] gap-3 border-b border-[#e4eaf1] py-2.5"
+                className={`grid grid-cols-[minmax(82px,auto)_minmax(0,1fr)] gap-3 border-b border-[#e4eaf1] py-2.5 pr-4 max-[1200px]:pr-0 ${label === "项目介绍" ? "col-span-2 max-[1200px]:col-span-1" : ""}`}
               >
                 <dt className="text-[#7585a0]">{t(label)}</dt>
                 <dd className="m-0 break-words whitespace-pre-line font-medium text-[#263953]">
@@ -232,39 +226,6 @@ export function ProjectDetailsContent({
               </div>
             ))}
           </dl>
-        </section>
-
-        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[1350px]:col-span-2 max-[1350px]:border-l-0 max-[1350px]:pl-0 max-[800px]:col-span-1">
-          <SectionTitle>{t("项目位置")}</SectionTitle>
-          {location ? (
-            <div className="relative">
-              <Suspense
-                fallback={
-                  <div className="flex h-72 items-center justify-center rounded-md bg-[#f3f6f9]">
-                    <Spin />
-                  </div>
-                }
-              >
-                <ProjectLocationMap
-                  latitude={location.latitude}
-                  longitude={location.longitude}
-                  compact
-                />
-              </Suspense>
-              <Button
-                className="!absolute bottom-3 right-3 !z-[500]"
-                icon={<EnvironmentOutlined />}
-                onClick={() => setShowMap(true)}
-              >
-                {t("查看地图")}
-              </Button>
-            </div>
-          ) : (
-            <div className="flex h-72 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#dbe4ee] bg-[#f6f8fa] text-[#8390a3]">
-              <EnvironmentOutlined className="text-3xl" aria-hidden />
-              {t("尚未设置项目位置")}
-            </div>
-          )}
         </section>
       </div>
 
