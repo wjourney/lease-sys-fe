@@ -16,7 +16,6 @@ import {
   Spin,
   Table,
 } from "antd";
-import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -46,20 +45,11 @@ const maskedPhone = (value?: string) =>
   value && value.length > 7
     ? `${value.slice(0, 3)}****${value.slice(-4)}`
     : blank(value);
-const remainingDays = (end?: string) =>
-  end
-    ? `${Math.max(0, dayjs(end).startOf("day").diff(dayjs().startOf("day"), "day"))} 天`
-    : "—";
-
 const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const { id = "" } = useParams();
   const root = useRoot();
   const navigate = useNavigate();
   const [company, setCompany] = useState<Row>();
-  const [summary, setSummary] = useState<{
-    memberCount: number;
-    admin?: Row;
-  }>();
   const [images, setImages] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,27 +85,11 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     const request = ++detailRequest.current;
     setLoading(true);
     setError("");
-    Promise.all([
-      api.get<Row>(`/sales-companies/${id}`),
-      api.get<Page>("/users", {
-        params: { salesCompanyId: id, page: 1, pageSize: 1 },
-      }),
-      api.get<Page>("/users", {
-        params: {
-          salesCompanyId: id,
-          role: "SALES_COMPANY_ADMIN",
-          page: 1,
-          pageSize: 1,
-        },
-      }),
-    ])
-      .then(([detail, allMembers, admins]) => {
+    api
+      .get<Row>(`/sales-companies/${id}`)
+      .then(({ data }) => {
         if (request !== detailRequest.current) return;
-        setCompany(detail.data);
-        setSummary({
-          memberCount: allMembers.data.total,
-          admin: admins.data.items[0],
-        });
+        setCompany(data);
       })
       .catch((cause) => {
         if (request === detailRequest.current) setError(errorMessage(cause));
@@ -134,16 +108,19 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     options("materials", { salesCompanyId: id })
       .then((rows) => {
         if (!active) return;
-        const available = rows.filter((row) => row.storageKey);
-        const latestLogo = available
-          .filter((row) => row.category === "LOGO")
-          .sort((a, b) =>
-            String(b.createdAt).localeCompare(String(a.createdAt)),
-          )[0];
-        setImages([
-          ...(latestLogo ? [latestLogo] : []),
-          ...available.filter((row) => row.category === "PHOTO"),
-        ]);
+        setImages(
+          rows
+            .filter(
+              (row) =>
+                row.storageKey && ["LOGO", "PHOTO"].includes(row.category),
+            )
+            .sort(
+              (a, b) =>
+                Number(a.sortOrder || 0) - Number(b.sortOrder || 0) ||
+                Number(b.category === "LOGO") - Number(a.category === "LOGO") ||
+                String(a.createdAt).localeCompare(String(b.createdAt)),
+            ),
+        );
       })
       .catch(() => {
         if (active) setImages([]);
@@ -232,8 +209,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       <h1 className="record-header-title">{t(company.name)}</h1>
     </div>
   );
-  const featuredImage =
-    images.find((image) => image.category === "PHOTO") || images[0];
+  const featuredImage = images[0];
   const otherImages = images.filter((image) => image.id !== featuredImage?.id);
   const overviewColumns = [
     [
@@ -248,45 +224,19 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       },
       { label: "会员编号", value: blank(company.companyNo) },
       { label: "联系人", value: t(blank(company.contactName)) },
-      {
-        label: "账号统计",
-        value: t(
-          `子账号 ${summary?.memberCount ?? 0} · 分行 ${company.branches?.length ?? 0} · 职位 ${company.positions?.length ?? 0}`,
-        ),
-      },
     ],
     [
       { label: "电话", value: maskedPhone(company.phone) },
       { label: "邮箱", value: blank(company.email) },
-      {
-        label: "地址 / 服务区域",
-        value: (
-          <>
-            {t(blank(company.address))} · {t(blank(company.serviceArea))}
-          </>
-        ),
-      },
-      { label: "最后修改", value: dateText(company.updatedAt) },
+      { label: "地址", value: t(blank(company.address)) },
+      { label: "服务区域", value: t(blank(company.serviceArea)) },
     ],
     [
-      {
-        label: "管理员",
-        value: summary?.admin
-          ? `${t(summary.admin.name)} / ${summary.admin.username}`
-          : "—",
-      },
-      {
-        label: "服务期限",
-        value: (
-          <>
-            {dateText(company.serviceStartsOn)} {t("至")}{" "}
-            {dateText(company.serviceEndsOn)}（{t("剩余")}{" "}
-            {remainingDays(company.serviceEndsOn)}）
-          </>
-        ),
-      },
       { label: "商业登记", value: blank(company.registrationNo) },
       { label: "登记届满", value: dateText(company.registrationExpiresOn) },
+      { label: "开户银行", value: t(blank(company.payoutBankName)) },
+      { label: "账户名称", value: t(blank(company.payoutAccountName)) },
+      { label: "银行账号", value: blank(company.payoutAccountNo) },
     ],
   ];
   const columns = [
@@ -338,10 +288,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       {headerHost ? createPortal(heading, headerHost) : heading}
       <Spin spinning={loading}>
         <div className="sales-company-detail-layout">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-sm font-medium text-[#67758b]">
-              {t("销售组织")} / {t(company.name)}
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap gap-2">
               {root.canWrite("sales-companies") && (
                 <Button onClick={() => setEditingCompany(true)}>

@@ -11,9 +11,13 @@ const imageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 export function ProjectImageField({
   files,
   onChange,
+  title = "项目图片",
+  logoLabel = "项目 Logo",
 }: {
   files: UploadFile[];
   onChange: (files: UploadFile[]) => void;
+  title?: string;
+  logoLabel?: string;
 }) {
   const { message } = App.useApp();
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
@@ -35,7 +39,7 @@ export function ProjectImageField({
   return (
     <div className="col-span-full mb-4 min-w-0">
       <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-xs text-[#73819a]">{t("项目图片")}</span>
+        <span className="text-xs text-[#73819a]">{t(title)}</span>
         <span className="text-xs text-[#8995a6]">
           {t(
             `最多 ${MAX_PROJECT_IMAGES} 张，第一张默认为 Logo，可指定其他图片`,
@@ -79,7 +83,7 @@ export function ProjectImageField({
             </button>
             {index === 0 ? (
               <div className="flex h-8 items-center px-2 text-xs font-medium text-[#192d4c]">
-                {t("项目 Logo")}
+                {t(logoLabel)}
               </div>
             ) : (
               <button
@@ -104,7 +108,7 @@ export function ProjectImageField({
             showUploadList={false}
             beforeUpload={(file) => {
               if (!imageTypes.has(file.type)) {
-                message.error(t("项目图片仅支持 PNG、JPG、WebP 图片"));
+                message.error(t("仅支持 PNG、JPG、WebP 图片"));
                 return Upload.LIST_IGNORE;
               }
               if (file.size > 30 * 1024 * 1024) {
@@ -117,7 +121,7 @@ export function ProjectImageField({
             onChange={({ fileList }) => {
               if (fileList.length > MAX_PROJECT_IMAGES)
                 message.warning({
-                  content: t(`最多上传 ${MAX_PROJECT_IMAGES} 张项目图片`),
+                  content: t(`最多上传 ${MAX_PROJECT_IMAGES} 张图片`),
                   key: "project-image-limit",
                 });
               onChange(fileList.slice(0, MAX_PROJECT_IMAGES));

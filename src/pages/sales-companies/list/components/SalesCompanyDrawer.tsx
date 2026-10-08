@@ -1,27 +1,12 @@
 import { RequestError } from "../../../../components/feedback/RequestError";
-import { UploadOutlined } from "@ant-design/icons";
-import {
-  App,
-  Button,
-  DatePicker,
-  Drawer,
-  Form,
-  Input,
-  Select,
-  Upload,
-} from "antd";
+import { App, Button, DatePicker, Drawer, Form, Input, Select } from "antd";
 import type { UploadFile } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
-import {
-  api,
-  errorMessage,
-  options,
-  type Page,
-  type Row,
-} from "../../../../shared/api";
+import { api, errorMessage, options, type Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { useRoot } from "../../../../stores/root";
+import { ProjectImageField } from "../../../projects/components/ProjectImageField";
 
 const regionOptions = ["香港岛", "九龙", "新界", "离岛"].map((name) => ({
   label: t(name),
@@ -29,54 +14,6 @@ const regionOptions = ["香港岛", "九龙", "新界", "离岛"].map((name) => 
 }));
 const fieldClass =
   "min-w-0 !mb-4 [&_.ant-input]:!h-10 [&_.ant-picker]:!h-10 [&_.ant-select-selector]:!min-h-10";
-
-function CompanyImageUpload({
-  label,
-  prompt,
-  files,
-  onChange,
-  multiple,
-}: {
-  label: string;
-  prompt: string;
-  files: UploadFile[];
-  onChange: (files: UploadFile[]) => void;
-  multiple?: boolean;
-}) {
-  const { message } = App.useApp();
-  return (
-    <div className="min-w-0">
-      <div className="mb-2 text-xs text-[#73819a]">{t(label)}</div>
-      <Upload
-        accept=".jpg,.jpeg,.png,.webp"
-        multiple={multiple}
-        fileList={files}
-        beforeUpload={(file) => {
-          if (
-            !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-            file.size > 30 * 1024 * 1024
-          ) {
-            message.error(t("请上传小于 30 MB 的 JPG、PNG 或 WebP 图片"));
-            return Upload.LIST_IGNORE;
-          }
-          return false;
-        }}
-        onChange={({ fileList }) =>
-          onChange(multiple ? fileList : fileList.slice(-1))
-        }
-        className="[&_.ant-upload]:!block"
-      >
-        <Button
-          block
-          icon={<UploadOutlined aria-hidden />}
-          className="!h-10 !border-dashed !text-left"
-        >
-          {t(prompt)}
-        </Button>
-      </Upload>
-    </div>
-  );
-}
 
 export function SalesCompanyDrawer({
   company,
@@ -90,16 +27,14 @@ export function SalesCompanyDrawer({
   const root = useRoot();
   const { message } = App.useApp();
   const [form] = Form.useForm();
-  const [logo, setLogo] = useState<UploadFile[]>([]);
-  const [photos, setPhotos] = useState<UploadFile[]>([]);
+  const [images, setImages] = useState<UploadFile[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [createdCompany, setCreatedCompany] = useState<Row>();
-  const [adminAccount, setAdminAccount] = useState<Row>();
   const [imagesLoading, setImagesLoading] = useState(!!company);
   const existingImageIds = useRef(new Set<string>());
   const currentRevision = useRef<number>(company?.revision ?? 0);
-  const uploaded = useRef(new Set<string>());
+  const uploaded = useRef(new Map<string, string>());
   useEffect(() => {
     if (!company) return;
     form.setFieldsValue({
@@ -113,6 +48,9 @@ export function SalesCompanyDrawer({
         .split(" / ")
         .filter(Boolean),
       registrationNo: company.registrationNo,
+      payoutBankName: company.payoutBankName,
+      payoutAccountName: company.payoutAccountName,
+      payoutAccountNo: company.payoutAccountNo,
       registrationExpiresOn: company.registrationExpiresOn
         ? dayjs(company.registrationExpiresOn)
         : undefined,
@@ -141,18 +79,15 @@ export function SalesCompanyDrawer({
           (row) => ["LOGO", "PHOTO"].includes(row.category) && row.storageKey,
         );
         existingImageIds.current = new Set(existing.map((row) => row.id));
-        setLogo(
-          existing
-            .filter((row) => row.category === "LOGO")
-            .sort((a, b) =>
-              String(b.createdAt).localeCompare(String(a.createdAt)),
-            )
-            .slice(0, 1)
-            .map(toFile),
+        const sorted = existing.sort(
+          (a, b) =>
+            Number(a.sortOrder || 0) - Number(b.sortOrder || 0) ||
+            (a.category === "LOGO" ? -1 : 0) -
+              (b.category === "LOGO" ? -1 : 0) ||
+            String(a.createdAt).localeCompare(String(b.createdAt)),
         );
-        setPhotos(
-          existing.filter((row) => row.category === "PHOTO").map(toFile),
-        );
+        setImages(sorted.map(toFile));
+        for (const row of sorted) uploaded.current.set(row.id, row.id);
       })
       .catch((cause) => {
         if (active) setError(t(`图片加载失败：${errorMessage(cause)}`));
@@ -164,28 +99,6 @@ export function SalesCompanyDrawer({
       active = false;
     };
   }, [company?.id, form]);
-  useEffect(() => {
-    if (!company || !root.canRead("users")) return;
-    let active = true;
-    api
-      .get<Page>("/users", {
-        params: {
-          salesCompanyId: company.id,
-          role: "SALES_COMPANY_ADMIN",
-          page: 1,
-          pageSize: 1,
-        },
-      })
-      .then(({ data }) => {
-        if (active) setAdminAccount(data.items[0]);
-      })
-      .catch(() => {
-        if (active) setAdminAccount(undefined);
-      });
-    return () => {
-      active = false;
-    };
-  }, [company?.id]);
   const serviceEndsOn = Form.useWatch("serviceEndsOn", form) as
     Dayjs | undefined;
   const remainingDays = serviceEndsOn
@@ -196,26 +109,22 @@ export function SalesCompanyDrawer({
     : undefined;
 
   async function uploadImages(companyId: string) {
-    for (const [category, files] of [
-      ["LOGO", logo],
-      ["PHOTO", photos],
-    ] as const) {
-      for (const file of files) {
-        if (!file.originFileObj || uploaded.current.has(file.uid)) continue;
-        const payload = new FormData();
-        payload.append(
-          "payload",
-          JSON.stringify({
-            salesCompanyId: companyId,
-            category,
-            title: file.name,
-            visibility: "SHARED",
-          }),
-        );
-        payload.append("file", file.originFileObj, file.name);
-        await api.post("/materials/upload", payload);
-        uploaded.current.add(file.uid);
-      }
+    for (const [index, file] of images.entries()) {
+      if (!file.originFileObj || uploaded.current.has(file.uid)) continue;
+      const payload = new FormData();
+      payload.append(
+        "payload",
+        JSON.stringify({
+          salesCompanyId: companyId,
+          category: "PHOTO",
+          title: file.name,
+          visibility: "SHARED",
+          sortOrder: index,
+        }),
+      );
+      payload.append("file", file.originFileObj, file.name);
+      const { data } = await api.post<Row>("/materials/upload", payload);
+      uploaded.current.set(file.uid, data.id);
     }
   }
 
@@ -223,6 +132,7 @@ export function SalesCompanyDrawer({
     setSaving(true);
     setError("");
     let savedCompany = createdCompany;
+    let detailsSaved = false;
     try {
       const serviceStartsOn = (
         values.serviceStartsOn as Dayjs | undefined
@@ -250,6 +160,9 @@ export function SalesCompanyDrawer({
         address: values.address?.trim() || "",
         serviceArea: (values.serviceArea || []).join(" / "),
         registrationNo: values.registrationNo?.trim() || "",
+        payoutBankName: values.payoutBankName?.trim() || "",
+        payoutAccountName: values.payoutAccountName?.trim() || "",
+        payoutAccountNo: values.payoutAccountNo?.trim() || "",
         registrationExpiresOn: (
           values.registrationExpiresOn as Dayjs | undefined
         )?.format("YYYY-MM-DD"),
@@ -267,9 +180,10 @@ export function SalesCompanyDrawer({
         savedCompany = (await api.post<Row>("/sales-companies", payload)).data;
         setCreatedCompany(savedCompany);
       }
+      detailsSaved = true;
       await uploadImages(savedCompany!.id);
       if (company) {
-        const retained = new Set([...logo, ...photos].map((file) => file.uid));
+        const retained = new Set(images.map((file) => file.uid));
         for (const id of existingImageIds.current) {
           if (retained.has(id)) continue;
           await api.delete(`/materials/${id}`, {
@@ -278,12 +192,17 @@ export function SalesCompanyDrawer({
           existingImageIds.current.delete(id);
         }
       }
+      const imageIds = images.map((file) => uploaded.current.get(file.uid));
+      if (imageIds.some((id) => !id)) throw new Error(t("公司图片上传未完成"));
+      await api.patch(`/sales-companies/${savedCompany!.id}/images/order`, {
+        ids: imageIds,
+      });
       message.success(t(company ? "销售公司修改成功" : "销售公司创建成功"));
       root.invalidate();
       onSaved();
     } catch (cause) {
       setError(
-        savedCompany
+        detailsSaved
           ? t(`公司资料已保存，图片处理失败；请重试：${errorMessage(cause)}`)
           : errorMessage(cause),
       );
@@ -365,12 +284,6 @@ export function SalesCompanyDrawer({
             >
               <Input placeholder={t("请输入公司英文名称")} />
             </Form.Item>
-            <CompanyImageUpload
-              label="Logo"
-              prompt="上传 / 替换 Logo"
-              files={logo}
-              onChange={setLogo}
-            />
             <Form.Item
               name="contactName"
               label={t("联系人")}
@@ -417,19 +330,49 @@ export function SalesCompanyDrawer({
             </Form.Item>
           </div>
           <div className="grid grid-cols-2 gap-x-4 max-[500px]:grid-cols-1">
-            <CompanyImageUpload
-              label="公司照片"
-              prompt="上传照片"
-              files={photos}
-              onChange={setPhotos}
-              multiple
-            />
             <Form.Item
               name="registrationExpiresOn"
               label={t("商业登记届满日期")}
               className={fieldClass}
             >
               <DatePicker className="w-full" format="YYYY-MM-DD" />
+            </Form.Item>
+          </div>
+          <ProjectImageField
+            title="公司图片"
+            logoLabel="公司 Logo"
+            files={images}
+            onChange={setImages}
+          />
+        </section>
+        <section className="mt-4 rounded-lg bg-[#f5f6f8] p-4 max-[600px]:p-3">
+          <h2 className="mb-1 text-sm font-semibold text-[#26344a]">
+            {t("收款账户（选填）")}
+          </h2>
+          <p className="mb-4 text-xs text-[#8491a3]">
+            {t("用于向销售公司付款，请按银行资料填写并在付款前核对。")}
+          </p>
+          <div className="grid grid-cols-3 gap-x-4 max-[700px]:grid-cols-2 max-[500px]:grid-cols-1">
+            <Form.Item
+              name="payoutBankName"
+              label={t("开户银行")}
+              className={fieldClass}
+            >
+              <Input maxLength={191} placeholder={t("请输入开户银行")} />
+            </Form.Item>
+            <Form.Item
+              name="payoutAccountName"
+              label={t("账户名称")}
+              className={fieldClass}
+            >
+              <Input maxLength={191} placeholder={t("请输入账户名称")} />
+            </Form.Item>
+            <Form.Item
+              name="payoutAccountNo"
+              label={t("银行账号")}
+              className={fieldClass}
+            >
+              <Input maxLength={191} placeholder={t("请输入银行账号")} />
             </Form.Item>
           </div>
         </section>
@@ -467,33 +410,6 @@ export function SalesCompanyDrawer({
                 </p>
               )}
             </>
-          )}
-          {company && (
-            <div className="mt-4 border-t border-[#e0e6ee] pt-3 text-sm text-[#52617a]">
-              <div className="mb-2 font-medium text-[#26344a]">
-                {t("账号信息")}
-              </div>
-              <div className="flex flex-wrap gap-x-8 gap-y-1">
-                <span>
-                  {t("公司编号")}：{t(company.companyNo || "—")}
-                </span>
-                {!root.companyAdmin && (
-                  <span>
-                    {t("管理员账号")}：{t(adminAccount?.username || "尚未开通")}
-                  </span>
-                )}
-                {!root.companyAdmin && (
-                  <span>
-                    {t("管理员姓名")}：{t(adminAccount?.name || "—")}
-                  </span>
-                )}
-              </div>
-              {!root.companyAdmin && (
-                <p className="mb-0 mt-2 text-xs text-[#8491a3]">
-                  {t("管理员账号请在账号管理中创建或修改。")}
-                </p>
-              )}
-            </div>
           )}
         </section>
       </Form>
