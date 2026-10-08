@@ -216,7 +216,7 @@ export function ProjectForm({
           onValuesChange={markDirty}
           onFinish={save}
         >
-          <ProjectBasicFields isEdit={!!row} />
+          <ProjectBasicFields isEdit={!!row} onLocationChange={markDirty} />
           <ProjectUnitTypesFields
             usage={row?.unitTypeUsage as Record<string, number> | undefined}
           />

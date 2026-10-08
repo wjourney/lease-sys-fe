@@ -1,13 +1,20 @@
 import { Form, Input, InputNumber, Select } from "antd";
 import { t } from "../../../shared/i18n";
 import { ProjectCreateSection } from "./ProjectCreateSection";
+import { ProjectLocationField } from "./ProjectLocationField";
 
 const regionOptions = ["港岛", "九龙", "新界", "离岛"].map((value) => ({
   value,
   label: t(value),
 }));
 
-export function ProjectBasicFields({ isEdit }: { isEdit?: boolean }) {
+export function ProjectBasicFields({
+  isEdit,
+  onLocationChange,
+}: {
+  isEdit?: boolean;
+  onLocationChange: () => void;
+}) {
   return (
     <ProjectCreateSection title="基本资料">
       <Form.Item
@@ -71,24 +78,7 @@ export function ProjectBasicFields({ isEdit }: { isEdit?: boolean }) {
       >
         <Input placeholder={t("请输入详细地址")} />
       </Form.Item>
-      <Form.Item name="longitude" label={t("地图经度")}>
-        <InputNumber
-          min={-180}
-          max={180}
-          precision={8}
-          controls={false}
-          placeholder={t("请输入经度")}
-        />
-      </Form.Item>
-      <Form.Item name="latitude" label={t("地图纬度")}>
-        <InputNumber
-          min={-90}
-          max={90}
-          precision={8}
-          controls={false}
-          placeholder={t("请输入纬度")}
-        />
-      </Form.Item>
+      <ProjectLocationField onChange={onLocationChange} />
       <Form.Item name="usage" label={t("用途")}>
         <Select
           options={["住宅", "商业", "办公", "综合"].map((value) => ({

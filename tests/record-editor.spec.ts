@@ -246,6 +246,9 @@ test("create project submits through the independent page", async ({
   await page.locator("#mtrStation").fill("太古站");
   await page.locator("#region").click();
   await page.getByTitle("港岛", { exact: true }).click();
+  await page.getByRole("button", { name: "地图选点" }).click();
+  await page.locator(".leaflet-container").click();
+  await page.getByRole("button", { name: "确定位置" }).click();
   for (const index of [0, 1]) {
     for (const [field, value] of Object.entries({
       building: "A座",
@@ -276,6 +279,23 @@ test("create project submits through the independent page", async ({
       },
     },
   });
+  expect(writes[0].body.latitude).toBeCloseTo(22.3193, 2);
+  expect(writes[0].body.longitude).toBeCloseTo(114.1694, 2);
+});
+
+test("project detail opens its saved location on a map", async ({ page }) => {
+  await mockApi(page, "SUPER_ADMIN", {
+    ...project,
+    latitude: "22.31930000",
+    longitude: "114.16940000",
+  });
+  await page.goto("/projects/project");
+  await page.getByRole("button", { name: "查看地图" }).click();
+  await expect(page.getByRole("dialog")).toContainText("22.319300");
+  await expect(page.getByRole("dialog")).toContainText("114.169400");
+  await expect(
+    page.getByRole("link", { name: "在 OpenStreetMap 打开" }),
+  ).toHaveAttribute("href", /mlat=22\.3193&mlon=114\.1694/);
 });
 
 test("new unit keeps project selected and supports narrow-screen creation", async ({
