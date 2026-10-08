@@ -5,6 +5,7 @@ import type {
   ProjectUploadCategory,
   ProjectUploads,
 } from "./components/ProjectUploadField";
+import { projectImages } from "./project-images";
 
 const extraKeys = [
   "salesStatus",
@@ -17,10 +18,14 @@ const extraKeys = [
   "nearbySchools",
   "website",
   "salesOffice",
+  "floorCount",
+  "completionYear",
+  "ownership",
+  "parking",
+  "mtrStation",
 ] as const;
 
 export const projectUploadCategories: ProjectUploadCategory[] = [
-  "LOGO",
   "PHOTO",
   "VIDEO",
   "PROJECT_FILE",
@@ -31,7 +36,6 @@ export const projectUploadCategories: ProjectUploadCategory[] = [
 ];
 
 export const emptyProjectUploads = (): ProjectUploads => ({
-  LOGO: [],
   PHOTO: [],
   VIDEO: [],
   PROJECT_FILE: [],
@@ -52,6 +56,13 @@ export function projectFormValues(row: Row): Row {
     propertyName: row.propertyName,
     developer: row.developer,
     address: row.address,
+    floorCount: extra.floorCount ?? undefined,
+    completionYear:
+      extra.completionYear ??
+      (row.completionDate ? dayjs(row.completionDate).year() : undefined),
+    ownership: extra.ownership ?? undefined,
+    parking: extra.parking ?? undefined,
+    mtrStation: extra.mtrStation ?? undefined,
     longitude: row.longitude == null ? undefined : Number(row.longitude),
     latitude: row.latitude == null ? undefined : Number(row.latitude),
     landLeaseEndDate: extra.landLeaseEndDate
@@ -66,13 +77,14 @@ export function projectFormValues(row: Row): Row {
 export function projectUploadsFromMaterials(materials: Row[]): ProjectUploads {
   const uploads = emptyProjectUploads();
   for (const category of projectUploadCategories) {
-    const rows = materials
-      .filter((row) => row.category === category && row.storageKey)
-      .sort((a, b) =>
-        category === "LOGO"
-          ? Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0)
-          : String(b.createdAt).localeCompare(String(a.createdAt)),
-      );
+    const rows =
+      category === "PHOTO"
+        ? projectImages(materials)
+        : materials
+            .filter((row) => row.category === category && row.storageKey)
+            .sort((a, b) =>
+              String(b.createdAt).localeCompare(String(a.createdAt)),
+            );
     uploads[category] = rows.map((row): UploadFile => ({
       uid: row.id,
       name: row.originalName || row.title,
@@ -110,7 +122,6 @@ export function projectPayload(values: Row, currentExtra: Row = {}): Row {
       building: item.building?.trim(),
       floor: item.floor?.trim(),
       layout: item.layout?.trim(),
-      age: item.age,
       ...Object.fromEntries(
         ["area", "minRent", "maxRent", "referenceRent"].map((key) => [
           key,
@@ -151,7 +162,7 @@ export async function uploadProjectFiles(
               category,
               title: file.name,
               visibility: "SHARED",
-              ...(category === "LOGO" ? { sortOrder: index } : {}),
+              ...(category === "PHOTO" ? { sortOrder: index } : {}),
             }),
           );
           data.append("file", file.originFileObj, file.name);

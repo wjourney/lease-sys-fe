@@ -137,11 +137,11 @@ export function ProjectForm({
         uploaded.current,
         (completed, total) => setUploadProgress({ completed, total }),
       );
-      const logoIds = uploads.LOGO.map((file) =>
-        uploaded.current.get(`LOGO:${file.uid}`),
+      const imageIds = uploads.PHOTO.map((file) =>
+        uploaded.current.get(`PHOTO:${file.uid}`),
       );
-      if (logoIds.some((id) => !id)) throw new Error("Logo 上传未完成");
-      await api.patch(`/projects/${data.id}/logos/order`, { ids: logoIds });
+      if (imageIds.some((id) => !id)) throw new Error("项目图片上传未完成");
+      await api.patch(`/projects/${data.id}/images/order`, { ids: imageIds });
       message.success(row ? "项目修改已保存" : "项目创建成功");
       root.invalidate();
       allowLeave();

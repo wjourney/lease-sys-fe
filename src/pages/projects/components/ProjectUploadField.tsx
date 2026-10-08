@@ -5,7 +5,6 @@ import { useState } from "react";
 import { t } from "../../../shared/i18n";
 
 export type ProjectUploadCategory =
-  | "LOGO"
   | "PHOTO"
   | "VIDEO"
   | "PROJECT_FILE"
@@ -52,7 +51,7 @@ export function ProjectUploadField({
   accept = ".pdf,.png,.jpg,.jpeg,.webp,.mp4",
   allowedTypes,
 }: {
-  category: Exclude<ProjectUploadCategory, "LOGO">;
+  category: ProjectUploadCategory;
   label: string;
   prompt: string;
   files: ProjectUploads;

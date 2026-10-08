@@ -4,11 +4,11 @@ import type { UploadFile } from "antd";
 import { useEffect, useState } from "react";
 import { t } from "../../../shared/i18n";
 
-export const MAX_PROJECT_LOGOS = 4;
+export const MAX_PROJECT_IMAGES = 100;
 
 const imageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 
-export function ProjectLogoField({
+export function ProjectImageField({
   files,
   onChange,
 }: {
@@ -35,9 +35,11 @@ export function ProjectLogoField({
   return (
     <div className="col-span-full mb-4 min-w-0">
       <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-xs text-[#73819a]">Logo</span>
+        <span className="text-xs text-[#73819a]">{t("项目图片")}</span>
         <span className="text-xs text-[#8995a6]">
-          {t(`最多 ${MAX_PROJECT_LOGOS} 张，支持 PNG / JPG / WebP`)}
+          {t(
+            `最多 ${MAX_PROJECT_IMAGES} 张，第一张默认为 Logo，可指定其他图片`,
+          )}
         </span>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -77,7 +79,7 @@ export function ProjectLogoField({
             </button>
             {index === 0 ? (
               <div className="flex h-8 items-center px-2 text-xs font-medium text-[#192d4c]">
-                {t("主 Logo")}
+                {t("项目 Logo")}
               </div>
             ) : (
               <button
@@ -95,26 +97,30 @@ export function ProjectLogoField({
             )}
           </div>
         ))}
-        {files.length < MAX_PROJECT_LOGOS && (
+        {files.length < MAX_PROJECT_IMAGES && (
           <Upload
             accept=".png,.jpg,.jpeg,.webp"
             multiple
             showUploadList={false}
             beforeUpload={(file) => {
               if (!imageTypes.has(file.type)) {
-                message.error(t("Logo 仅支持 PNG、JPG、WebP 图片"));
+                message.error(t("项目图片仅支持 PNG、JPG、WebP 图片"));
+                return Upload.LIST_IGNORE;
+              }
+              if (file.size > 30 * 1024 * 1024) {
+                message.error(t("单张图片不能超过 30 MB"));
                 return Upload.LIST_IGNORE;
               }
               return false;
             }}
             fileList={files}
             onChange={({ fileList }) => {
-              if (fileList.length > MAX_PROJECT_LOGOS)
+              if (fileList.length > MAX_PROJECT_IMAGES)
                 message.warning({
-                  content: t(`最多上传 ${MAX_PROJECT_LOGOS} 张 Logo`),
-                  key: "project-logo-limit",
+                  content: t(`最多上传 ${MAX_PROJECT_IMAGES} 张项目图片`),
+                  key: "project-image-limit",
                 });
-              onChange(fileList.slice(0, MAX_PROJECT_LOGOS));
+              onChange(fileList.slice(0, MAX_PROJECT_IMAGES));
             }}
             className="[&_.ant-upload]:!block [&_.ant-upload]:!size-28"
           >

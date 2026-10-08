@@ -26,7 +26,6 @@ describe("legacy unit type presentation", () => {
       "楼层",
       "间隔",
       "实用面积",
-      "楼龄",
       "月租价格",
     ]);
     expect(
@@ -42,19 +41,18 @@ describe("legacy unit type presentation", () => {
       )["1"],
     ).toContain("请先编辑项目完善类型资料");
   });
-  it("preserves zero years, valid area and a floor suffix only once", () => {
+  it("preserves valid area and a floor suffix only once", () => {
     const type = {
       ...legacy,
       building: "A座",
       floor: "3楼",
       area: "30",
-      age: 0,
       layout: "一房",
       referenceRent: "1000",
     };
     expect(unitTypeProblems(type)).toEqual([]);
     expect(unitTypeLabel(type)).toBe("单间 · A座 / 3楼");
-    expect(unitTypeDetails(type)).toContainEqual(["楼龄", "0 年"]);
+    expect(unitTypeDetails(type).map(([label]) => label)).not.toContain("楼龄");
     expect(typeFloor(undefined)).toBe("待完善");
   });
   it("does not treat null, blank or invalid numeric fields as complete", () => {
@@ -65,7 +63,6 @@ describe("legacy unit type presentation", () => {
         floor: null,
         area: "",
         layout: "",
-        age: null,
         minRent: "",
         maxRent: "no",
       }),

@@ -25,11 +25,12 @@ import {
 import { MediaGalleryModal, type MediaCategory } from "./MediaGalleryModal";
 import { ProjectLogoPreview } from "./ProjectLogoPreview";
 import { ProjectOverviewDetails } from "./ProjectOverviewDetails";
+import { projectImages } from "../../project-images";
 import { UnitDetailModal } from "./UnitDetailModal";
 import { ProjectUnits } from "./ProjectUnits";
 
 type Section = "basic" | MaterialSection;
-type ProjectMediaCategory = Exclude<MediaCategory, "LOGO">;
+type ProjectMediaCategory = MediaCategory;
 const mediaTitles: Record<ProjectMediaCategory, string> = {
   PHOTO: "项目图片",
   VIDEO: "项目视频",
@@ -238,7 +239,11 @@ export function ProjectDetailView({
       <MediaGalleryModal
         category={mediaCategory}
         title={mediaCategory ? mediaTitles[mediaCategory] : "项目素材"}
-        items={materials.filter((item: Row) => item.category === mediaCategory)}
+        items={
+          mediaCategory === "PHOTO"
+            ? projectImages(materials)
+            : materials.filter((item: Row) => item.category === mediaCategory)
+        }
         onClose={() => setMediaCategory(undefined)}
       />
       <Modal

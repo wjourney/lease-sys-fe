@@ -38,6 +38,32 @@ export function ProjectBasicFields({ isEdit }: { isEdit?: boolean }) {
       <Form.Item name="developer" label={t("发展商")}>
         <Input placeholder={t("请输入发展商")} />
       </Form.Item>
+      <Form.Item name="floorCount" label={t("楼层数目")}>
+        <InputNumber
+          className="!w-full"
+          min={1}
+          precision={0}
+          placeholder={t("请输入楼层数目")}
+        />
+      </Form.Item>
+      <Form.Item name="completionYear" label={t("落成年份")}>
+        <InputNumber
+          className="!w-full"
+          min={1800}
+          max={2200}
+          precision={0}
+          placeholder={t("请输入落成年份")}
+        />
+      </Form.Item>
+      <Form.Item name="ownership" label={t("业权")}>
+        <Input placeholder={t("请输入业权资料")} />
+      </Form.Item>
+      <Form.Item name="parking" label={t("停车场")}>
+        <Input placeholder={t("请输入停车场资料")} />
+      </Form.Item>
+      <Form.Item name="mtrStation" label={t("港铁站")}>
+        <Input placeholder={t("请输入附近港铁站")} />
+      </Form.Item>
       <Form.Item
         name="address"
         label={t("详细地址")}

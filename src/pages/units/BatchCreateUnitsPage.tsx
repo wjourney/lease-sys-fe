@@ -516,8 +516,7 @@ const BatchEditor = observer(function BatchEditor({
                         </div>
                         <div className="text-[#73819a]">
                           {typeValue(type.area, " ㎡")} ·{" "}
-                          {typeValue(type.layout)} ·{" "}
-                          {typeValue(type.age, " 年")}
+                          {typeValue(type.layout)}
                         </div>
                         <div>{typePriceRange(type)}</div>
                       </div>

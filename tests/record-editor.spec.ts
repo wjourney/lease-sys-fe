@@ -22,7 +22,6 @@ const project = {
       floor: "12",
       area: "48",
       layout: "两房",
-      age: 5,
       minRent: "10000",
       maxRent: "20000",
       referenceRent: "15000",
@@ -47,7 +46,11 @@ const unit = {
   materials: [],
   extra: { phase: "A座", rentCycle: "月付" },
 };
-async function mockApi(page: Page, role = "SUPER_ADMIN") {
+async function mockApi(
+  page: Page,
+  role = "SUPER_ADMIN",
+  projectData: any = project,
+) {
   const writes: { path: string; method: string; body: any }[] = [];
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request();
@@ -65,8 +68,8 @@ async function mockApi(page: Page, role = "SUPER_ADMIN") {
         },
       };
     if (path === "/site-config") data = {};
-    if (path === "/projects") data = { items: [project], total: 25 };
-    if (path === "/projects/project") data = project;
+    if (path === "/projects") data = { items: [projectData], total: 25 };
+    if (path === "/projects/project") data = projectData;
     if (path === "/units") data = { items: [unit], total: 25 };
     if (path === "/units/unit") data = unit;
     if (request.method() !== "GET") {
@@ -76,7 +79,7 @@ async function mockApi(page: Page, role = "SUPER_ADMIN") {
         body: request.postDataJSON(),
       });
       data = {
-        ...(path.startsWith("/units") ? unit : project),
+        ...(path.startsWith("/units") ? unit : projectData),
         ...request.postDataJSON(),
       };
     }
@@ -140,6 +143,47 @@ test("project edits load full data and return to the filtered list after saving"
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+test("existing logo and photos share one gallery and the chosen photo becomes the logo", async ({
+  page,
+}) => {
+  const materials = [
+    {
+      id: "00000000-0000-4000-8000-000000000001",
+      category: "LOGO",
+      storageKey: "old-logo",
+      sortOrder: 0,
+      title: "旧 Logo",
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000002",
+      category: "PHOTO",
+      storageKey: "first-photo",
+      sortOrder: 0,
+      title: "外观",
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000003",
+      category: "PHOTO",
+      storageKey: "second-photo",
+      sortOrder: 1,
+      title: "大堂",
+    },
+  ];
+  const writes = await mockApi(page, "SUPER_ADMIN", { ...project, materials });
+  await page.goto("/projects/project/edit");
+  await expect(page.getByText("项目 Logo", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "设为主 Logo" })).toHaveCount(
+    2,
+  );
+  await page.getByRole("button", { name: "设为主 Logo" }).last().click();
+  await page.getByRole("button", { name: "保存修改" }).click();
+  await expect(page).toHaveURL(/\/projects\/project$/);
+  expect(
+    writes.find((write) => write.path === "/projects/project/images/order")
+      ?.body.ids,
+  ).toEqual([materials[2].id, materials[0].id, materials[1].id]);
+});
+
 test("unit edit preserves the project's filters and pagination on save", async ({
   page,
 }) => {
@@ -195,6 +239,11 @@ test("create project submits through the independent page", async ({
   await page.locator("#name").fill("新海湾项目");
   await page.locator("#propertyName").fill("海湾住宅");
   await page.locator("#address").fill("海湾路88号");
+  await page.locator("#floorCount").fill("28");
+  await page.locator("#completionYear").fill("2023");
+  await page.locator("#ownership").fill("单一业权");
+  await page.locator("#parking").fill("地下停车场");
+  await page.locator("#mtrStation").fill("太古站");
   await page.locator("#region").click();
   await page.getByTitle("港岛", { exact: true }).click();
   for (const index of [0, 1]) {
@@ -203,7 +252,6 @@ test("create project submits through the independent page", async ({
       floor: "12",
       area: "48",
       layout: "两房",
-      age: 5,
       minRent: "10000",
       maxRent: "20000",
       referenceRent: "15000",
@@ -216,7 +264,17 @@ test("create project submits through the independent page", async ({
   expect(writes[0]).toMatchObject({
     path: "/projects",
     method: "POST",
-    body: { name: "新海湾项目", region: "港岛" },
+    body: {
+      name: "新海湾项目",
+      region: "港岛",
+      extra: {
+        floorCount: 28,
+        completionYear: 2023,
+        ownership: "单一业权",
+        parking: "地下停车场",
+        mtrStation: "太古站",
+      },
+    },
   });
 });
 

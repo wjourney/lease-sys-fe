@@ -15,7 +15,6 @@ describe("project edit data", () => {
         floor: "12",
         area: 48,
         layout: "两房",
-        age: 5,
         minRent: 10000,
         maxRent: 20000,
         referenceRent: 15000,
@@ -30,7 +29,6 @@ describe("project edit data", () => {
         floor: "12",
         area: "48",
         layout: "两房",
-        age: 5,
         minRent: "10000",
         maxRent: "20000",
         referenceRent: "15000",
@@ -45,15 +43,26 @@ describe("project edit data", () => {
       address: "海湾街 26 号",
       completionDate: "2023-01-01T00:00:00.000Z",
       longitude: "114.20000000",
-      extra: { developmentDate: "2020-01-01", customNote: "保留" },
+      extra: {
+        developmentDate: "2020-01-01",
+        customNote: "保留",
+        floorCount: 28,
+        ownership: "单一业权",
+        parking: "地下停车场",
+        mtrStation: "太古站",
+      },
     };
     const values = projectFormValues(row);
     expect(values).not.toHaveProperty("completionDate");
     expect(values.longitude).toBe(114.2);
+    expect(values.completionYear).toBe(2023);
+    expect(values.floorCount).toBe(28);
     const payload = projectPayload(
       {
         ...values,
         completionDate: undefined,
+        completionYear: undefined,
+        floorCount: undefined,
         longitude: undefined,
         developmentDate: undefined,
       },
@@ -61,7 +70,13 @@ describe("project edit data", () => {
     );
     expect(payload).not.toHaveProperty("completionDate");
     expect(payload.longitude).toBeNull();
-    expect(payload.extra).toEqual({ customNote: "保留" });
+    expect(payload.extra).toEqual({
+      customNote: "保留",
+      floorCount: 28,
+      ownership: "单一业权",
+      parking: "地下停车场",
+      mtrStation: "太古站",
+    });
     expect(payload).not.toHaveProperty("code");
   });
 
@@ -109,10 +124,14 @@ describe("project edit data", () => {
       },
       { id: "text-only", category: "GUIDE", title: "无附件说明" },
     ]);
-    expect(files.LOGO.map((file) => file.uid)).toEqual(["first", "second"]);
+    expect(files.PHOTO.map((file) => file.uid)).toEqual([
+      "first",
+      "photo",
+      "second",
+    ]);
     expect(files.OFFICIAL[0].name).toBe("价单.pdf");
-    expect(files.PHOTO[0].name).toBe("项目外观.jpg");
-    expect(files.PHOTO[0].url).toBe(
+    expect(files.PHOTO[1].name).toBe("项目外观.jpg");
+    expect(files.PHOTO[1].url).toBe(
       "https://example.oss-cn-shanghai.aliyuncs.com/photo?Signature=example",
     );
     expect(files.VIDEO[0].name).toBe("项目介绍.mp4");

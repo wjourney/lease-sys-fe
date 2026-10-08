@@ -120,19 +120,6 @@ export function ProjectUnitTypesFields({
                   </Form.Item>
                   <Form.Item
                     {...rest}
-                    name={[name, "age"]}
-                    label={t("楼龄（年）")}
-                    rules={required}
-                  >
-                    <InputNumber
-                      className="!w-full"
-                      min={0}
-                      max={999}
-                      precision={0}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    {...rest}
                     name={[name, "minRent"]}
                     label={t("最低价（HKD）")}
                     rules={required}

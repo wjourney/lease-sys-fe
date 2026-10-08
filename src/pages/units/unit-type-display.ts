@@ -27,7 +27,6 @@ export function unitTypeProblems(type?: Row): string[] {
     .filter(([key]) => typeof type[key] !== "string" || !type[key].trim())
     .map(([, label]) => String(label));
   if (!hasNumber(type.area) || Number(type.area) <= 0) missing.push("实用面积");
-  if (!Number.isInteger(type.age) || type.age < 0) missing.push("楼龄");
   if (
     !hasNumber(type.minRent) ||
     !hasNumber(type.maxRent) ||
@@ -59,7 +58,6 @@ export function unitTypeDetails(type: Row) {
     ["楼层", typeFloor(type.floor)],
     ["实用面积", typeValue(type.area, " ㎡")],
     ["间隔", typeValue(type.layout)],
-    ["楼龄", typeValue(type.age, " 年")],
     ["价格范围", typePriceRange(type)],
     [
       "月租价格（HKD）",

@@ -1,6 +1,6 @@
 import type { UploadFile } from "antd";
 import { ProjectCreateSection } from "./ProjectCreateSection";
-import { ProjectLogoField } from "./ProjectLogoField";
+import { ProjectImageField } from "./ProjectImageField";
 import {
   ProjectUploadField,
   type ProjectUploads,
@@ -19,18 +19,9 @@ export function ProjectMediaFields({
 }) {
   return (
     <ProjectCreateSection title="项目图片与展示资料">
-      <ProjectLogoField
-        files={uploads.LOGO}
-        onChange={(files) => onUploadChange("LOGO", files)}
-      />
-      <ProjectUploadField
-        category="PHOTO"
-        label="项目图片"
-        prompt="上传项目图片"
-        files={uploads}
-        onChange={onUploadChange}
-        accept=".png,.jpg,.jpeg,.webp"
-        allowedTypes={["image/png", "image/jpeg", "image/webp"]}
+      <ProjectImageField
+        files={uploads.PHOTO}
+        onChange={(files) => onUploadChange("PHOTO", files)}
       />
       <ProjectUploadField
         category="VIDEO"

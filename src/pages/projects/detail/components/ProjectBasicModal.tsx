@@ -1,5 +1,4 @@
 import { Button, Modal } from "antd";
-import dayjs from "dayjs";
 import { Row, dateText } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 
@@ -45,9 +44,6 @@ export function ProjectBasicModal({
   canEdit: boolean;
 }) {
   const extra: Row = row.extra || {};
-  const age = row.completionDate
-    ? `${Math.max(0, dayjs().diff(dayjs(row.completionDate), "year"))} 年`
-    : "未填写";
   return (
     <Modal
       open={open}
@@ -81,15 +77,16 @@ export function ProjectBasicModal({
                 ? "未填写"
                 : `${row.longitude}, ${row.latitude}`,
             ],
+            ["发展商", row.developer],
+            ["楼层数目", extra.floorCount],
             [
-              "发展商 / 开发日期",
-              `${row.developer || "—"} / ${dateText(extra.developmentDate)}`,
+              "落成年份",
+              extra.completionYear ?? row.completionDate?.slice(0, 4),
             ],
-            ["落成日期 / 楼龄", `${dateText(row.completionDate)} / ${age}`],
-            [
-              "销售状态 / 现况 / 用途",
-              `${extra.salesStatus || "—"} / ${extra.buildingStatus || "—"} / ${extra.usage || "—"}`,
-            ],
+            ["业权", extra.ownership],
+            ["停车场", extra.parking],
+            ["港铁站", extra.mtrStation],
+            ["用途", extra.usage],
           ]}
         />
         <InfoGroup

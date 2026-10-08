@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { MediaCategory, MediaGalleryModal } from "./MediaGalleryModal";
+import { projectImages } from "../../project-images";
 
 export function ProjectMediaCards({
   materials: allMaterials,
@@ -14,6 +15,7 @@ export function ProjectMediaCards({
   materials: Row[];
 }) {
   const materials = allMaterials.filter((row) => row.storageKey);
+  const images = projectImages(materials);
   const [open, setOpen] = useState<MediaCategory>();
 
   const cards = [
@@ -36,15 +38,19 @@ export function ProjectMediaCards({
       icon: <FileTextOutlined aria-hidden />,
     },
   ];
-  const chosen = materials.filter((item) => item.category === open);
+  const chosen =
+    open === "PHOTO"
+      ? images
+      : materials.filter((item) => item.category === open);
 
   return (
     <>
       <div className="grid grid-cols-3 max-[600px]:grid-cols-1">
         {cards.map((card) => {
-          const count = materials.filter(
-            (item) => item.category === card.key,
-          ).length;
+          const count =
+            card.key === "PHOTO"
+              ? images.length
+              : materials.filter((item) => item.category === card.key).length;
           return (
             <button
               key={card.key}

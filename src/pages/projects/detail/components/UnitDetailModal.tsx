@@ -158,7 +158,6 @@ export function UnitDetailModal({
                 />
                 <DetailField label="间隔" value={detail.layout} />
                 <DetailField label="装修情况" value={detail.decoration} />
-                <DetailField label="楼龄" value={extra.age} />
                 <DetailField label="现况" value={extra.currentState} />
                 <DetailField label="用途" value={extra.usage} />
               </DetailSection>
