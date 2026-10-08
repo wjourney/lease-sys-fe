@@ -5,7 +5,7 @@ import {
   EditOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { Button } from "antd";
+import { Button, Tooltip } from "antd";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -116,13 +116,24 @@ export function ProjectDetailView({
                 <Button icon={<EditOutlined />} onClick={onEdit}>
                   {t("编辑项目")}
                 </Button>
-                <Button
-                  danger
-                  icon={<DeleteOutlined aria-hidden />}
-                  onClick={() => setShowDelete(true)}
+                <Tooltip
+                  title={
+                    Number(row.occupiedCount) > 0
+                      ? t("已有单位正在租赁，不能删除项目")
+                      : undefined
+                  }
                 >
-                  {t("删除项目")}
-                </Button>
+                  <span>
+                    <Button
+                      danger
+                      disabled={Number(row.occupiedCount) > 0}
+                      icon={<DeleteOutlined aria-hidden />}
+                      onClick={() => setShowDelete(true)}
+                    >
+                      {t("删除项目")}
+                    </Button>
+                  </span>
+                </Tooltip>
               </div>
             )}
             <ProjectDetailsContent row={row} allowExactRent={allowExactRent} />

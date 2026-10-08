@@ -10,7 +10,7 @@ import {
   Empty,
   Pagination,
   Spin,
-  Tag,
+  Tooltip,
   Typography,
 } from "antd";
 import { observer } from "mobx-react-lite";
@@ -64,24 +64,26 @@ export const ProjectGrid = observer(function ProjectGrid({
               >
                 <div className="flex items-center justify-between gap-1 [&_h4]:!mb-1 [&_h4]:!text-[15px]">
                   <Title level={4}>{t(row.name)}</Title>
-                  <Tag color="green" bordered={false}>
-                    {t("可租")}
-                    {t(row.availableCount)}
-                    {t("套")}
-                  </Tag>
                 </div>
                 <div className="my-[5px] mb-3 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-[#8290a2]">
                   <EnvironmentOutlined aria-hidden={true} /> {t(row.region)} ·{" "}
                   {t(row.address)}
                 </div>
-                <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-[#eff1f5] pt-2.5 text-[11px] text-[#8290a2] [&_b]:ml-[3px] [&_b]:font-medium [&_b]:text-[#45546b]">
+                <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-[#eff1f5] pt-2.5 text-[12px] text-[#8290a2] [&_b]:ml-[3px] [&_b]:font-semibold [&_b]:text-[#45546b]">
                   <span>
-                    {t("单位总数")}
-                    <b>{t(row.unitCount)}</b>
+                    {t("总计")}
+                    <b>{t(row.unitCount ?? 0)}</b>
+                    {t("套")}
                   </span>
                   <span>
-                    {t("已租")}
-                    <b>{t(row.occupiedCount)}</b>
+                    {t("在租")}
+                    <b>{t(row.occupiedCount ?? 0)}</b>
+                    {t("套")}
+                  </span>
+                  <span>
+                    {t("可租")}
+                    <b>{t(row.availableCount ?? 0)}</b>
+                    {t("套")}
                   </span>
                 </div>
                 <div className="flex gap-2" data-row-action>
@@ -108,15 +110,26 @@ export const ProjectGrid = observer(function ProjectGrid({
                       >
                         {t("编辑")}
                       </Button>
-                      <Button
-                        size="small"
-                        className="flex-1"
-                        danger
-                        icon={<DeleteOutlined aria-hidden />}
-                        onClick={() => setDeleting(row)}
+                      <Tooltip
+                        title={
+                          Number(row.occupiedCount) > 0
+                            ? t("已有单位正在租赁，不能删除项目")
+                            : undefined
+                        }
                       >
-                        {t("删除")}
-                      </Button>
+                        <span className="flex-1">
+                          <Button
+                            size="small"
+                            className="w-full"
+                            danger
+                            disabled={Number(row.occupiedCount) > 0}
+                            icon={<DeleteOutlined aria-hidden />}
+                            onClick={() => setDeleting(row)}
+                          >
+                            {t("删除")}
+                          </Button>
+                        </span>
+                      </Tooltip>
                     </>
                   )}
                 </div>
