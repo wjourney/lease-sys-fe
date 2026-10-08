@@ -28,7 +28,7 @@ export function UnitForm({
   row?: Row;
   initial?: Row;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (unit: Row) => void;
 }) {
   const [form] = Form.useForm();
   const root = useRoot();
@@ -116,7 +116,7 @@ export function UnitForm({
     if (saving) return;
     if (recordSaved.current) {
       root.invalidate();
-      onSaved();
+      onSaved(current.current!);
     } else onClose();
   }
 
@@ -138,7 +138,7 @@ export function UnitForm({
       message.success(t(row ? "单位修改已保存" : "单位创建成功"));
       root.invalidate();
       allowLeave();
-      onSaved();
+      onSaved(data);
     } catch (cause) {
       setError(
         recordSaved.current
@@ -152,7 +152,9 @@ export function UnitForm({
 
   return (
     <RecordFormPage
-      title={row ? "编辑单位" : "新建单位"}
+      title={
+        row ? `编辑单位 · ${row.unitNo || row.roomNo || row.id}` : "新建单位"
+      }
       onBack={close}
       saving={saving}
       footer={

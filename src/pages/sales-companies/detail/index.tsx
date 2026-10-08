@@ -229,9 +229,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
         aria-label={t("返回上级")}
         onClick={() => navigate("/sales-companies")}
       />
-      <h1 className="!m-0 truncate text-[19px] font-semibold text-[#26334a]">
-        {t(company.name)}
-      </h1>
+      <h1 className="record-header-title">{t(company.name)}</h1>
     </div>
   );
   const featuredImage =

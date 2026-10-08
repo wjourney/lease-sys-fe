@@ -14,8 +14,8 @@ import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { ProjectDeleteModal } from "./ProjectDeleteModal";
 import { ProjectDetailsContent } from "./ProjectDetailsContent";
-import { UnitDetailModal } from "./UnitDetailModal";
 import { ProjectUnits } from "./ProjectUnits";
+import { unitDetailPath, unitListPath } from "../../../units/unit-navigation";
 
 type DetailTab = "details" | "units";
 
@@ -27,17 +27,29 @@ export function ProjectDetailView({
   onDelete: (reason: string) => Promise<void>;
 }) {
   const { row, id, root, navigate } = useRecordDetail();
-  const [activeTab, setActiveTab] = useState<DetailTab>("details");
   const [showDelete, setShowDelete] = useState(false);
-  const [unitDetail, setUnitDetail] = useState<Row>();
   const location = useLocation();
+  const activeTab: DetailTab =
+    new URLSearchParams(location.search).get("tab") === "units"
+      ? "units"
+      : "details";
+  const listReturnTo = unitListPath(id, location.search);
+  const changeTab = (tab: DetailTab) => {
+    const search = new URLSearchParams(location.search);
+    if (tab === "units") search.set("tab", "units");
+    else search.delete("tab");
+    navigate(
+      { pathname: location.pathname, search: search.toString() },
+      { replace: true },
+    );
+  };
   const openUnitEditor = (unit?: Row) =>
     navigate(
       unit
         ? `/projects/${id}/units/${unit.id}/edit`
         : `/projects/${id}/units/new`,
       {
-        state: { returnTo: location.pathname + location.search },
+        state: { returnTo: listReturnTo, listReturnTo },
       },
     );
   const allowExactRent =
@@ -54,7 +66,7 @@ export function ProjectDetailView({
         onClick={() => navigate("/projects")}
       />
       <h1
-        className="!m-0 min-w-0 truncate text-[14px] font-semibold leading-6 text-[#26334a]"
+        className="record-header-title"
         title={`${t(row.name)}${row.address ? ` · ${t(row.address)}` : ""}`}
       >
         {t(row.name)}
@@ -85,7 +97,7 @@ export function ProjectDetailView({
               id={`project-tab-${key}`}
               aria-controls={`project-panel-${key}`}
               aria-selected={activeTab === key}
-              onClick={() => setActiveTab(key)}
+              onClick={() => changeTab(key)}
               className={`min-h-11 border-b-[3px] px-5 text-[14px] font-medium transition-colors hover:text-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d] ${activeTab === key ? "border-[#17355d] text-[#17355d]" : "border-transparent text-[#72819a]"}`}
             >
               {t(label)}
@@ -133,7 +145,11 @@ export function ProjectDetailView({
                 </Button>
                 <Button
                   icon={<AppstoreAddOutlined aria-hidden />}
-                  onClick={() => navigate(`/projects/${id}/units/batch`)}
+                  onClick={() =>
+                    navigate(`/projects/${id}/units/batch`, {
+                      state: { returnTo: listReturnTo },
+                    })
+                  }
                 >
                   {t("批量创建单位")}
                 </Button>
@@ -142,26 +158,17 @@ export function ProjectDetailView({
             <ProjectUnits
               projectId={id}
               stats={row}
-              onViewUnit={setUnitDetail}
+              onViewUnit={(unit) =>
+                navigate(unitDetailPath(id, unit.id), {
+                  state: { returnTo: listReturnTo },
+                })
+              }
               onEditUnit={openUnitEditor}
               allowExactRent={allowExactRent}
             />
           </div>
         )}
       </div>
-      {unitDetail && (
-        <UnitDetailModal
-          unit={unitDetail}
-          projectName={row.name}
-          allowExactRent={allowExactRent}
-          canEdit={root.canWrite("units")}
-          onClose={() => setUnitDetail(undefined)}
-          onEdit={(unit) => {
-            setUnitDetail(undefined);
-            openUnitEditor(unit);
-          }}
-        />
-      )}
       <ProjectDeleteModal
         open={showDelete}
         projectName={row.name}

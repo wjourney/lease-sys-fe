@@ -30,7 +30,7 @@ export function OrderDetailHeader({
               aria-label={t("返回订单列表")}
               onClick={() => navigate("/orders")}
             />
-            <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
+            <h1 className="record-header-title">
               {t(row.unitNo || row.orderNo)}
             </h1>
           </div>,

@@ -5,6 +5,7 @@ import { useRoot } from "../stores/root";
 const BatchCreateUnitsPage = lazy(
   () => import("../pages/units/BatchCreateUnitsPage"),
 );
+const UnitDetailPage = lazy(() => import("../pages/units/detail"));
 const CompanyFinancePage = lazy(() => import("../pages/company-finance"));
 
 const LedgerPage = lazy(() => import("../pages/finance/LedgerPage"));
@@ -107,6 +108,10 @@ export const AppRoutes = observer(function AppRoutes() {
       <Route
         path="/projects/:projectId/units/batch"
         element={<BatchCreateUnitsPage />}
+      />
+      <Route
+        path="/projects/:projectId/units/:id"
+        element={<UnitDetailPage />}
       />
       <Route path="/projects/:id" element={<ProjectDetailPage />} />
       <Route path="/orders" element={<OrderListPage />} />

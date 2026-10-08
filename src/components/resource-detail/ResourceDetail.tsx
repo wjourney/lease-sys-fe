@@ -207,9 +207,7 @@ export const ResourceDetail = observer(function ResourceDetail({
                         aria-label={t("返回上级")}
                         onClick={() => navigate("/" + resource)}
                       />
-                      <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
-                        {t(title)}
-                      </h1>
+                      <h1 className="record-header-title">{t(title)}</h1>
                     </div>,
                     headerHost,
                   )}

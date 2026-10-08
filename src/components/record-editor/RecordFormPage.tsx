@@ -8,12 +8,14 @@ export function RecordFormPage({
   title,
   onBack,
   saving = false,
+  contentLabel,
   footer,
   children,
 }: {
   title: string;
   onBack: () => void;
   saving?: boolean;
+  contentLabel?: string;
   footer?: ReactNode;
   children: ReactNode;
 }) {
@@ -27,7 +29,7 @@ export function RecordFormPage({
         onClick={onBack}
         disabled={saving}
       />
-      <h1 className="!m-0 truncate text-[19px] font-semibold leading-6 text-[#26334a]">
+      <h1 className="record-header-title" title={t(title)}>
         {t(title)}
       </h1>
     </div>
@@ -38,7 +40,7 @@ export function RecordFormPage({
       <div
         className="record-form-scroll"
         tabIndex={0}
-        aria-label={t(title + "表单")}
+        aria-label={t(contentLabel ?? title + "表单")}
       >
         {children}
       </div>

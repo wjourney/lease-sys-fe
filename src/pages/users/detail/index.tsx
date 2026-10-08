@@ -117,10 +117,7 @@ const UserDetailPage = observer(function UserDetailPage() {
         aria-label={t("返回上级")}
         onClick={() => navigate("/users")}
       />
-      <h1
-        className="!m-0 truncate text-[19px] font-semibold text-[#26334a]"
-        title={t(row.name || row.username)}
-      >
+      <h1 className="record-header-title" title={t(row.name || row.username)}>
         {t(row.name || row.username)}
       </h1>
     </div>

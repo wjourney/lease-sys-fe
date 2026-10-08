@@ -8,6 +8,12 @@ import { useRoot } from "../../stores/root";
 import { RequestError } from "../feedback/RequestError";
 import { ProjectForm } from "../../pages/projects/components/ProjectForm";
 import { UnitForm } from "../../pages/units/components/UnitForm";
+import {
+  unitDetailPath,
+  unitEditorReturnTo,
+  unitListPath,
+  unitListReturnTo,
+} from "../../pages/units/unit-navigation";
 import { RecordFormPage } from "./RecordFormPage";
 
 export default function ResourceEditPage({
@@ -34,17 +40,35 @@ const EditPage = observer(function EditPage({
   const [retry, setRetry] = useState(0);
   const title = `${id ? "编辑" : "新建"}${resource === "projects" ? "项目" : "单位"}`;
   const fallback = projectId
-    ? `/projects/${projectId}`
+    ? unitListPath(projectId)
     : id
       ? `/projects/${id}`
       : "/projects";
   const from = location.state?.returnTo;
-  const returnTo =
-    typeof from === "string" &&
-    /^\/projects(?:\/(?!new(?:\?|$))[^/?#]+)?(?:\?[^#]*)?$/.test(from)
+  const returnTo = projectId
+    ? unitEditorReturnTo(projectId, id, from)
+    : typeof from === "string" &&
+        /^\/projects(?:\/(?!new(?:\?|$))[^/?#]+)?(?:\?[^#]*)?$/.test(from)
       ? from
       : fallback;
-  const close = () => navigate(returnTo, { replace: true });
+  const listReturnTo = projectId
+    ? unitListReturnTo(projectId, location.state?.listReturnTo ?? from)
+    : "";
+  const close = () =>
+    navigate(returnTo, {
+      replace: true,
+      state:
+        projectId && id && returnTo === unitDetailPath(projectId, id)
+          ? { returnTo: listReturnTo }
+          : undefined,
+    });
+  const afterUnitSaved = (unit: Row) =>
+    navigate(unitDetailPath(projectId!, unit.id), {
+      replace: true,
+      state: { returnTo: listReturnTo },
+    });
+  const afterProjectSaved = (project: Row) =>
+    navigate(id ? returnTo : `/projects/${project.id}`, { replace: true });
   useEffect(() => {
     if (!allowed || !id) return;
     let active = true;
@@ -94,13 +118,13 @@ const EditPage = observer(function EditPage({
       </RecordFormPage>
     );
   return resource === "projects" ? (
-    <ProjectForm row={row} onClose={close} onSaved={close} />
+    <ProjectForm row={row} onClose={close} onSaved={afterProjectSaved} />
   ) : (
     <UnitForm
       row={row}
       initial={{ projectId }}
       onClose={close}
-      onSaved={close}
+      onSaved={afterUnitSaved}
     />
   );
 });

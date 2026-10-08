@@ -21,12 +21,13 @@ import {
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { RecordFormPage } from "../../components/record-editor/RecordFormPage";
 import { useUnsavedChanges } from "../../components/record-editor/useUnsavedChanges";
 import { amount, api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
+import { unitListReturnTo } from "./unit-navigation";
 import {
   BATCH_UNIT_LIMIT,
   generateRoomNumbers,
@@ -58,6 +59,7 @@ const BatchEditor = observer(function BatchEditor({
   const root = useRoot();
   const allowed = root.canWrite("units");
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
   const [project, setProject] = useState<Row>();
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,8 @@ const BatchEditor = observer(function BatchEditor({
   }));
   const errors = { ...serverErrors, ...validateBatchRows(rows, types) };
   const disabled = !!busy || uncertain;
-  const close = () => navigate(`/projects/${projectId}`);
+  const close = () =>
+    navigate(unitListReturnTo(projectId, location.state?.returnTo));
 
   useEffect(() => {
     if (!allowed) return;

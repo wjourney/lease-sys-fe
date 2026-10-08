@@ -410,6 +410,22 @@
   display: block;
   margin-top: 5px;
 }
+.record-header-title {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #26334a;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+#record-detail-header > div {
+  align-items: center;
+}
+
 /* Dedicated project/unit editors keep the header and actions visible. */
 .record-editor-content {
   display: flex;

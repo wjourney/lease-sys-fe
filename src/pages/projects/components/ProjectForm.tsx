@@ -33,7 +33,7 @@ export function ProjectForm({
 }: {
   row?: Row;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (project: Row) => void;
 }) {
   const [form] = Form.useForm();
   const root = useRoot();
@@ -95,7 +95,7 @@ export function ProjectForm({
     if (saving) return;
     if (saved.current) {
       root.invalidate();
-      onSaved();
+      onSaved(current.current!);
     } else onClose();
   }
 
@@ -148,7 +148,7 @@ export function ProjectForm({
       message.success(row ? "项目修改已保存" : "项目创建成功");
       root.invalidate();
       allowLeave();
-      onSaved();
+      onSaved(data);
     } catch (cause) {
       setError(
         recordSaved
@@ -163,7 +163,7 @@ export function ProjectForm({
 
   return (
     <RecordFormPage
-      title={row ? "编辑项目" : "新建项目"}
+      title={row ? `编辑项目 · ${row.name || row.code || row.id}` : "新建项目"}
       onBack={close}
       saving={saving}
       footer={
@@ -223,10 +223,7 @@ export function ProjectForm({
           <ProjectUnitTypesFields
             usage={row?.unitTypeUsage as Record<string, number> | undefined}
           />
-          <ProjectOptionalFields
-            isEdit={!!row}
-            onLocationChange={markDirty}
-          />
+          <ProjectOptionalFields isEdit={!!row} onLocationChange={markDirty} />
           <ProjectMediaFields
             uploads={uploads}
             onUploadChange={onUploadChange}
