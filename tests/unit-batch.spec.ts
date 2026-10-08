@@ -48,7 +48,23 @@ async function setup(page: Page, role = "SUPER_ADMIN", mode = "ok") {
         },
       };
     if (path === "/site-config") data = {};
-    if (path === `/projects/${projectId}`) data = project;
+    if (path === `/projects/${projectId}`)
+      data =
+        mode === "legacy"
+          ? {
+              ...project,
+              typeConfigs: [
+                {
+                  code: "OLD",
+                  name: "单间",
+                  minArea: "20",
+                  maxArea: "40",
+                  minRent: "1000",
+                  maxRent: "9000",
+                },
+              ],
+            }
+          : project;
     if (path === "/units/batch" || path === "/units/batch-preview") {
       const body = req.postDataJSON();
       writes.push({ path, body });
@@ -183,3 +199,31 @@ for (const role of ["SALES", "SALES_COMPANY_ADMIN", "FINANCE"])
     ).toHaveCount(0);
     expect(writes).toHaveLength(0);
   });
+
+test("legacy project types show missing fields and cannot create incomplete units", async ({
+  page,
+}) => {
+  const writes = await setup(page, "SUPER_ADMIN", "legacy");
+  await page
+    .getByRole("combobox", { name: "默认单位类型", exact: true })
+    .click();
+  await page.getByTitle("单间 · 资料待完善").click();
+  await expect(page.getByText(/所选类型资料未完善：/)).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("undefined");
+  await expect(page.locator("body")).not.toContainText("NaN");
+  await expect(page.getByRole("button", { name: "添加到预览" })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "连续生成并添加" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "确认批量创建" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "编辑项目，完善类型" }),
+  ).toBeEnabled();
+  await page.screenshot({
+    path: "/tmp/lease-unit-batch-legacy-fixed.png",
+    fullPage: true,
+  });
+  expect(writes).toHaveLength(0);
+});

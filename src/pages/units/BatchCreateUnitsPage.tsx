@@ -1,4 +1,12 @@
 import {
+  typeValue,
+  typeFloor,
+  typePriceRange,
+  unitTypeDetails,
+  unitTypeLabel,
+  unitTypeProblems,
+} from "./unit-type-display";
+import {
   App,
   Button,
   Descriptions,
@@ -16,7 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RecordFormPage } from "../../components/record-editor/RecordFormPage";
 import { useUnsavedChanges } from "../../components/record-editor/useUnsavedChanges";
-import { api, amount, errorMessage, type Row } from "../../shared/api";
+import { api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
 import {
@@ -72,9 +80,12 @@ const BatchEditor = observer(function BatchEditor({
   const { markDirty, allowLeave } = useUnsavedChanges(!!busy);
   const types: Row[] = project?.typeConfigs ?? [];
   const selectedType = types.find((type) => type.code === typeCode);
+  const selectedTypeProblems = selectedType
+    ? unitTypeProblems(selectedType)
+    : [];
   const typeOptions = types.map((type) => ({
     value: type.code,
-    label: `${type.name} · ${type.building} / ${type.floor}${/楼$/.test(type.floor) ? "" : "楼"}`,
+    label: unitTypeLabel(type),
   }));
   const errors = { ...serverErrors, ...validateBatchRows(rows, types) };
   const disabled = !!busy || uncertain;
@@ -134,6 +145,10 @@ const BatchEditor = observer(function BatchEditor({
   function addRooms(rooms: string[]) {
     if (!typeCode || rent == null) {
       message.warning(t("请先选择单位类型并填写月租价格"));
+      return;
+    }
+    if (unitTypeProblems(selectedType).length) {
+      message.warning(t("请先编辑项目，完善所选单位类型资料"));
       return;
     }
     if (!rooms.length) {
@@ -364,22 +379,32 @@ const BatchEditor = observer(function BatchEditor({
                     size="small"
                     className="mb-4 rounded-md bg-[#f5f7fa] p-4"
                     column={{ xs: 1, sm: 2, md: 3 }}
-                    items={[
-                      ["期 / 座", selectedType.building],
-                      ["楼层", selectedType.floor],
-                      ["实用面积", `${selectedType.area} ㎡`],
-                      ["间隔", selectedType.layout],
-                      ["楼龄", `${selectedType.age} 年`],
-                      [
-                        "价格范围",
-                        `${amount(selectedType.minRent)} – ${amount(selectedType.maxRent)}`,
-                      ],
-                    ].map(([label, value]) => ({
-                      key: label,
-                      label: t(label),
-                      children: value,
-                    }))}
+                    items={unitTypeDetails(selectedType).map(
+                      ([label, value]) => ({
+                        key: label,
+                        label: t(label),
+                        children: value,
+                      }),
+                    )}
                   />
+                )}
+                {!!selectedTypeProblems.length && (
+                  <div
+                    className="mb-5 rounded-md bg-[#fffbe6] p-4"
+                    role="status"
+                  >
+                    <p className="mb-2">
+                      {t(
+                        `所选类型资料未完善：${selectedTypeProblems.join("、")}。请先编辑项目补充后再创建单位。`,
+                      )}
+                    </p>
+                    <Button
+                      disabled={disabled}
+                      onClick={() => navigate(`/projects/${projectId}/edit`)}
+                    >
+                      {t("编辑项目，完善类型")}
+                    </Button>
+                  </div>
                 )}
                 <label className="mb-2 block" htmlFor="batch-rooms">
                   {t("粘贴房号（换行或逗号分隔）")}
@@ -397,7 +422,7 @@ const BatchEditor = observer(function BatchEditor({
                 />
                 <Button
                   className="mt-3"
-                  disabled={disabled}
+                  disabled={disabled || !!selectedTypeProblems.length}
                   onClick={() => addRooms(parseRoomNumbers(roomText))}
                 >
                   {t("添加到预览")}
@@ -435,7 +460,7 @@ const BatchEditor = observer(function BatchEditor({
                     </label>
                   ))}
                   <Button
-                    disabled={disabled}
+                    disabled={disabled || !!selectedTypeProblems.length}
                     onClick={() =>
                       addRooms(
                         generateRoomNumbers(
@@ -508,15 +533,14 @@ const BatchEditor = observer(function BatchEditor({
                     return type ? (
                       <div className="text-sm">
                         <div>
-                          {type.building} / {type.floor}
-                          {/楼$/.test(type.floor) ? "" : "楼"}
+                          {typeValue(type.building)} / {typeFloor(type.floor)}
                         </div>
                         <div className="text-[#73819a]">
-                          {type.area} ㎡ · {type.layout} · {type.age} {t("年")}
+                          {typeValue(type.area, " ㎡")} ·{" "}
+                          {typeValue(type.layout)} ·{" "}
+                          {typeValue(type.age, " 年")}
                         </div>
-                        <div>
-                          {amount(type.minRent)} – {amount(type.maxRent)}
-                        </div>
+                        <div>{typePriceRange(type)}</div>
                       </div>
                     ) : (
                       "—"

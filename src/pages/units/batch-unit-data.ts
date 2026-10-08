@@ -1,3 +1,4 @@
+import { unitTypeProblems } from "./unit-type-display";
 import type { Row } from "../../shared/api";
 
 export type BatchUnitRow = {
@@ -42,6 +43,9 @@ export function validateBatchRows(rows: BatchUnitRow[], types: Row[]) {
     const room = row.roomNo.trim();
     if (!room || room.length > 100) errors[row.key] = "请填写 1–100 字的房号";
     else if (!type) errors[row.key] = "请选择当前项目的单位类型";
+    else if (unitTypeProblems(type).length)
+      errors[row.key] =
+        `请先编辑项目完善类型资料：${unitTypeProblems(type).join("、")}`;
     else if (
       !/^\d{1,12}(\.\d{1,2})?$/.test(row.referenceRent) ||
       Number(row.referenceRent) < Number(type.minRent) ||
