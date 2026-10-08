@@ -10,6 +10,7 @@ import {
   App,
   Avatar,
   Button,
+  Breadcrumb,
   Drawer,
   Dropdown,
   Layout,
@@ -82,6 +83,24 @@ export const AppLayout = observer(function AppLayout() {
   const isOrderDetail = /^\/orders\/[^/]+\/?$/.test(location.pathname);
   const isProjectDetail =
     /^\/projects\/[^/]+\/?$/.test(location.pathname) && !isRecordEditor;
+  const currentNavigation =
+    nav
+      .flatMap((item): { key: string; label: string; parent?: string }[] =>
+        item.children?.length
+          ? item.children.map((child) => ({
+              key: child.key,
+              label: child.label,
+              parent: item.label,
+            }))
+          : [{ key: item.key, label: item.label }],
+      )
+      .find((item) => item.key === location.pathname.replace(/\/$/, "")) ??
+    (
+      {
+        "/invoices": { label: t("发票管理") },
+        "/materials": { label: t("资料管理") },
+      } as Record<string, { label: string; parent?: string }>
+    )[location.pathname];
   return (
     <Layout className="app-layout min-h-screen">
       <Drawer
@@ -146,6 +165,17 @@ export const AppLayout = observer(function AppLayout() {
                     : setCollapsed(!collapsed)
                 }
               />
+              {currentNavigation && (
+                <Breadcrumb
+                  className="min-w-0 text-[16px] font-semibold [&_.ant-breadcrumb-link]:!text-[#26334a]"
+                  items={[
+                    ...(currentNavigation.parent
+                      ? [{ title: currentNavigation.parent }]
+                      : []),
+                    { title: currentNavigation.label },
+                  ]}
+                />
+              )}
             </div>
           )}
           <div className="!gap-3.5 max-[760px]:!gap-[5px]">

@@ -118,15 +118,15 @@ export function ProjectDetailView({
                 </Button>
                 <Tooltip
                   title={
-                    Number(row.occupiedCount) > 0
-                      ? t("已有单位正在租赁，不能删除项目")
+                    Number(row.unitCount) > 0
+                      ? t("请先删除项目下的单位")
                       : undefined
                   }
                 >
                   <span>
                     <Button
                       danger
-                      disabled={Number(row.occupiedCount) > 0}
+                      disabled={Number(row.unitCount) > 0}
                       icon={<DeleteOutlined aria-hidden />}
                       onClick={() => setShowDelete(true)}
                     >

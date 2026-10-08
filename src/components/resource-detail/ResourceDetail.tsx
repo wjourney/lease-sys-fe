@@ -182,7 +182,7 @@ export const ResourceDetail = observer(function ResourceDetail({
               })
             }
             onDelete={async (reason) => {
-              await api.delete(`/projects/${id}`, { data: { reason } });
+              await api.delete("/projects", { data: { ids: [id], reason } });
               message.success(t("已删除"));
               root.invalidate();
               navigate("/projects");
