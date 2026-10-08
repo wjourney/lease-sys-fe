@@ -1,5 +1,5 @@
 import { Button, Modal } from "antd";
-import { Row, dateText } from "../../../../shared/api";
+import { Row, amount } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 
 function value(value: unknown) {
@@ -44,10 +44,17 @@ export function ProjectBasicModal({
   canEdit: boolean;
 }) {
   const extra: Row = row.extra || {};
+  const typeConfigs: Row[] = Array.isArray(row.typeConfigs)
+    ? row.typeConfigs
+    : [];
+  const money = (value: unknown) =>
+    value === null || value === undefined || value === ""
+      ? undefined
+      : amount(value);
   return (
     <Modal
       open={open}
-      title={`${t("基本资料")} · ${t(row.name)}`}
+      title={`${t("项目基本资料")} · ${t(row.name)}`}
       width={760}
       onCancel={onClose}
       footer={
@@ -59,24 +66,18 @@ export function ProjectBasicModal({
     >
       <div className="max-h-[65vh] space-y-3 overflow-y-auto py-2">
         <InfoGroup
-          title="基本资料"
+          title="基本资料（必填）"
           items={[
-            ["项目编号", row.code],
-            [
-              "中文名称 / 英文名称",
-              `${row.name || "—"} / ${row.nameEn || "—"}`,
-            ],
-            [
-              "物业名称 / 区域",
-              `${row.propertyName || "—"} / ${row.region || "—"}`,
-            ],
+            ["项目中文名称", row.name],
+            ["区域", row.region],
             ["详细地址", row.address],
-            [
-              "地图经纬度",
-              row.longitude == null || row.latitude == null
-                ? "未填写"
-                : `${row.longitude}, ${row.latitude}`,
-            ],
+          ]}
+        />
+        <InfoGroup
+          title="补充资料（选填）"
+          items={[
+            ["项目英文名称", row.nameEn],
+            ["物业名称", row.propertyName],
             ["发展商", row.developer],
             ["楼层数目", extra.floorCount],
             [
@@ -86,31 +87,57 @@ export function ProjectBasicModal({
             ["业权", extra.ownership],
             ["停车场", extra.parking],
             ["港铁站", extra.mtrStation],
+            [
+              "项目位置",
+              row.longitude == null || row.latitude == null
+                ? undefined
+                : `${row.latitude}, ${row.longitude}`,
+            ],
             ["用途", extra.usage],
+            ["项目状态", row.status === "DISABLED" ? "停用" : "启用"],
           ]}
         />
-        <InfoGroup
-          title="物业与配套"
-          items={[
-            [
-              "单位总数 / 面积范围",
-              `${row.unitCount ?? 0} 套 / ${extra.areaRange || "—"}`,
-            ],
-            ["单位间隔", extra.unitInterval],
-            [
-              "管理费 / 地契年期",
-              `${extra.managementFee || "—"} / ${dateText(extra.landLeaseEndDate)}`,
-            ],
-            [
-              "律师楼 / 周边学校",
-              `${extra.lawyerFirm || "—"} / ${extra.nearbySchools || "—"}`,
-            ],
-            ["网址", extra.website],
-            ["售楼处地址 / 联系电话", extra.salesOffice],
-            ["详细资料介绍", row.description],
-            ["允许销售查看具体租金", row.salesCanViewExactRent ? "是" : "否"],
-          ]}
-        />
+        <section className="rounded-md bg-[#f5f6f8] px-5 py-4 text-[13px] text-[#26334a]">
+          <h3 className="mb-2 text-[14px] font-semibold">
+            {t("项目单位类型")}
+          </h3>
+          {typeConfigs.length ? (
+            <div className="space-y-3">
+              {typeConfigs.map((item, index) => (
+                <div
+                  key={item.code || index}
+                  className="rounded border border-[#e0e6ed] bg-white p-3"
+                >
+                  <h4 className="mb-2 font-semibold">
+                    {t(item.name || `单位类型 ${index + 1}`)}
+                  </h4>
+                  <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-1 max-[560px]:grid-cols-1">
+                    {[
+                      ["期 / 座", item.building],
+                      ["楼层", item.floor],
+                      ["间隔", item.layout],
+                      ["实用面积（㎡）", item.area],
+                      ["最低价（HKD）", money(item.minRent)],
+                      ["最高价（HKD）", money(item.maxRent)],
+                      ["月租价格（HKD）", money(item.referenceRent)],
+                    ].map(([label, data]) => (
+                      <div key={label} className="flex gap-1">
+                        <dt className="shrink-0 text-[#73819a]">
+                          {t(label)}：
+                        </dt>
+                        <dd className="m-0 min-w-0 break-words">
+                          {value(data)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="m-0 text-[#73819a]">{t("暂无单位类型")}</p>
+          )}
+        </section>
       </div>
     </Modal>
   );

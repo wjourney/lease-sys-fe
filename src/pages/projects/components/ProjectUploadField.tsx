@@ -4,14 +4,7 @@ import type { UploadFile } from "antd";
 import { useState } from "react";
 import { t } from "../../../shared/i18n";
 
-export type ProjectUploadCategory =
-  | "PHOTO"
-  | "VIDEO"
-  | "PROJECT_FILE"
-  | "OFFICIAL"
-  | "MARKETING"
-  | "GUIDE"
-  | "TEMPLATE";
+export type ProjectUploadCategory = "PHOTO" | "VIDEO" | "PROJECT_FILE";
 
 export type ProjectUploads = Record<ProjectUploadCategory, UploadFile[]>;
 

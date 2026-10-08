@@ -16,10 +16,6 @@ import { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { ProjectBasicModal } from "./ProjectBasicModal";
 import { ProjectDeleteModal } from "./ProjectDeleteModal";
-import {
-  MaterialSection,
-  ProjectMaterialsModal,
-} from "./ProjectMaterialsModal";
 import { MediaGalleryModal, type MediaCategory } from "./MediaGalleryModal";
 import { ProjectLogoPreview } from "./ProjectLogoPreview";
 import { ProjectOverviewDetails } from "./ProjectOverviewDetails";
@@ -27,7 +23,6 @@ import { projectImages } from "../../project-images";
 import { UnitDetailModal } from "./UnitDetailModal";
 import { ProjectUnits } from "./ProjectUnits";
 
-type Section = "basic" | MaterialSection;
 type ProjectMediaCategory = MediaCategory;
 const mediaTitles: Record<ProjectMediaCategory, string> = {
   PHOTO: "项目图片",
@@ -43,7 +38,7 @@ export function ProjectDetailView({
   onDelete: (reason: string) => Promise<void>;
 }) {
   const { row, id, root, navigate } = useRecordDetail();
-  const [section, setSection] = useState<Section>();
+  const [showBasic, setShowBasic] = useState(false);
   const [mediaCategory, setMediaCategory] = useState<ProjectMediaCategory>();
   const [showDelete, setShowDelete] = useState(false);
   const location = useLocation();
@@ -144,15 +139,12 @@ export function ProjectDetailView({
               <Dropdown
                 menu={{
                   items: [
+                    { key: "basic", label: t("基本资料与单位类型") },
                     { key: "PROJECT_FILE", label: t("项目文件") },
-                    { key: "basic", label: t("基本资料") },
-                    { key: "OFFICIAL", label: t("官方文件") },
-                    { key: "MARKETING", label: t("营销资料") },
-                    { key: "GUIDE", label: t("开单资料") },
                   ],
                   onClick: ({ key }) => {
                     if (key === "PROJECT_FILE") setMediaCategory(key);
-                    else setSection(key as Section);
+                    else setShowBasic(true);
                   },
                 }}
               >
@@ -202,11 +194,11 @@ export function ProjectDetailView({
       )}
       <ProjectBasicModal
         row={row}
-        open={section === "basic"}
-        onClose={() => setSection(undefined)}
+        open={showBasic}
+        onClose={() => setShowBasic(false)}
         canEdit={root.canWrite("projects")}
         onEdit={() => {
-          setSection(undefined);
+          setShowBasic(false);
           onEdit();
         }}
       />
@@ -216,19 +208,23 @@ export function ProjectDetailView({
         onClose={() => setShowDelete(false)}
         onConfirm={onDelete}
       />
-      <ProjectMaterialsModal
-        projectId={id}
-        materials={row.materials || []}
-        section={section === "basic" ? undefined : section}
-        onClose={() => setSection(undefined)}
-      />
       <MediaGalleryModal
         category={mediaCategory}
         title={mediaCategory ? mediaTitles[mediaCategory] : "项目素材"}
         items={
           mediaCategory === "PHOTO"
             ? projectImages(materials)
-            : materials.filter((item: Row) => item.category === mediaCategory)
+            : materials.filter((item: Row) =>
+                mediaCategory === "PROJECT_FILE"
+                  ? [
+                      "PROJECT_FILE",
+                      "OFFICIAL",
+                      "MARKETING",
+                      "GUIDE",
+                      "TEMPLATE",
+                    ].includes(item.category)
+                  : item.category === mediaCategory,
+              )
         }
         onClose={() => setMediaCategory(undefined)}
       />

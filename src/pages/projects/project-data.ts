@@ -29,20 +29,12 @@ export const projectUploadCategories: ProjectUploadCategory[] = [
   "PHOTO",
   "VIDEO",
   "PROJECT_FILE",
-  "OFFICIAL",
-  "MARKETING",
-  "GUIDE",
-  "TEMPLATE",
 ];
 
 export const emptyProjectUploads = (): ProjectUploads => ({
   PHOTO: [],
   VIDEO: [],
   PROJECT_FILE: [],
-  OFFICIAL: [],
-  MARKETING: [],
-  GUIDE: [],
-  TEMPLATE: [],
 });
 
 export function projectFormValues(row: Row): Row {

@@ -129,13 +129,13 @@ describe("project edit data", () => {
       "photo",
       "second",
     ]);
-    expect(files.OFFICIAL[0].name).toBe("价单.pdf");
     expect(files.PHOTO[1].name).toBe("项目外观.jpg");
     expect(files.PHOTO[1].url).toBe(
       "https://example.oss-cn-shanghai.aliyuncs.com/photo?Signature=example",
     );
     expect(files.VIDEO[0].name).toBe("项目介绍.mp4");
     expect(files.PROJECT_FILE[0].name).toBe("项目资料.pdf");
-    expect(files.GUIDE).toEqual([]);
+    expect(files).not.toHaveProperty("OFFICIAL");
+    expect(files).not.toHaveProperty("GUIDE");
   });
 });
