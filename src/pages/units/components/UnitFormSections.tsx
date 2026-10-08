@@ -1,6 +1,6 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { unitTypeDetails } from "../unit-type-display";
-import { Collapse, Form, Input, Select, Tooltip } from "antd";
+import { Form, Input, Select, Tooltip } from "antd";
 import type { UploadFile } from "antd";
 import { type Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
@@ -47,17 +47,20 @@ export function UnitFormSections({
         </div>
         {selectedType && (
           <section className="overflow-hidden rounded-lg border border-[#e0e6ed] bg-[#f8fafc]">
-            <div className="flex items-center gap-2 border-b border-[#e0e6ed] px-4 py-3">
-              <h3 className="m-0 text-sm font-semibold text-[#26334a]">
+            <div className="flex min-h-11 items-center gap-2 border-b border-[#e0e6ed] px-4 py-3">
+              <h3 className="m-0 text-sm font-semibold leading-5 text-[#26334a]">
                 {t("类型资料（自动带入）")}
               </h3>
               <Tooltip title={t(typeHint)}>
                 <button
                   type="button"
                   aria-label={t("查看类型资料说明")}
-                  className="flex h-5 w-5 cursor-help items-center justify-center rounded-full border-0 bg-transparent p-0 text-[#8291a5] hover:text-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d]"
+                  className="inline-flex h-5 w-5 cursor-help items-center justify-center rounded-full border-0 bg-transparent p-0 leading-none text-[#8291a5] hover:text-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d]"
                 >
-                  <InfoCircleOutlined aria-hidden />
+                  <InfoCircleOutlined
+                    aria-hidden
+                    className="relative -top-[2px] flex items-center justify-center leading-none [&_svg]:block"
+                  />
                 </button>
               </Tooltip>
             </div>
@@ -76,34 +79,26 @@ export function UnitFormSections({
           </section>
         )}
       </section>
-      <Collapse
-        items={[
-          {
-            key: "media",
-            label: t("补充资料（选填）"),
-            children: (
-              <div className="grid grid-cols-2 gap-5 max-[640px]:grid-cols-1">
-                {(
-                  [
-                    ["PHOTO", "单位图片", "添加图片"],
-                    ["VIDEO", "单位视频", "添加视频"],
-                    ["PROJECT_FILE", "单位文件", "添加文件"],
-                  ] as const
-                ).map(([category, label, prompt]) => (
-                  <UnitMediaField
-                    key={category}
-                    category={category}
-                    label={label}
-                    prompt={prompt}
-                    files={media[category]}
-                    onChange={onMediaChange}
-                  />
-                ))}
-              </div>
-            ),
-          },
-        ]}
-      />
+      <section className="rounded-lg border border-[#e0e6ed] bg-white p-6">
+        <div className="grid grid-cols-2 gap-5 max-[640px]:grid-cols-1">
+          {(
+            [
+              ["PHOTO", "单位图片", "添加图片"],
+              ["VIDEO", "单位视频", "添加视频"],
+              ["PROJECT_FILE", "单位文件", "添加文件"],
+            ] as const
+          ).map(([category, label, prompt]) => (
+            <UnitMediaField
+              key={category}
+              category={category}
+              label={label}
+              prompt={prompt}
+              files={media[category]}
+              onChange={onMediaChange}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
