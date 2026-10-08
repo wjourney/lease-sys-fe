@@ -244,15 +244,15 @@ export function SalesCompanyDrawer({
       const payload = {
         name: values.name.trim(),
         nameEn: values.nameEn?.trim() || "",
-        contactName: values.contactName.trim(),
-        phone: values.phone.trim(),
-        email: values.email.trim(),
+        contactName: values.contactName?.trim() || "",
+        phone: values.phone?.trim() || "",
+        email: values.email?.trim() || "",
         address: values.address?.trim() || "",
         serviceArea: (values.serviceArea || []).join(" / "),
-        registrationNo: values.registrationNo.trim(),
-        registrationExpiresOn: (values.registrationExpiresOn as Dayjs).format(
-          "YYYY-MM-DD",
-        ),
+        registrationNo: values.registrationNo?.trim() || "",
+        registrationExpiresOn: (
+          values.registrationExpiresOn as Dayjs | undefined
+        )?.format("YYYY-MM-DD"),
         ...(!root.companyAdmin ? { serviceStartsOn, serviceEndsOn } : {}),
       };
       if (company) {
@@ -375,37 +375,17 @@ export function SalesCompanyDrawer({
               name="contactName"
               label={t("联系人")}
               className={fieldClass}
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: t("请输入联系人"),
-                },
-              ]}
             >
               <Input placeholder={t("请输入联系人")} />
             </Form.Item>
-            <Form.Item
-              name="phone"
-              label={t("电话")}
-              className={fieldClass}
-              rules={[
-                { required: true, whitespace: true, message: t("请输入电话") },
-              ]}
-            >
+            <Form.Item name="phone" label={t("电话")} className={fieldClass}>
               <Input placeholder={t("请输入电话")} />
             </Form.Item>
             <Form.Item
               name="email"
               label="Email"
               className={fieldClass}
-              rules={[
-                {
-                  required: true,
-                  type: "email",
-                  message: t("请输入有效的 Email"),
-                },
-              ]}
+              rules={[{ type: "email", message: t("请输入有效的 Email") }]}
             >
               <Input placeholder={t("请输入 Email")} />
             </Form.Item>
@@ -432,13 +412,6 @@ export function SalesCompanyDrawer({
               name="registrationNo"
               label={t("商业登记号码")}
               className={fieldClass}
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: t("请输入商业登记号码"),
-                },
-              ]}
             >
               <Input placeholder={t("请输入商业登记号码")} />
             </Form.Item>
@@ -455,7 +428,6 @@ export function SalesCompanyDrawer({
               name="registrationExpiresOn"
               label={t("商业登记届满日期")}
               className={fieldClass}
-              rules={[{ required: true, message: t("请选择商业登记届满日期") }]}
             >
               <DatePicker className="w-full" format="YYYY-MM-DD" />
             </Form.Item>
@@ -463,77 +435,66 @@ export function SalesCompanyDrawer({
         </section>
         <section className="mt-4 rounded-lg bg-[#f5f6f8] p-4 max-[600px]:p-3">
           <h2 className="mb-4 text-sm font-semibold text-[#26344a]">
-            {t("账号与服务")}
+            {t("服务期限")}
           </h2>
-          <div className="grid grid-cols-3 gap-x-4 max-[700px]:grid-cols-2 max-[500px]:grid-cols-1">
-            <Form.Item label={t("会员 / 公司编号")} className={fieldClass}>
-              <Input
-                disabled
-                value={
-                  company?.companyNo ||
-                  createdCompany?.companyNo ||
-                  t("系统自动生成")
-                }
-              />
-            </Form.Item>
-            <Form.Item label={t("管理员账号")} className={fieldClass}>
-              <Input
-                disabled
-                value={
-                  adminAccount?.username ||
-                  t(company ? "尚未开通" : "创建公司后在账号管理开通")
-                }
-              />
-            </Form.Item>
-            <Form.Item label={t("管理员姓名")} className={fieldClass}>
-              <Input
-                disabled
-                value={
-                  adminAccount?.name ||
-                  t(company ? "尚未填写" : "创建公司后在账号管理填写")
-                }
-              />
-            </Form.Item>
-            <Form.Item
-              name="serviceStartsOn"
-              label={t("开通时间")}
-              className={fieldClass}
-            >
-              <DatePicker
-                disabled={root.companyAdmin}
-                className="w-full"
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-            <Form.Item
-              name="serviceEndsOn"
-              label={t("服务到期日")}
-              className={fieldClass}
-            >
-              <DatePicker
-                disabled={root.companyAdmin}
-                className="w-full"
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-            <Form.Item label={t("剩余期限")} className={fieldClass}>
-              <Input
-                disabled
-                value={
-                  remainingDays === undefined
-                    ? t("选择服务到期日后计算")
-                    : t(`${remainingDays} 天`)
-                }
-              />
-            </Form.Item>
-          </div>
-          <p className="mb-0 text-xs text-[#8491a3]">
-            {t(
-              root.companyAdmin
-                ? "服务期限及成员账号由平台管理员维护。"
-                : "子账号数、分行数、职位数与最后修改日期由系统统计。管理员账号需在账号管理中单独创建。",
-            )}
-          </p>
+          {root.companyAdmin ? (
+            <p className="mb-0 text-sm text-[#52617a]">
+              {t("服务期限由平台管理员维护：")}
+              {company?.serviceStartsOn || "—"} ~{" "}
+              {company?.serviceEndsOn || "—"}
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-x-4 max-[500px]:grid-cols-1">
+                <Form.Item
+                  name="serviceStartsOn"
+                  label={t("开通时间")}
+                  className={fieldClass}
+                >
+                  <DatePicker className="w-full" format="YYYY-MM-DD" />
+                </Form.Item>
+                <Form.Item
+                  name="serviceEndsOn"
+                  label={t("服务到期日")}
+                  className={fieldClass}
+                >
+                  <DatePicker className="w-full" format="YYYY-MM-DD" />
+                </Form.Item>
+              </div>
+              {remainingDays !== undefined && (
+                <p className="mb-0 text-sm text-[#52617a]">
+                  {t(`剩余期限：${remainingDays} 天`)}
+                </p>
+              )}
+            </>
+          )}
+          {company && (
+            <div className="mt-4 border-t border-[#e0e6ee] pt-3 text-sm text-[#52617a]">
+              <div className="mb-2 font-medium text-[#26344a]">
+                {t("账号信息")}
+              </div>
+              <div className="flex flex-wrap gap-x-8 gap-y-1">
+                <span>
+                  {t("公司编号")}：{t(company.companyNo || "—")}
+                </span>
+                {!root.companyAdmin && (
+                  <span>
+                    {t("管理员账号")}：{t(adminAccount?.username || "尚未开通")}
+                  </span>
+                )}
+                {!root.companyAdmin && (
+                  <span>
+                    {t("管理员姓名")}：{t(adminAccount?.name || "—")}
+                  </span>
+                )}
+              </div>
+              {!root.companyAdmin && (
+                <p className="mb-0 mt-2 text-xs text-[#8491a3]">
+                  {t("管理员账号请在账号管理中创建或修改。")}
+                </p>
+              )}
+            </div>
+          )}
         </section>
       </Form>
     </Drawer>

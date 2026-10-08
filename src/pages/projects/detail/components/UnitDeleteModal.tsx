@@ -6,12 +6,10 @@ import { t } from "../../../../shared/i18n";
 
 export function UnitDeleteModal({
   unit,
-  units,
   onClose,
   onDeleted,
 }: {
-  unit?: Row;
-  units?: Row[];
+  unit: Row;
   onClose: () => void;
   onDeleted: () => void;
 }) {
@@ -23,11 +21,8 @@ export function UnitDeleteModal({
     setSaving(true);
     setError("");
     try {
-      await api.delete("/units", {
-        data: {
-          ids: units?.map((item) => item.id) ?? [unit!.id],
-          reason: reason.trim(),
-        },
+      await api.delete(`/units/${unit.id}`, {
+        data: { reason: reason.trim() },
       });
       onDeleted();
     } catch (cause) {
@@ -41,7 +36,7 @@ export function UnitDeleteModal({
     <Modal
       open
       centered
-      title={t(units?.length ? `批量删除单位（${units.length}）` : "删除单位")}
+      title={t("删除单位")}
       onCancel={() => {
         if (!saving) onClose();
       }}
@@ -66,21 +61,10 @@ export function UnitDeleteModal({
       }
     >
       <p className="mt-5 text-sm text-[#52617a]">
-        {t(units?.length ? "确定删除所选单位吗？" : "确定删除单位")}
-        {!units?.length && (
-          <strong className="mx-1 text-[#243248]">{t(unit?.unitNo)}</strong>
-        )}
-        {t(
-          units?.length
-            ? "已有订单引用的单位无法删除，整批将撤销。"
-            : "吗？已有订单引用的单位无法删除。",
-        )}
+        {t("确定删除单位")}
+        <strong className="mx-1 text-[#243248]">{t(unit.unitNo)}</strong>
+        {t("吗？已有订单引用的单位无法删除。")}
       </p>
-      {!!units?.length && (
-        <div className="mb-4 max-h-24 overflow-auto rounded bg-[#f5f7fa] px-3 py-2 text-sm text-[#52617a]">
-          {units.map((item) => t(item.unitNo)).join("、")}
-        </div>
-      )}
       {error && (
         <RequestError
           type="error"

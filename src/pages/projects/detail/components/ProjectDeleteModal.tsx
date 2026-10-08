@@ -7,13 +7,11 @@ import { t } from "../../../../shared/i18n";
 export function ProjectDeleteModal({
   open,
   projectName,
-  projectNames,
   onClose,
   onConfirm,
 }: {
   open: boolean;
-  projectName?: string;
-  projectNames?: string[];
+  projectName: string;
   onClose: () => void;
   onConfirm: (reason: string) => Promise<void>;
 }) {
@@ -47,11 +45,7 @@ export function ProjectDeleteModal({
     <Modal
       open={open}
       centered
-      title={t(
-        projectNames?.length
-          ? `批量删除项目（${projectNames.length}）`
-          : "确认删除项目",
-      )}
+      title={t("确认删除项目")}
       onCancel={close}
       closable={!saving}
       maskClosable={!saving}
@@ -68,21 +62,10 @@ export function ProjectDeleteModal({
       }
     >
       <p className="text-sm text-[#52617a]">
-        {t(projectNames?.length ? "确定删除所选项目吗？" : "确定删除项目")}
-        {!projectNames?.length && (
-          <strong className="mx-1 text-[#243248]">{t(projectName)}</strong>
-        )}
-        {t(
-          projectNames?.length
-            ? "有单位的项目无法删除，整批将撤销。请填写删除原因后确认。"
-            : "吗？有单位的项目无法删除。请填写删除原因后确认。",
-        )}
+        {t("确定删除项目")}
+        <strong className="mx-1 text-[#243248]">{t(projectName)}</strong>
+        {t("吗？请填写删除原因后确认。")}
       </p>
-      {!!projectNames?.length && (
-        <div className="mb-4 max-h-24 overflow-auto rounded bg-[#f5f7fa] px-3 py-2 text-sm text-[#52617a]">
-          {projectNames.map(t).join("、")}
-        </div>
-      )}
       {error && (
         <RequestError
           type="error"
