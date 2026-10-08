@@ -45,9 +45,12 @@ export function useResourceList(
         : filter === "PAID"
           ? "PAID"
           : undefined
-      : filter;
+      : resource === "sales-companies"
+        ? undefined
+        : filter;
   const urlFilters = Object.fromEntries(search.entries());
   if (resource === "commissions") delete urlFilters.mode;
+  if (resource === "sales-companies") delete urlFilters.status;
   const key = JSON.stringify({
     ...urlFilters,
     ...fixed,

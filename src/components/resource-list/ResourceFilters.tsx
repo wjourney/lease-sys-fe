@@ -44,7 +44,11 @@ export const ResourceFilters = observer(function ResourceFilters({
             if (!event.nativeEvent.isComposing) searchNow();
           }}
           prefix={<SearchOutlined aria-hidden={true} />}
-          placeholder={t("搜索编号、名称或关键词")}
+          placeholder={t(
+            resource === "sales-companies"
+              ? "搜索公司名称或商业登记号码"
+              : "搜索编号、名称或关键词",
+          )}
         />
       </div>
       {resource === "commissions" && extraFilters}

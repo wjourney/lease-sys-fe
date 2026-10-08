@@ -1,4 +1,4 @@
-import { cols, Config, date, status, text } from "../../shared/resource-config";
+import { cols, Config, date, text } from "../../shared/resource-config";
 export const SalesCompanyConfig: Config = {
   title: "销售公司",
   description: "管理合作公司、服务期限及所属销售人员",
@@ -26,14 +26,12 @@ export const SalesCompanyConfig: Config = {
       type: "json",
       span: 2,
     },
-    status,
   ],
   columns: cols({
-    companyNo: "公司编号",
     name: "销售公司",
+    registrationNo: "商业登记号码",
     contactName: "联系人",
     phone: "联系电话",
-    serviceEndsOn: "服务到期日",
-    status: "状态",
+    email: "邮箱",
   }),
 };

@@ -222,7 +222,6 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
           </>
         ),
       },
-      { label: "会员编号", value: blank(company.companyNo) },
       { label: "联系人", value: t(blank(company.contactName)) },
     ],
     [

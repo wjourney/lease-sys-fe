@@ -14,6 +14,7 @@ export default function SalesCompanyListPage() {
     <>
       <ResourceList
         resource="sales-companies"
+        hideStatus
         hideCreate={root.salesRole}
         renderEditor={({ row, onClose, onSaved }) => (
           <SalesCompanyDrawer
