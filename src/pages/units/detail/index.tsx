@@ -155,11 +155,8 @@ export default observer(function UnitDetailPage() {
         </div>
       ) : (
         <div className="space-y-4 pb-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3 text-[14px] text-[#718095]">
-              <Status value={detail.occupancyStatus || "AVAILABLE"} />
-              <span>{t(detail.projectName || project?.name || "")}</span>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Status value={detail.occupancyStatus || "AVAILABLE"} />
             {root.canWrite("units") && (
               <Button
                 icon={<EditOutlined aria-hidden />}
