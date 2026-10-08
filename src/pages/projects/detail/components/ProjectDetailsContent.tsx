@@ -1,0 +1,393 @@
+import {
+  EnvironmentOutlined,
+  FileOutlined,
+  LeftOutlined,
+  PictureOutlined,
+  PlayCircleFilled,
+  RightOutlined,
+} from "@ant-design/icons";
+import { Button, Spin } from "antd";
+import { lazy, Suspense, useState } from "react";
+import { amount, type Row } from "../../../../shared/api";
+import { t } from "../../../../shared/i18n";
+import { ProjectLocationModal } from "../../components/ProjectLocationModal";
+import { projectImages } from "../../project-images";
+import { projectLocation } from "../../project-location";
+import { MediaGalleryModal, type MediaCategory } from "./MediaGalleryModal";
+
+const ProjectLocationMap = lazy(
+  () => import("../../components/ProjectLocationMap"),
+);
+const fileCategories = [
+  "PROJECT_FILE",
+  "OFFICIAL",
+  "MARKETING",
+  "GUIDE",
+  "TEMPLATE",
+];
+const mediaUrl = (item: Row) =>
+  item.previewUrl ||
+  item.downloadUrl ||
+  `/api/v1/materials/${item.id}/download`;
+const present = (value: unknown) =>
+  value === null || value === undefined || value === ""
+    ? "—"
+    : t(String(value));
+const money = (value: unknown) =>
+  value === null || value === undefined || value === ""
+    ? "—"
+    : t(amount(value));
+const fileSize = (bytes: unknown) => {
+  const size = Number(bytes);
+  if (!Number.isFinite(size) || size < 0 || bytes == null) return "—";
+  return size >= 1024 * 1024
+    ? `${(size / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(size / 1024))} KB`;
+};
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="m-0 mb-3 text-[14px] font-semibold leading-6 text-[#17345e]">
+      {children}
+    </h2>
+  );
+}
+
+export function ProjectDetailsContent({
+  row,
+  allowExactRent,
+}: {
+  row: Row;
+  allowExactRent: boolean;
+}) {
+  const materials: Row[] = (row.materials || []).filter(
+    (item: Row) => item.storageKey,
+  );
+  const photos = projectImages(materials);
+  const videos = materials.filter((item) => item.category === "VIDEO");
+  const files = materials.filter((item) =>
+    fileCategories.includes(item.category),
+  );
+  const types: Row[] = Array.isArray(row.typeConfigs) ? row.typeConfigs : [];
+  const extra: Row = row.extra || {};
+  const location = projectLocation(row.latitude, row.longitude);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [media, setMedia] = useState<{
+    category: MediaCategory;
+    index: number;
+  }>();
+  const [showMap, setShowMap] = useState(false);
+  const selectedPhoto = photos[Math.min(photoIndex, photos.length - 1)];
+  const detailRows: [string, unknown][] = [
+    ["项目中文名称", row.name],
+    ["区域", row.region],
+    ["详细地址", row.address],
+    ["物业名称", row.propertyName],
+    ["用途", extra.usage],
+    ["发展商", row.developer],
+    ["落成年份", extra.completionYear ?? row.completionDate?.slice(0, 4)],
+    ["项目英文名称", row.nameEn],
+    ["楼层数目", extra.floorCount],
+    ["业权", extra.ownership],
+    ["停车场", extra.parking],
+    ["港铁站", extra.mtrStation],
+    ["项目介绍", row.description],
+  ];
+
+  return (
+    <div className="space-y-6 pb-6">
+      <div className="grid grid-cols-3 gap-6 max-[1350px]:grid-cols-2 max-[800px]:grid-cols-1">
+        <section className="min-w-0">
+          <SectionTitle>
+            {t("项目图片")}（{photos.length}）
+          </SectionTitle>
+          {selectedPhoto ? (
+            <>
+              <div className="relative max-w-[440px] overflow-hidden rounded-md border border-[#e1e8f0] bg-[#f3f6f9]">
+                <button
+                  type="button"
+                  className="block h-[210px] w-full cursor-zoom-in"
+                  aria-label={t(`查看第 ${photoIndex + 1} 张项目图片`)}
+                  onClick={() =>
+                    setMedia({ category: "PHOTO", index: photoIndex })
+                  }
+                >
+                  <img
+                    src={mediaUrl(selectedPhoto)}
+                    alt={t(
+                      selectedPhoto.originalName ||
+                        `项目图片 ${photoIndex + 1}`,
+                    )}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+                {photos.length > 1 && (
+                  <>
+                    <Button
+                      shape="circle"
+                      icon={<LeftOutlined />}
+                      aria-label={t("上一张")}
+                      className="!absolute left-2 top-1/2 -translate-y-1/2"
+                      onClick={() =>
+                        setPhotoIndex(
+                          (index) =>
+                            (index - 1 + photos.length) % photos.length,
+                        )
+                      }
+                    />
+                    <Button
+                      shape="circle"
+                      icon={<RightOutlined />}
+                      aria-label={t("下一张")}
+                      className="!absolute right-2 top-1/2 -translate-y-1/2"
+                      onClick={() =>
+                        setPhotoIndex((index) => (index + 1) % photos.length)
+                      }
+                    />
+                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#152743cc] px-3 py-0.5 text-[14px] text-white">
+                      {photoIndex + 1} / {photos.length}
+                    </span>
+                  </>
+                )}
+              </div>
+              {photos.length > 1 && (
+                <div className="mt-2 flex max-w-[440px] gap-2 overflow-x-auto pb-1">
+                  {photos.map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      type="button"
+                      onClick={() => setPhotoIndex(index)}
+                      aria-label={t(`选择第 ${index + 1} 张项目图片`)}
+                      aria-pressed={photoIndex === index}
+                      className={`h-16 w-20 shrink-0 overflow-hidden rounded border-2 ${photoIndex === index ? "border-[#17355d]" : "border-transparent"}`}
+                    >
+                      <img
+                        src={mediaUrl(photo)}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex h-[210px] max-w-[440px] flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#dbe4ee] bg-[#f6f8fa] text-[#8390a3]">
+              <PictureOutlined className="text-3xl" aria-hidden />
+              {t("暂无项目图片")}
+            </div>
+          )}
+          <div className="mt-4 border-t border-[#e4eaf1] pt-4">
+            <SectionTitle>
+              {t("项目视频")}（{videos.length}）
+            </SectionTitle>
+            {videos.length ? (
+              <div className="flex max-w-[440px] flex-col gap-2">
+                {videos.map((video, index) => (
+                  <button
+                    key={video.id}
+                    type="button"
+                    onClick={() => setMedia({ category: "VIDEO", index })}
+                    className="relative h-[210px] w-full overflow-hidden rounded-md bg-[#172b47] text-white"
+                  >
+                    <video
+                      src={mediaUrl(video)}
+                      preload="metadata"
+                      muted
+                      aria-hidden
+                      className="absolute inset-0 h-full w-full object-cover opacity-70"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-white">
+                      <PlayCircleFilled className="text-3xl" aria-hidden />
+                    </span>
+                    <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#14243fdd] to-transparent px-3 pb-2 pt-5 text-left text-[14px] text-white">
+                      {t(
+                        video.title ||
+                          video.originalName ||
+                          `项目视频 ${index + 1}`,
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="m-0 text-sm text-[#8390a3]">{t("暂无项目视频")}</p>
+            )}
+          </div>
+        </section>
+
+        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[800px]:border-l-0 max-[800px]:pl-0">
+          <SectionTitle>{t("基本资料")}</SectionTitle>
+          <dl className="m-0 border-t border-[#e4eaf1] text-[14px]">
+            {detailRows.map(([label, value]) => (
+              <div
+                key={label}
+                className="grid grid-cols-[110px_minmax(0,1fr)] gap-3 border-b border-[#e4eaf1] py-2.5"
+              >
+                <dt className="text-[#7585a0]">{t(label)}</dt>
+                <dd className="m-0 break-words whitespace-pre-line font-medium text-[#263953]">
+                  {present(value)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[1350px]:col-span-2 max-[1350px]:border-l-0 max-[1350px]:pl-0 max-[800px]:col-span-1">
+          <SectionTitle>{t("项目位置")}</SectionTitle>
+          {location ? (
+            <div className="relative">
+              <Suspense
+                fallback={
+                  <div className="flex h-72 items-center justify-center rounded-md bg-[#f3f6f9]">
+                    <Spin />
+                  </div>
+                }
+              >
+                <ProjectLocationMap
+                  latitude={location.latitude}
+                  longitude={location.longitude}
+                  compact
+                />
+              </Suspense>
+              <Button
+                className="!absolute bottom-3 right-3 !z-[500]"
+                icon={<EnvironmentOutlined />}
+                onClick={() => setShowMap(true)}
+              >
+                {t("查看地图")}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex h-72 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[#dbe4ee] bg-[#f6f8fa] text-[#8390a3]">
+              <EnvironmentOutlined className="text-3xl" aria-hidden />
+              {t("尚未设置项目位置")}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <div className="grid grid-cols-[1.1fr_0.9fr] gap-6 border-t border-[#e4eaf1] pt-5 max-[900px]:grid-cols-1">
+        <section className="min-w-0">
+          <SectionTitle>
+            {t("单位类型")}（{types.length}）
+          </SectionTitle>
+          {types.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[550px] text-left text-[14px] text-[#263953]">
+                <thead className="border-b border-[#dce4ed] text-[#7585a0]">
+                  <tr>
+                    <th className="py-2 font-medium">{t("单位类型")}</th>
+                    <th className="py-2 font-medium">{t("期 / 座 · 楼层")}</th>
+                    <th className="py-2 font-medium">{t("实用面积")}</th>
+                    <th className="py-2 font-medium">{t("月租价格")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {types.map((type, index) => (
+                    <tr
+                      key={type.code || index}
+                      className="border-b border-[#e4eaf1]"
+                    >
+                      <td className="py-2.5 font-medium">
+                        {present(type.name || type.code)}
+                      </td>
+                      <td className="py-2.5">
+                        {[type.building, type.floor]
+                          .filter(Boolean)
+                          .map(t)
+                          .join(" · ") || "—"}
+                      </td>
+                      <td className="py-2.5">
+                        {type.area == null ? "—" : `${present(type.area)} ㎡`}
+                      </td>
+                      <td className="py-2.5">
+                        {allowExactRent && type.referenceRent != null
+                          ? money(type.referenceRent)
+                          : type.minRent != null && type.maxRent != null
+                            ? `${money(type.minRent)} – ${money(type.maxRent)}`
+                            : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="m-0 text-sm text-[#8390a3]">{t("暂无单位类型")}</p>
+          )}
+        </section>
+        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[900px]:border-l-0 max-[900px]:pl-0">
+          <SectionTitle>
+            {t("项目文件")}（{files.length}）
+          </SectionTitle>
+          {files.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[400px] text-left text-[14px] text-[#263953]">
+                <thead className="border-b border-[#dce4ed] text-[#7585a0]">
+                  <tr>
+                    <th className="py-2 font-medium">{t("文件名称")}</th>
+                    <th className="py-2 font-medium">{t("上传日期")}</th>
+                    <th className="py-2 font-medium">{t("文件大小")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {files.map((file, index) => (
+                    <tr key={file.id} className="border-b border-[#e4eaf1]">
+                      <td className="py-2.5">
+                        <button
+                          type="button"
+                          className="flex max-w-[260px] items-center gap-2 text-left text-[#245184] hover:underline"
+                          onClick={() =>
+                            setMedia({ category: "PROJECT_FILE", index })
+                          }
+                        >
+                          <FileOutlined aria-hidden />
+                          <span className="truncate">
+                            {t(file.originalName || file.title || "文件")}
+                          </span>
+                        </button>
+                      </td>
+                      <td className="py-2.5">
+                        {present(file.createdAt?.slice?.(0, 10))}
+                      </td>
+                      <td className="py-2.5">{fileSize(file.sizeBytes)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="m-0 text-sm text-[#8390a3]">{t("暂无项目文件")}</p>
+          )}
+        </section>
+      </div>
+      {showMap && location && (
+        <ProjectLocationModal
+          location={location}
+          onClose={() => setShowMap(false)}
+        />
+      )}
+      <MediaGalleryModal
+        category={media?.category}
+        title={
+          media?.category === "PHOTO"
+            ? "项目图片"
+            : media?.category === "VIDEO"
+              ? "项目视频"
+              : "项目文件"
+        }
+        items={
+          media?.category === "PHOTO"
+            ? photos
+            : media?.category === "VIDEO"
+              ? videos
+              : files
+        }
+        initialIndex={media?.index || 0}
+        onClose={() => setMedia(undefined)}
+      />
+    </div>
+  );
+}

@@ -9,10 +9,12 @@ export default function ProjectLocationMap({
   latitude,
   longitude,
   onPick,
+  compact = false,
 }: {
   latitude?: number;
   longitude?: number;
   onPick?: (latitude: number, longitude: number) => void;
+  compact?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
@@ -74,7 +76,7 @@ export default function ProjectLocationMap({
   return (
     <div
       ref={container}
-      className="h-[min(52vh,420px)] min-h-72 w-full overflow-hidden rounded-md border border-[#dce2ea]"
+      className={`${compact ? "h-[368px] max-[1350px]:h-72" : "h-[min(52vh,420px)] min-h-72"} w-full overflow-hidden rounded-md border border-[#dce2ea]`}
       aria-label={onPick ? "点击地图选择项目位置" : "项目位置地图"}
     />
   );

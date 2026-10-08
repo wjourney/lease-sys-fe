@@ -33,8 +33,9 @@ export const ProjectUnits = observer(function ProjectUnits({
   const [search, setSearch] = useSearchParams();
   const unitTypeCode = search.get("unitTypeCode") || undefined;
   const sort = search.get("sort") || "default";
-  const statusFilter = ((search.get("status") === "LOCKED" ? "OCCUPIED" : search.get("status")) || undefined) as
-    ProjectUnitStatus | undefined;
+  const statusFilter = ((search.get("status") === "LOCKED"
+    ? "OCCUPIED"
+    : search.get("status")) || undefined) as ProjectUnitStatus | undefined;
   function updateFilter(key: string, value?: string) {
     setSearch(
       (current) => {
@@ -180,10 +181,10 @@ const UnitGrid = observer(function UnitGrid({
                 )
               }
             >
-              <h3 className="m-0 truncate text-[15px] font-semibold text-[#26334a]">
+              <h3 className="m-0 truncate text-[14px] font-semibold text-[#26334a]">
                 {t(unit.unitNo)}
               </h3>
-              <div className="my-2.5 flex min-w-0 items-center justify-between gap-2 text-[13px] font-medium text-[#1b355d]">
+              <div className="my-2.5 flex min-w-0 items-center justify-between gap-2 text-[14px] font-medium text-[#1b355d]">
                 <span className="min-w-0 truncate">
                   {t("参考月租")}{" "}
                   {unit.referenceRent != null
@@ -235,7 +236,7 @@ const UnitGrid = observer(function UnitGrid({
         )}
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-        <span className="text-xs text-[#8793a6]">
+        <span className="text-[14px] text-[#8793a6]">
           {t(`共 ${store.total} 个单位`)}
         </span>
         <Pagination

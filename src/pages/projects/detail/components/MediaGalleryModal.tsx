@@ -23,15 +23,17 @@ export function MediaGalleryModal({
   category,
   title,
   items,
+  initialIndex = 0,
   onClose,
 }: {
   category?: MediaCategory;
   title: string;
   items: Row[];
+  initialIndex?: number;
   onClose: () => void;
 }) {
-  const [index, setIndex] = useState(0);
-  useEffect(() => setIndex(0), [category]);
+  const [index, setIndex] = useState(initialIndex);
+  useEffect(() => setIndex(initialIndex), [category, initialIndex]);
   const currentIndex = Math.min(index, Math.max(0, items.length - 1));
   const item = items[currentIndex];
   const name = item?.originalName || item?.title || "文件";
