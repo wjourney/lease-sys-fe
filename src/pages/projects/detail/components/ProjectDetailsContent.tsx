@@ -229,20 +229,33 @@ export function ProjectDetailsContent({
         </section>
       </div>
 
-      <div className="grid grid-cols-[1.1fr_0.9fr] gap-6 border-t border-[#e4eaf1] pt-5 max-[900px]:grid-cols-1">
+      <div className="space-y-6 border-t border-[#e4eaf1] pt-5">
         <section className="min-w-0">
           <SectionTitle>
             {t("单位类型")}（{types.length}）
           </SectionTitle>
           {types.length ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[550px] text-left text-[14px] text-[#263953]">
+              <table className="w-full min-w-[1100px] text-left text-[14px] text-[#263953]">
                 <thead className="border-b border-[#dce4ed] text-[#7585a0]">
                   <tr>
-                    <th className="py-2 font-medium">{t("单位类型")}</th>
-                    <th className="py-2 font-medium">{t("期 / 座 · 楼层")}</th>
-                    <th className="py-2 font-medium">{t("实用面积")}</th>
-                    <th className="py-2 font-medium">{t("月租价格")}</th>
+                    {[
+                      "单位类型",
+                      "期 / 座",
+                      "楼层",
+                      "实用面积",
+                      "间隔",
+                      "最低价",
+                      "最高价",
+                      "月租价格",
+                    ].map((label) => (
+                      <th
+                        key={label}
+                        className="whitespace-nowrap px-3 py-2 font-medium first:pl-0"
+                      >
+                        {t(label)}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -251,24 +264,29 @@ export function ProjectDetailsContent({
                       key={type.code || index}
                       className="border-b border-[#e4eaf1]"
                     >
-                      <td className="py-2.5 font-medium">
+                      <td className="whitespace-nowrap px-3 py-3 pl-0 font-medium">
                         {present(type.name || type.code)}
                       </td>
-                      <td className="py-2.5">
-                        {[type.building, type.floor]
-                          .filter(Boolean)
-                          .map(t)
-                          .join(" · ") || "—"}
+                      <td className="whitespace-nowrap px-3 py-3">
+                        {present(type.building)}
                       </td>
-                      <td className="py-2.5">
+                      <td className="whitespace-nowrap px-3 py-3">
+                        {present(type.floor)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3">
                         {type.area == null ? "—" : `${present(type.area)} ㎡`}
                       </td>
-                      <td className="py-2.5">
-                        {allowExactRent && type.referenceRent != null
-                          ? money(type.referenceRent)
-                          : type.minRent != null && type.maxRent != null
-                            ? `${money(type.minRent)} – ${money(type.maxRent)}`
-                            : "—"}
+                      <td className="whitespace-nowrap px-3 py-3">
+                        {present(type.layout)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3">
+                        {money(type.minRent)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3">
+                        {money(type.maxRent)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 font-medium">
+                        {allowExactRent ? money(type.referenceRent) : "—"}
                       </td>
                     </tr>
                   ))}
@@ -279,7 +297,7 @@ export function ProjectDetailsContent({
             <p className="m-0 text-sm text-[#8390a3]">{t("暂无单位类型")}</p>
           )}
         </section>
-        <section className="min-w-0 border-l border-[#e4eaf1] pl-6 max-[900px]:border-l-0 max-[900px]:pl-0">
+        <section className="min-w-0 border-t border-[#e4eaf1] pt-5">
           <SectionTitle>
             {t("项目文件")}（{files.length}）
           </SectionTitle>
