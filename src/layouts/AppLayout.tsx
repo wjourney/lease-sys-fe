@@ -168,6 +168,7 @@ export const AppLayout = observer(function AppLayout() {
               {currentNavigation && (
                 <Breadcrumb
                   className="min-w-0 text-[16px] font-semibold [&_.ant-breadcrumb-link]:!text-[#26334a]"
+                  style={{ fontSize: 16 }}
                   items={[
                     ...(currentNavigation.parent
                       ? [{ title: currentNavigation.parent }]

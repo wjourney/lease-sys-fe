@@ -62,45 +62,43 @@ export const ProjectGrid = observer(function ProjectGrid({
                   )
                 }
               >
-                <div className="flex items-center justify-between gap-1 [&_h4]:!mb-1 [&_h4]:!text-[15px]">
+                <div className="flex items-center justify-between gap-1 [&_h4]:!mb-1 [&_h4]:!text-[16px]">
                   <Title level={4}>{t(row.name)}</Title>
                 </div>
                 <div className="my-[5px] mb-3 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-[#8290a2]">
                   <EnvironmentOutlined aria-hidden={true} /> {t(row.region)} ·{" "}
                   {t(row.address)}
                 </div>
-                <div className="mb-3 grid grid-cols-3 gap-2 border-t border-[#eff1f5] pt-3 text-center">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-[#eff1f5] pt-3 text-[12px] text-[#8290a2]">
                   {[
-                    {
-                      label: "总计",
-                      count: row.unitCount,
-                      color: "bg-[#f1f4f8] text-[#26334a]",
-                    },
+                    { label: "总计", count: row.unitCount, dot: "" },
                     {
                       label: "在租",
                       count: row.occupiedCount,
-                      color: "bg-[#eaf2ff] text-[#2463b0]",
+                      dot: "bg-[#4b83db]",
                     },
                     {
                       label: "可租",
                       count: row.availableCount,
-                      color: "bg-[#edf8ee] text-[#258349]",
+                      dot: "bg-[#4eab69]",
                     },
                   ].map((item) => (
-                    <div
+                    <span
                       key={item.label}
-                      className={`rounded-md px-1 py-2 ${item.color}`}
+                      className="inline-flex items-center whitespace-nowrap"
                     >
-                      <div className="text-[12px] font-medium">
-                        {t(item.label)}
-                      </div>
-                      <div className="mt-0.5 text-[18px] font-bold leading-none">
+                      {item.dot && (
+                        <span
+                          aria-hidden
+                          className={`mr-1.5 size-[7px] rounded-full ${item.dot}`}
+                        />
+                      )}
+                      {t(item.label)}
+                      <strong className="ml-1.5 text-[18px] font-semibold leading-none text-[#26334a]">
                         {t(item.count ?? 0)}
-                        <span className="ml-0.5 text-[11px] font-normal">
-                          {t("套")}
-                        </span>
-                      </div>
-                    </div>
+                      </strong>
+                      <span className="ml-0.5">{t("套")}</span>
+                    </span>
                   ))}
                 </div>
                 <div className="flex gap-2" data-row-action>

@@ -422,6 +422,11 @@
   line-height: 32px;
 }
 
+.topbar .ant-breadcrumb,
+.topbar .ant-breadcrumb .ant-breadcrumb-link {
+  font-size: 16px;
+}
+
 .unit-header-status {
   display: inline-flex;
   flex-shrink: 0;
