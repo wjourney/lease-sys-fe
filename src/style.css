@@ -422,6 +422,19 @@
   line-height: 32px;
 }
 
+.unit-header-status {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+.unit-header-status .ant-tag {
+  margin-inline-end: 0;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
 #record-detail-header > div {
   align-items: center;
 }

@@ -6,6 +6,7 @@ import { t } from "../../shared/i18n";
 
 export function RecordFormPage({
   title,
+  titleExtra,
   onBack,
   saving = false,
   contentLabel,
@@ -13,6 +14,7 @@ export function RecordFormPage({
   children,
 }: {
   title: string;
+  titleExtra?: ReactNode;
   onBack: () => void;
   saving?: boolean;
   contentLabel?: string;
@@ -32,6 +34,7 @@ export function RecordFormPage({
       <h1 className="record-header-title" title={t(title)}>
         {t(title)}
       </h1>
+      {titleExtra}
     </div>
   );
   return (

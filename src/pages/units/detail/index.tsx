@@ -129,6 +129,13 @@ export default observer(function UnitDetailPage() {
   return (
     <RecordFormPage
       title={detail ? `单位详情 · ${detail.unitNo}` : "单位详情"}
+      titleExtra={
+        detail ? (
+          <span className="unit-header-status">
+            <Status value={detail.occupancyStatus || "AVAILABLE"} />
+          </span>
+        ) : undefined
+      }
       contentLabel="单位详情"
       onBack={back}
     >
@@ -156,7 +163,6 @@ export default observer(function UnitDetailPage() {
       ) : (
         <div className="space-y-4 pb-6">
           <div className="flex flex-wrap items-center gap-3">
-            <Status value={detail.occupancyStatus || "AVAILABLE"} />
             {root.canWrite("units") && (
               <Button
                 icon={<EditOutlined aria-hidden />}
