@@ -139,25 +139,34 @@
     flex-shrink: 0;
   }
 
-  .sales-company-detail-layout,
   .company-member-section {
     display: flex;
-    flex: 0 1 auto;
     flex-direction: column;
     min-height: 0;
   }
 
   .sales-company-detail-layout {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
     gap: 16px;
     max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  .sales-company-detail-layout > :not(.company-member-section) {
-    flex-shrink: 0;
+  .sales-company-overview {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .company-member-section {
+    flex: 1 1 auto;
   }
 
   .company-member-section .embedded-list-scroll {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-height: 0;
     max-height: none;
   }
@@ -173,7 +182,7 @@
 
 .sales-company-overview-grid {
   display: grid;
-  grid-template-columns: minmax(0, 350px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 430px) minmax(0, 1fr);
   gap: 20px;
 }
 
@@ -189,13 +198,13 @@
 }
 
 .sales-company-gallery-body.has-thumbnails {
-  grid-template-columns: minmax(0, 1fr) 80px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .sales-company-gallery-main {
   position: relative;
   min-width: 0;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 2 / 1;
   overflow: hidden;
   border: 1px solid #e1e7ef;
   border-radius: 8px;
@@ -253,15 +262,15 @@
 .sales-company-gallery-thumbs {
   display: flex;
   min-height: 0;
-  max-height: 180px;
-  flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .sales-company-gallery-thumb {
   position: relative;
-  flex: 0 0 80px;
+  flex: 0 0 56px;
+  height: 56px;
   overflow: hidden;
   border: 2px solid transparent;
   border-radius: 7px;
@@ -304,16 +313,17 @@
 
 .sales-company-payout {
   display: grid;
-  grid-template-columns: 100px minmax(0, 1fr) minmax(0, 1fr) minmax(
-      180px,
-      1.3fr
-    );
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 10px 12px;
+  margin-top: 16px;
   border-radius: 7px;
   background: #f0f6ff;
-  padding: 10px 14px;
+  padding: 12px 14px;
+}
+
+.sales-company-payout h3 {
+  grid-column: 1 / -1;
 }
 
 .sales-company-payout-field + .sales-company-payout-field {
@@ -327,15 +337,7 @@
 
 @media (max-width: 1250px) {
   .sales-company-overview-grid {
-    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-  }
-
-  .sales-company-payout {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .sales-company-payout h3 {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
   }
 }
 
@@ -352,7 +354,7 @@
   }
 
   .sales-company-gallery-body {
-    max-width: 350px;
+    max-width: 430px;
   }
 }
 

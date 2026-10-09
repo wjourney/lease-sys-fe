@@ -22,7 +22,7 @@ import {
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   api,
   dateText,
@@ -52,6 +52,11 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const { id = "" } = useParams();
   const root = useRoot();
   const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab =
+    new URLSearchParams(location.search).get("tab") === "members"
+      ? "members"
+      : "company";
   const [company, setCompany] = useState<Row>();
   const [images, setImages] = useState<Row[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -189,6 +194,15 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     setRole("");
     applyMemberFilters("", "");
   }
+  function changeTab(tab: "company" | "members") {
+    const search = new URLSearchParams(location.search);
+    if (tab === "members") search.set("tab", "members");
+    else search.delete("tab");
+    navigate(
+      { pathname: location.pathname, search: search.toString() },
+      { replace: true },
+    );
+  }
 
   if (!root.canRead("sales-companies"))
     return <Empty description={t("暂无此模块的访问权限")} />;
@@ -220,21 +234,30 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     image.previewUrl || `/api/v1/materials/${image.id}/download`;
   const overviewColumns = [
     [
+      { label: "中文名称", value: company.name },
       { label: "联系人", value: company.contactName },
       { label: "电话", value: company.phone ? maskedPhone(company.phone) : "" },
       { label: "邮箱", value: company.email },
       { label: "公司地址", value: company.address },
+      { label: "服务区域", value: company.serviceArea },
     ],
     [
-      { label: "商业登记", value: company.registrationNo },
+      { label: "英文名称", value: company.nameEn },
+      { label: "商业登记号码", value: company.registrationNo },
       {
-        label: "登记届满",
+        label: "商业登记届满日期",
         value: company.registrationExpiresOn
           ? dateText(company.registrationExpiresOn)
           : "",
       },
-      { label: "服务区域", value: company.serviceArea },
-      ...(company.nameEn ? [{ label: "英文名称", value: company.nameEn }] : []),
+      {
+        label: "开通时间",
+        value: company.serviceStartsOn ? dateText(company.serviceStartsOn) : "",
+      },
+      {
+        label: "服务到期日",
+        value: company.serviceEndsOn ? dateText(company.serviceEndsOn) : "",
+      },
     ],
   ];
   const payoutFields = [
@@ -291,248 +314,282 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       {headerHost ? createPortal(heading, headerHost) : heading}
       <Spin spinning={loading}>
         <div className="sales-company-detail-layout">
-          {root.canWrite("sales-companies") && (
-            <div>
-              <Button onClick={() => setEditingCompany(true)}>
-                {t("编辑销售公司")}
-              </Button>
-            </div>
-          )}
-          <section
-            className="sales-company-overview rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
-            aria-label={t("公司资料")}
-          >
-            <div className="sales-company-overview-grid">
-              <div className="sales-company-gallery min-w-0">
-                <div
-                  className={`sales-company-gallery-body ${images.length > 1 ? "has-thumbnails" : ""}`}
-                  aria-label={t(`公司图片（${images.length}）`)}
+          <div className="sales-company-detail-tabs flex shrink-0 items-center gap-3 border-b border-[#dfe6ef]">
+            <div
+              role="tablist"
+              aria-label={t("销售公司详情")}
+              className="flex gap-2"
+            >
+              {(
+                [
+                  ["company", "公司资料"],
+                  ["members", "成员列表"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  id={`sales-company-tab-${key}`}
+                  aria-controls={`sales-company-panel-${key}`}
+                  aria-selected={activeTab === key}
+                  onClick={() => changeTab(key)}
+                  className={`min-h-11 border-b-[3px] px-5 text-[14px] font-medium transition-colors hover:text-[#17355d] focus-visible:outline-2 focus-visible:outline-[#17355d] ${activeTab === key ? "border-[#17355d] text-[#17355d]" : "border-transparent text-[#72819a]"}`}
                 >
-                  <div className="sales-company-gallery-main">
-                    {selectedImage ? (
-                      <Image.PreviewGroup
-                        items={images.map(imageUrl)}
-                        preview={{
-                          current: selectedImageIndex,
-                          onChange: (current) => setActiveImageIndex(current),
-                        }}
+                  {t(label)}
+                </button>
+              ))}
+            </div>
+          </div>
+          {activeTab === "company" ? (
+            <section
+              id="sales-company-panel-company"
+              role="tabpanel"
+              aria-labelledby="sales-company-tab-company"
+              className="sales-company-overview rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
+            >
+              {root.canWrite("sales-companies") && (
+                <div className="mb-4 flex justify-start border-b border-[#e4eaf1] pb-4">
+                  <Button onClick={() => setEditingCompany(true)}>
+                    {t("编辑销售公司")}
+                  </Button>
+                </div>
+              )}
+              <div className="sales-company-overview-grid">
+                <div className="sales-company-gallery min-w-0">
+                  <div
+                    className={`sales-company-gallery-body ${images.length > 1 ? "has-thumbnails" : ""}`}
+                    aria-label={t(`公司图片（${images.length}）`)}
+                  >
+                    <div className="sales-company-gallery-main">
+                      {selectedImage ? (
+                        <Image.PreviewGroup
+                          items={images.map(imageUrl)}
+                          preview={{
+                            current: selectedImageIndex,
+                            onChange: (current) => setActiveImageIndex(current),
+                          }}
+                        >
+                          <Image
+                            src={imageUrl(selectedImage)}
+                            alt={
+                              selectedImage.originalName ||
+                              selectedImage.title ||
+                              t("公司图片")
+                            }
+                          />
+                        </Image.PreviewGroup>
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center gap-2 bg-[#f7f8fa] text-xs text-[#9aa6b8]">
+                          <PictureOutlined className="text-3xl" />
+                          {t("暂无公司图片")}
+                        </div>
+                      )}
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            className="sales-company-gallery-arrow left-2"
+                            aria-label={t("上一张公司图片")}
+                            onClick={() =>
+                              setActiveImageIndex(
+                                (selectedImageIndex - 1 + images.length) %
+                                  images.length,
+                              )
+                            }
+                          >
+                            <LeftOutlined />
+                          </button>
+                          <button
+                            type="button"
+                            className="sales-company-gallery-arrow right-2"
+                            aria-label={t("下一张公司图片")}
+                            onClick={() =>
+                              setActiveImageIndex(
+                                (selectedImageIndex + 1) % images.length,
+                              )
+                            }
+                          >
+                            <RightOutlined />
+                          </button>
+                          <span className="sales-company-gallery-count">
+                            {selectedImageIndex + 1}/{images.length}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {images.length > 1 && (
+                      <div
+                        className="sales-company-gallery-thumbs"
+                        aria-label={t("公司图片列表")}
                       >
-                        <Image
-                          src={imageUrl(selectedImage)}
-                          alt={
-                            selectedImage.originalName ||
-                            selectedImage.title ||
-                            t("公司图片")
-                          }
-                        />
-                      </Image.PreviewGroup>
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-2 bg-[#f7f8fa] text-xs text-[#9aa6b8]">
-                        <PictureOutlined className="text-3xl" />
-                        {t("暂无公司图片")}
+                        {images.map((image, index) => (
+                          <button
+                            key={image.id}
+                            type="button"
+                            className={`sales-company-gallery-thumb ${index === selectedImageIndex ? "is-active" : ""}`}
+                            aria-label={t(`查看第 ${index + 1} 张公司图片`)}
+                            aria-pressed={index === selectedImageIndex}
+                            onClick={() => setActiveImageIndex(index)}
+                          >
+                            <img src={imageUrl(image)} alt="" loading="lazy" />
+                            {index === 0 && <span>{t("封面")}</span>}
+                          </button>
+                        ))}
                       </div>
                     )}
-                    {images.length > 1 && (
-                      <>
-                        <button
-                          type="button"
-                          className="sales-company-gallery-arrow left-2"
-                          aria-label={t("上一张公司图片")}
-                          onClick={() =>
-                            setActiveImageIndex(
-                              (selectedImageIndex - 1 + images.length) %
-                                images.length,
-                            )
-                          }
-                        >
-                          <LeftOutlined />
-                        </button>
-                        <button
-                          type="button"
-                          className="sales-company-gallery-arrow right-2"
-                          aria-label={t("下一张公司图片")}
-                          onClick={() =>
-                            setActiveImageIndex(
-                              (selectedImageIndex + 1) % images.length,
-                            )
-                          }
-                        >
-                          <RightOutlined />
-                        </button>
-                        <span className="sales-company-gallery-count">
-                          {selectedImageIndex + 1}/{images.length}
-                        </span>
-                      </>
-                    )}
                   </div>
-                  {images.length > 1 && (
-                    <div
-                      className="sales-company-gallery-thumbs"
-                      aria-label={t("公司图片列表")}
-                    >
-                      {images.map((image, index) => (
-                        <button
-                          key={image.id}
-                          type="button"
-                          className={`sales-company-gallery-thumb ${index === selectedImageIndex ? "is-active" : ""}`}
-                          aria-label={t(`查看第 ${index + 1} 张公司图片`)}
-                          aria-pressed={index === selectedImageIndex}
-                          onClick={() => setActiveImageIndex(index)}
+                </div>
+                <div className="min-w-0">
+                  <div className="sales-company-overview-fields">
+                    {overviewColumns.map((column, index) => (
+                      <dl
+                        key={index}
+                        className="m-0 min-w-0 space-y-1.5 text-sm leading-6"
+                      >
+                        {column.map(({ label, value }) => (
+                          <div
+                            key={label}
+                            className="grid min-w-0 grid-cols-[126px_minmax(0,1fr)] gap-x-3 max-[440px]:grid-cols-[112px_minmax(0,1fr)]"
+                          >
+                            <dt className="whitespace-nowrap text-[#8190a4]">
+                              {t(label)}
+                            </dt>
+                            <dd
+                              className={`m-0 min-w-0 break-words ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
+                            >
+                              {value ? t(String(value)) : t("未填写")}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ))}
+                  </div>
+                  <div className="sales-company-payout">
+                    <h3 className="m-0 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#26344a]">
+                      <BankOutlined className="text-[#216bd9]" />
+                      {t("收款账户")}
+                    </h3>
+                    {payoutFields.map(({ label, value }) => (
+                      <div
+                        key={label}
+                        className="sales-company-payout-field flex min-w-0 items-start gap-2 text-sm"
+                      >
+                        <span className="shrink-0 text-[#8190a4]">
+                          {t(label)}
+                        </span>
+                        <span
+                          className={`min-w-0 break-words [overflow-wrap:anywhere] ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
                         >
-                          <img src={imageUrl(image)} alt="" loading="lazy" />
-                          {index === 0 && <span>{t("封面")}</span>}
-                        </button>
-                      ))}
-                    </div>
+                          {value ? t(String(value)) : t("未填写")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : (
+            <section
+              id="sales-company-panel-members"
+              role="tabpanel"
+              aria-labelledby="sales-company-tab-members"
+              className="company-member-section rounded-lg border border-[#e1e7ef] bg-white"
+            >
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 pt-4 pb-4 max-[700px]:px-4">
+                <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
+                  <label
+                    htmlFor="company-member-keyword"
+                    className="shrink-0 whitespace-nowrap text-sm text-[#8190a4]"
+                  >
+                    {t("关键词")}
+                  </label>
+                  <Input
+                    id="company-member-keyword"
+                    className="w-[280px] max-[650px]:min-w-0 max-[650px]:flex-1"
+                    value={keyword}
+                    onChange={(event) => changeKeyword(event.target.value)}
+                    onPressEnter={(event) => {
+                      if (!event.nativeEvent.isComposing)
+                        applyMemberFilters(keyword, role);
+                    }}
+                    placeholder={t("请输入关键词")}
+                    allowClear
+                  />
+                </div>
+                <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
+                  <label
+                    htmlFor="company-member-role"
+                    className="shrink-0 whitespace-nowrap text-sm text-[#8190a4]"
+                  >
+                    {t("成员角色")}
+                  </label>
+                  <Select
+                    id="company-member-role"
+                    className="w-[180px] max-[650px]:min-w-0 max-[650px]:flex-1"
+                    value={role}
+                    onChange={(value) => {
+                      setRole(value);
+                      applyMemberFilters(keyword, value);
+                    }}
+                    options={[
+                      { value: "", label: t("全部角色") },
+                      { value: "SALES_COMPANY_ADMIN", label: t("销售管理员") },
+                      { value: "SALES", label: t("销售员工") },
+                    ]}
+                  />
+                </div>
+                <div className="ml-auto flex items-center gap-2 max-[650px]:w-full max-[650px]:justify-end">
+                  <Button onClick={reset}>{t("重置")}</Button>
+                  {root.canWrite("users") && (
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setCreating(true)}
+                    >
+                      {t("新建成员账号")}
+                    </Button>
                   )}
                 </div>
               </div>
-              <div className="min-w-0">
-                <div className="sales-company-overview-fields">
-                  {overviewColumns.map((column, index) => (
-                    <dl
-                      key={index}
-                      className="m-0 min-w-0 space-y-1.5 text-sm leading-6"
-                    >
-                      {column.map(({ label, value }) => (
-                        <div
-                          key={label}
-                          className="grid min-w-0 grid-cols-[96px_minmax(0,1fr)] gap-x-3 max-[440px]:grid-cols-[80px_minmax(0,1fr)]"
-                        >
-                          <dt className="whitespace-nowrap text-[#8190a4]">
-                            {t(label)}
-                          </dt>
-                          <dd
-                            className={`m-0 min-w-0 break-words ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
-                          >
-                            {value ? t(String(value)) : t("未填写")}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  ))}
-                </div>
-                <div className="sales-company-payout">
-                  <h3 className="m-0 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#26344a]">
-                    <BankOutlined className="text-[#216bd9]" />
-                    {t("收款账户")}
-                  </h3>
-                  {payoutFields.map(({ label, value }) => (
-                    <div
-                      key={label}
-                      className="sales-company-payout-field flex min-w-0 items-start gap-2 text-sm"
-                    >
-                      <span className="shrink-0 text-[#8190a4]">
-                        {t(label)}
-                      </span>
-                      <span
-                        className={`min-w-0 break-words [overflow-wrap:anywhere] ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
-                      >
-                        {value ? t(String(value)) : t("未填写")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-          <section
-            className="company-member-section rounded-lg border border-[#e1e7ef] bg-white"
-            aria-label={t("公司成员")}
-          >
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 pt-4 pb-4 max-[700px]:px-4">
-              <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
-                <label
-                  htmlFor="company-member-keyword"
-                  className="shrink-0 whitespace-nowrap text-sm text-[#8190a4]"
-                >
-                  {t("关键词")}
-                </label>
-                <Input
-                  id="company-member-keyword"
-                  className="w-[280px] max-[650px]:min-w-0 max-[650px]:flex-1"
-                  value={keyword}
-                  onChange={(event) => changeKeyword(event.target.value)}
-                  onPressEnter={(event) => {
-                    if (!event.nativeEvent.isComposing)
-                      applyMemberFilters(keyword, role);
-                  }}
-                  placeholder={t("请输入关键词")}
-                  allowClear
+              {membersError && (
+                <RequestError
+                  className="mx-5 mb-4"
+                  type="error"
+                  showIcon
+                  message={t(membersError)}
+                />
+              )}
+              <div className="embedded-list-scroll">
+                <Table
+                  rowKey="id"
+                  onRow={(member) => ({
+                    className: "cursor-pointer",
+                    onClick: (event) => {
+                      if (shouldOpenRow(event)) viewMember(member);
+                    },
+                  })}
+                  columns={columns}
+                  dataSource={members.items}
+                  loading={membersLoading}
+                  pagination={false}
+                  scroll={{ x: 760 }}
+                  locale={{ emptyText: t("暂无成员账号") }}
+                  className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-36"
                 />
               </div>
-              <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
-                <label
-                  htmlFor="company-member-role"
-                  className="shrink-0 whitespace-nowrap text-sm text-[#8190a4]"
-                >
-                  {t("成员角色")}
-                </label>
-                <Select
-                  id="company-member-role"
-                  className="w-[180px] max-[650px]:min-w-0 max-[650px]:flex-1"
-                  value={role}
-                  onChange={(value) => {
-                    setRole(value);
-                    applyMemberFilters(keyword, value);
-                  }}
-                  options={[
-                    { value: "", label: t("全部角色") },
-                    { value: "SALES_COMPANY_ADMIN", label: t("销售管理员") },
-                    { value: "SALES", label: t("销售员工") },
-                  ]}
+              <div className="flex flex-wrap items-center justify-end gap-5 px-5 py-4 text-sm text-[#8190a4]">
+                <span>{t(`共 ${members.total} 条`)}</span>
+                <Pagination
+                  current={page}
+                  pageSize={PAGE_SIZE}
+                  total={members.total}
+                  showSizeChanger={false}
+                  onChange={setPage}
                 />
               </div>
-              <div className="ml-auto flex items-center gap-2 max-[650px]:w-full max-[650px]:justify-end">
-                <Button onClick={reset}>{t("重置")}</Button>
-                {root.canWrite("users") && (
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => setCreating(true)}
-                  >
-                    {t("新建成员账号")}
-                  </Button>
-                )}
-              </div>
-            </div>
-            {membersError && (
-              <RequestError
-                className="mx-5 mb-4"
-                type="error"
-                showIcon
-                message={t(membersError)}
-              />
-            )}
-            <div className="embedded-list-scroll">
-              <Table
-                rowKey="id"
-                onRow={(member) => ({
-                  className: "cursor-pointer",
-                  onClick: (event) => {
-                    if (shouldOpenRow(event)) viewMember(member);
-                  },
-                })}
-                columns={columns}
-                dataSource={members.items}
-                loading={membersLoading}
-                pagination={false}
-                scroll={{ x: 760 }}
-                locale={{ emptyText: t("暂无成员账号") }}
-                className="[&_.ant-table-thead_th]:!bg-[#f6f7f9] [&_.ant-table-thead_th]:!text-[#7b899e] [&_.ant-table-placeholder_.ant-table-cell]:!h-36"
-              />
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-5 px-5 py-4 text-sm text-[#8190a4]">
-              <span>{t(`共 ${members.total} 条`)}</span>
-              <Pagination
-                current={page}
-                pageSize={PAGE_SIZE}
-                total={members.total}
-                showSizeChanger={false}
-                onChange={setPage}
-              />
-            </div>
-          </section>
+            </section>
+          )}
         </div>
       </Spin>
       <Drawer
