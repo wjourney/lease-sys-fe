@@ -174,7 +174,6 @@ export function OrderDrawer({
   }, [loadDetail, initialRow?.id, detailRetry]);
 
   const [unitRows, setUnitRows] = useState<Row[]>([]);
-  const unitId = Form.useWatch("unitId", form);
   const monthlyRent = Form.useWatch("monthlyRent", form);
   const projectId = Form.useWatch("projectId", form);
   const salesCompanyId = Form.useWatch("salesCompanyId", form);
@@ -1006,9 +1005,7 @@ export function OrderDrawer({
                 }
               >
                 <Select
-                  disabled={
-                    lockedLease || !unitId || !(Number(monthlyRent) > 0)
-                  }
+                  disabled={lockedLease}
                   options={[
                     { value: "UNPAID", label: t("未付款") },
                     { value: "PARTIAL", label: t("部分付款") },
