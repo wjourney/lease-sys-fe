@@ -694,33 +694,48 @@ export function OrderDrawer({
         >
           <Section title="单位信息">
             <div className="grid grid-cols-2 gap-x-3 max-[760px]:grid-cols-1">
-              <Form.Item name="projectId" label={t("项目")}>
+              <Form.Item
+                name="projectId"
+                label={t("项目")}
+                rules={[{ required: true, message: t("请选择项目") }]}
+              >
                 <Select
                   showSearch
                   optionFilterProp="label"
                   options={projects}
                   placeholder={t("请选择项目")}
                   disabled={!!row && row.status !== "DRAFT"}
-                  onChange={() => form.setFieldValue("unitId", undefined)}
+                  onChange={() =>
+                    form.setFieldsValue({
+                      unitId: undefined,
+                      monthlyRent: undefined,
+                      depositAmount: undefined,
+                    })
+                  }
                 />
               </Form.Item>
-              <Form.Item name="unitId" label={t("单位")}>
+              <Form.Item
+                name="unitId"
+                label={t("单位")}
+                rules={[{ required: true, message: t("请选择单位") }]}
+              >
                 <Select
                   showSearch
                   optionFilterProp="label"
                   options={units}
                   onChange={(id) => {
                     const unit = unitRows.find((u) => u.id === id);
-                    if (unit?.referenceRent != null) {
-                      const rent = String(unit.referenceRent);
-                      form.setFieldsValue({
-                        monthlyRent: rent,
-                        depositAmount: suggestedDeposit(
-                          rent,
-                          form.getFieldValue("depositPlan"),
-                        ),
-                      });
-                    }
+                    const rent =
+                      unit?.referenceRent != null
+                        ? String(unit.referenceRent)
+                        : undefined;
+                    form.setFieldsValue({
+                      monthlyRent: rent,
+                      depositAmount: suggestedDeposit(
+                        rent,
+                        form.getFieldValue("depositPlan"),
+                      ),
+                    });
                   }}
                   disabled={(!!row && row.status !== "DRAFT") || !projectId}
                   placeholder={t("请选择单位")}
@@ -853,6 +868,7 @@ export function OrderDrawer({
                 name="monthlyRent"
                 label={t("实际成交月租（HKD）")}
                 rules={[
+                  { required: true, message: t("请填写实际成交月租") },
                   {
                     validator(_, value) {
                       return !value || Number(value) > 0
@@ -1121,7 +1137,7 @@ export function OrderDrawer({
             {t(
               lockedLease
                 ? "订单已有收款或租期已生效，单位、租约、销售归属及首期收款仅供查看；可修改联系方式、订单备注及未付款的佣金。"
-                : "仅名称必填。资料不足时保存为待完善订单，不占用单位；补齐单位、租期和租金后生成账单。佣金资料可后补。登记首期付款直接入账，无需财务核对。",
+                : "项目、单位和月租必填；提交后生成租期账单。佣金资料可后补。登记首期付款直接入账，无需财务核对。",
             )}
           </p>
           {row && (
