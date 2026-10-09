@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, errorMessage, Row } from "../../shared/api";
+import { api, dateText, errorMessage, Row } from "../../shared/api";
 
 export type BillFilters = {
   q?: string;
@@ -37,6 +37,13 @@ export const billStates: Record<string, string> = {
   OPEN: "待付款",
   PAID: "已付款",
 };
+export function billTitle(bill: Row): string {
+  if (bill.billTitle) return bill.billTitle;
+  const type = billTypes[bill.feeType] || bill.feeType || "账单";
+  return bill.periodStart && bill.periodEnd
+    ? `${type}—${dateText(bill.periodStart)} 至 ${dateText(bill.periodEnd)}`
+    : type;
+}
 export function useBillRequest<T>(path: string, params: Row, epoch: number) {
   const [data, setData] = useState<T>();
   const [error, setError] = useState("");

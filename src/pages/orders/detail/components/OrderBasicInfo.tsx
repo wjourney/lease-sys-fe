@@ -79,7 +79,10 @@ export function OrderBasicInfo() {
           </dl>
           <p className="my-3 text-xs leading-5 text-[#78869a]">
             {t(
-              `不足月租金：首期${row.firstPeriodProration ? "按天折算" : "按整月计算"}，末期${row.lastPeriodProration ? "按天折算" : "按整月计算"}`,
+              row.firstPeriodProration !== false &&
+                row.lastPeriodProration !== false
+                ? "不足月按天折算：月租 × 实际租用天数 ÷ 完整账期天数（包含起止日）。"
+                : `不足月租金：首期${row.firstPeriodProration !== false ? "按天折算" : "按整月计算"}，末期${row.lastPeriodProration !== false ? "按天折算" : "按整月计算"}`,
             )}
           </p>
         </Card>

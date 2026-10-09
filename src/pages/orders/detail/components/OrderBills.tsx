@@ -10,6 +10,7 @@ import { t } from "../../../../shared/i18n";
 import { OrderTable } from "./OrderTable";
 import { OrderFigures } from "./OrderFigures";
 import { rentFigures, remainingMoney } from "../order-financials";
+import { billTitle } from "../../../incomes/bill-data";
 
 const types: Record<string, string> = {
   RENT: "租金",
@@ -134,17 +135,11 @@ export function OrderBills() {
         }
         columns={[
           {
-            title: t("账期 / 类型"),
+            title: t("账单标题"),
             render: (_, bill) => (
               <div className="min-w-[160px]">
-                <div>
-                  {bill.periodStart
-                    ? `${dateText(bill.periodStart)} 至 ${dateText(bill.periodEnd)}`
-                    : t(types[bill.feeType] || bill.feeType)}
-                </div>
+                <div className="leading-6">{t(billTitle(bill))}</div>
                 <div className="mt-1 text-xs text-[#8793a4]">
-                  {bill.periodStart && t(types[bill.feeType] || bill.feeType)}
-                  {bill.periodStart && " · "}
                   {bill.recordNo}
                   {bill.status === "VOID" && t(" · 已作废")}
                 </div>

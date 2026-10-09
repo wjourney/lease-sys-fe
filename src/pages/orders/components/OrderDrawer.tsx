@@ -911,7 +911,7 @@ export function OrderDrawer({
               {t(
                 paymentIntervalMonths !== 1
                   ? `历史订单：租金每 ${paymentIntervalMonths} 个月支付一次，保留原账单规则。`
-                  : "租金按月支付，保存后自动生成整个租期的月账单。",
+                  : "租金按月支付，保存后自动生成整个租期的账单。不足月按天折算：月租 × 实际租用天数 ÷ 完整账期天数（包含起止日）。",
               )}
             </p>
           </Section>
@@ -1031,6 +1031,7 @@ export function OrderDrawer({
                       const rent = Number(form.getFieldValue("monthlyRent"));
                       const firstRent =
                         end.isBefore(next.subtract(1, "day")) &&
+                        (row?.firstPeriodProration ?? true) &&
                         (row?.lastPeriodProration ?? true)
                           ? (rent * (end.diff(start, "day") + 1)) /
                             next.diff(start, "day")
