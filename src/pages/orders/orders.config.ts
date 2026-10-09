@@ -9,7 +9,7 @@ import {
 } from "../../shared/resource-config";
 export const OrderConfig: Config = {
   title: "订单管理",
-  description: "管理租赁订单，跟进收款、合同及交还进度",
+  description: "管理租赁订单、续约、收款与合同",
   fields: [
     {
       ...source("unitId", "租赁单位", "units"),
@@ -61,7 +61,6 @@ export const OrderConfig: Config = {
         OTHER: "其他",
       }),
     },
-    date("moveInOn", "办理入住日期"),
     {
       key: "paymentIntervalMonths",
       label: "付款周期（月）",

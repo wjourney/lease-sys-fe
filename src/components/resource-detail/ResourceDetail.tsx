@@ -139,7 +139,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   const tabs: NonNullable<TabsProps["items"]> = [
     {
       key: "basic",
-      label: t("基本资料"),
+      label: t(resource === "orders" ? "订单资料" : "基本资料"),
       children: resource === "orders" ? <OrderBasicInfo /> : detail,
     },
   ];
@@ -190,13 +190,7 @@ export const ResourceDetail = observer(function ResourceDetail({
           />
         ) : (
           <>
-            {resource === "orders" ? (
-              <OrderDetailHeader
-                editable={editable}
-                onEdit={() => setEdit(true)}
-                actions={actions}
-              />
-            ) : (
+            {resource !== "orders" && (
               <>
                 {headerHost &&
                   createPortal(
@@ -293,6 +287,20 @@ export const ResourceDetail = observer(function ResourceDetail({
               className={
                 resource === "orders"
                   ? "order-detail-tabs mx-auto w-full max-w-[1320px]"
+                  : undefined
+              }
+              renderTabBar={
+                resource === "orders"
+                  ? (props, DefaultTabBar) => (
+                      <>
+                        <DefaultTabBar {...props} />
+                        <OrderDetailHeader
+                          editable={editable}
+                          onEdit={() => setEdit(true)}
+                          actions={actions}
+                        />
+                      </>
+                    )
                   : undefined
               }
               activeKey={tab}

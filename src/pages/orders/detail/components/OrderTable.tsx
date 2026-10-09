@@ -11,6 +11,7 @@ export function OrderTable({
   expandable,
   summary,
   supplementary,
+  pageSize = 6,
 }: {
   rows: Row[];
   columns: TableProps<Row>["columns"];
@@ -19,9 +20,13 @@ export function OrderTable({
   expandable?: TableProps<Row>["expandable"];
   summary?: ReactNode;
   supplementary?: ReactNode;
+  pageSize?: number;
 }) {
   const [page, setPage] = useState(1);
-  const current = Math.min(page, Math.max(1, Math.ceil(rows.length / 12)));
+  const current = Math.min(
+    page,
+    Math.max(1, Math.ceil(rows.length / pageSize)),
+  );
   return (
     <div className="embedded-resource-list overflow-hidden rounded-lg border border-[#e5eaf0] bg-white">
       <div className="flex min-h-14 items-center justify-between gap-3 border-b border-[#edf0f4] px-6 py-3">
@@ -34,14 +39,14 @@ export function OrderTable({
           size="small"
           rowKey="id"
           columns={columns}
-          dataSource={rows.slice((current - 1) * 12, current * 12)}
+          dataSource={rows.slice((current - 1) * pageSize, current * pageSize)}
           pagination={false}
           scroll={{ x: "max-content" }}
           expandable={expandable}
         />
       </div>
       {supplementary && <div className="px-5 pb-4">{supplementary}</div>}
-      {rows.length > 12 && (
+      {rows.length > pageSize && (
         <div className="flex items-center justify-end gap-4 border-t border-[#edf0f4] px-5 py-3">
           <span className="text-sm text-[#8793a4]">
             {t(`共 ${rows.length} 条`)}
@@ -49,7 +54,7 @@ export function OrderTable({
           <Pagination
             current={current}
             total={rows.length}
-            pageSize={12}
+            pageSize={pageSize}
             showSizeChanger={false}
             onChange={setPage}
           />

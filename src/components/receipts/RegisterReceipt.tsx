@@ -1,4 +1,4 @@
-import { App, Button, Tooltip } from "antd";
+import { App, Button, Tooltip, type ButtonProps } from "antd";
 import { useState } from "react";
 import { ActionForm } from "../forms/ActionForm";
 import { financialFields } from "../resource-detail/financial-fields";
@@ -13,10 +13,12 @@ export function RegisterReceipt({
   bills,
   orderId,
   payerName,
+  buttonType = "primary",
 }: {
   bills: Row[];
   orderId?: string;
   payerName: string;
+  buttonType?: ButtonProps["type"];
 }) {
   const [key, setKey] = useState<string>();
   const root = useRoot();
@@ -66,7 +68,7 @@ export function RegisterReceipt({
     <>
       <Button
         size="small"
-        type="primary"
+        type={buttonType}
         onClick={() => setKey(crypto.randomUUID())}
       >
         {t(multiple ? "登记收款 / 分配账单" : "登记收款")}

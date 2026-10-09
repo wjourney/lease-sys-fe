@@ -2,6 +2,24 @@ import { describe, expect, it } from "vitest";
 import { errorMessage } from "./api";
 
 describe("errorMessage", () => {
+  it("distinguishes occupied renewal dates from stale order revisions", () => {
+    expect(
+      errorMessage({
+        response: {
+          status: 409,
+          data: { message: "该单位在所选租期已被占用" },
+        },
+      }),
+    ).toBe("该单位在所选租期已有订单，请调整到期日。");
+    expect(
+      errorMessage({
+        response: {
+          status: 409,
+          data: { message: "订单已更新，请刷新后重新续约" },
+        },
+      }),
+    ).toBe("内容已被修改，请刷新后重试");
+  });
   it("does not mistake missing API endpoints for deleted business data", () => {
     const hint = errorMessage({
       response: {

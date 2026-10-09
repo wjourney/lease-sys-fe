@@ -1,123 +1,178 @@
-import { FileOutlined, FilePdfOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Space } from "antd";
+import { PlayCircleFilled } from "@ant-design/icons";
+import { Button, Card, Space, Table } from "antd";
+import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import {
+  MediaGalleryModal,
+  type MediaCategory,
+} from "../../../projects/detail/components/MediaGalleryModal";
 
-function FileRow({ file }: { file: Row }) {
-  const { navigate } = useRecordDetail();
-  const isPdf = /\.pdf$/i.test(file.originalName || file.title || "");
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf0f4] px-6 py-4 last:border-b-0">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded bg-[#f3f6fa] text-lg text-[#506480]">
-          {isPdf ? (
-            <FilePdfOutlined aria-hidden />
-          ) : (
-            <FileOutlined aria-hidden />
-          )}
-        </span>
-        <div className="min-w-0">
-          <div className="truncate font-medium text-[#263650]">
-            {t(file.title || file.originalName || "未命名文件")}
-          </div>
-          <div className="mt-0.5 text-xs text-[#8793a4]">
-            {file.category === "CONTRACT" ? t("系统生成") : t("上传于")} ·{" "}
-            {dateText(file.createdAt)}
-          </div>
-        </div>
-      </div>
-      <Space size={4}>
-        {file.previewUrl && (
-          <Button
-            type="link"
-            size="small"
-            href={file.previewUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t("预览")}
-          </Button>
-        )}
-        {file.downloadUrl && (
-          <Button
-            type="link"
-            size="small"
-            href={file.downloadUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t("下载")}
-          </Button>
-        )}
-        <Button
-          type="link"
-          size="small"
-          onClick={() => navigate(`/materials/${file.id}`)}
-        >
-          {t("详情")}
-        </Button>
-      </Space>
-    </div>
-  );
-}
-
+const mediaUrl = (file: Row) =>
+  file.previewUrl ||
+  file.downloadUrl ||
+  `/api/v1/materials/${file.id}/download`;
 export function OrderFiles() {
-  const { row, id, root, setMaterial } = useRecordDetail();
+  const { row } = useRecordDetail();
+  const [preview, setPreview] = useState<{
+    category: MediaCategory;
+    index: number;
+  }>();
   const files: Row[] = row.materials ?? [];
-  const contracts = files.filter(
+  const photos = files.filter(
     (file) =>
-      file.category === "CONTRACT" || file.id === row.currentContractMaterialId,
+      file.category !== "CONTRACT" &&
+      (file.category === "PHOTO" || file.mimeType?.startsWith("image/")),
   );
-  const others = files.filter((file) => !contracts.includes(file));
+  const videos = files.filter(
+    (file) =>
+      file.category !== "CONTRACT" &&
+      (file.category === "VIDEO" || file.mimeType?.startsWith("video/")),
+  );
+  const documents = files.filter(
+    (file) => !photos.includes(file) && !videos.includes(file),
+  );
+  const hasMedia = photos.length > 0 || videos.length > 0;
+  const items =
+    preview?.category === "PHOTO"
+      ? photos
+      : preview?.category === "VIDEO"
+        ? videos
+        : documents;
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <Card
-        title={t("合同与协议")}
-        className="!border-[#e5eaf0] [&_.ant-card-head]:!min-h-14 [&_.ant-card-body]:!p-0"
+        title={t("合同与附件")}
+        className="!border-[#e5eaf0] [&_.ant-card-head]:!min-h-14 [&_.ant-card-body]:!p-5"
       >
-        {contracts.length ? (
-          <div className="max-h-[55dvh] overflow-y-auto">
-            {contracts.map((file) => (
-              <FileRow key={file.id} file={file} />
-            ))}
+        <div
+          className={`grid items-start gap-5 ${hasMedia ? "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : ""}`}
+        >
+          <div className="min-w-0 overflow-x-auto">
+            <Table<Row>
+              size="small"
+              rowKey="id"
+              pagination={false}
+              dataSource={documents}
+              locale={{ emptyText: t("暂无合同或文件") }}
+              columns={[
+                {
+                  title: t("文件名称"),
+                  render: (_, file) => (
+                    <span className="break-all">
+                      {t(file.title || file.originalName || "未命名文件")}
+                    </span>
+                  ),
+                },
+                {
+                  title: t("上传日期"),
+                  dataIndex: "createdAt",
+                  width: 116,
+                  render: dateText,
+                },
+                {
+                  title: t("操作"),
+                  width: 132,
+                  render: (_, file) => (
+                    <Space size={4}>
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() =>
+                          setPreview({
+                            category: "PROJECT_FILE",
+                            index: documents.indexOf(file),
+                          })
+                        }
+                      >
+                        {t("预览")}
+                      </Button>
+                      <Button
+                        type="link"
+                        size="small"
+                        href={`${file.downloadUrl || `/api/v1/materials/${file.id}/download`}${(file.downloadUrl || "").includes("?") ? "&" : "?"}download=1`}
+                      >
+                        {t("下载")}
+                      </Button>
+                    </Space>
+                  ),
+                },
+              ]}
+            />
           </div>
-        ) : (
-          <p className="m-0 px-6 py-5 text-sm text-[#8793a4]">
-            {t(
-              root.salesRole
-                ? "暂无合同文件，请联系平台管理员。"
-                : "暂无合同文件，可通过页面上方的“下载合同”生成。",
-            )}
-          </p>
-        )}
+          {hasMedia && (
+            <div className="min-w-0 space-y-4 xl:border-l xl:border-[#edf0f4] xl:pl-5">
+              {(
+                [
+                  ["PHOTO", "图片", photos],
+                  ["VIDEO", "视频", videos],
+                ] as const
+              )
+                .filter(([, , list]) => list.length > 0)
+                .map(([category, title, list]) => (
+                  <section key={category}>
+                    <h3 className="m-0 mb-2 text-sm font-medium text-[#263650]">
+                      {t(title)}（{list.length}）
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {list.map((file, index) => (
+                        <button
+                          key={file.id}
+                          type="button"
+                          title={file.originalName || file.title}
+                          aria-label={t(`预览${title} ${index + 1}`)}
+                          onClick={() => setPreview({ category, index })}
+                          className="group relative h-[88px] w-[132px] overflow-hidden rounded-md border border-[#dfe6ee] bg-[#f5f7fa] hover:border-[#193a68] focus-visible:outline-2 focus-visible:outline-[#193a68]"
+                        >
+                          {category === "PHOTO" ? (
+                            <img
+                              src={mediaUrl(file)}
+                              alt={
+                                file.originalName || file.title || t("订单图片")
+                              }
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <video
+                                src={mediaUrl(file)}
+                                muted
+                                preload="metadata"
+                                aria-hidden
+                                className="h-full w-full object-cover"
+                              />
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
+                                <PlayCircleFilled
+                                  className="text-3xl"
+                                  aria-hidden
+                                />
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+            </div>
+          )}
+        </div>
       </Card>
-      <Card
-        title={t("付款凭证与其他资料")}
-        extra={
-          root.canWrite("materials") && (
-            <Button
-              icon={<PlusOutlined aria-hidden />}
-              onClick={() => setMaterial({ orderId: id })}
-            >
-              {t("上传资料")}
-            </Button>
-          )
+      <MediaGalleryModal
+        category={preview?.category}
+        title={
+          preview?.category === "PHOTO"
+            ? "订单图片"
+            : preview?.category === "VIDEO"
+              ? "订单视频"
+              : "合同与附件"
         }
-        className="!border-[#e5eaf0] [&_.ant-card-head]:!min-h-14 [&_.ant-card-body]:!p-0"
-      >
-        {others.length ? (
-          <div className="max-h-[55dvh] overflow-y-auto">
-            {others.map((file) => (
-              <FileRow key={file.id} file={file} />
-            ))}
-          </div>
-        ) : (
-          <p className="m-0 px-6 py-5 text-sm text-[#8793a4]">
-            {t("暂无相关资料")}
-          </p>
-        )}
-      </Card>
-    </div>
+        items={items}
+        initialIndex={preview?.index ?? 0}
+        onClose={() => setPreview(undefined)}
+      />
+    </>
   );
 }

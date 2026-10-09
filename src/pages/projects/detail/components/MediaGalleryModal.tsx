@@ -46,7 +46,7 @@ export function MediaGalleryModal({
       title={t(title)}
       width={900}
       onCancel={onClose}
-      destroyOnClose
+      destroyOnHidden
       footer={
         <div className="flex justify-end gap-2">
           <Button onClick={onClose}>{t("关闭")}</Button>

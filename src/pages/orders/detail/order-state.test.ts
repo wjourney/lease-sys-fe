@@ -1,22 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { orderLabel, orderNotice } from "./order-state";
-describe("financial closure display", () => {
-  it("shows ended tenancy as awaiting settlement while money is outstanding", () => {
-    const order = {
-      status: "COMPLETED",
-      handoverStatus: "DONE",
-      settlement: { complete: false, blockers: ["1 笔付款单未付清"] },
-    };
-    expect(orderLabel(order)).toBe("已结束");
-    expect(orderNotice(order)).toContain("1 笔付款单未付清");
+import { orderLabel } from "./order-state";
+describe("order detail lifecycle label", () => {
+  it("keeps ended orders ended while refunds remain outstanding", () => {
+    expect(
+      orderLabel({
+        status: "COMPLETED",
+        settlement: { complete: false, blockers: ["退款未付清"] },
+      }),
+    ).toBe("已结束");
   });
-  it("shows completion only when server confirms closure conditions", () => {
-    const order = {
-      status: "COMPLETED",
-      handoverStatus: "DONE",
-      settlement: { complete: true, blockers: [] },
-    };
-    expect(orderLabel(order)).toBe("已结束");
-    expect(orderNotice(order)).toContain("均已结清");
+  it("uses the same simple status for legacy in-progress orders", () => {
+    for (const status of ["DRAFT", "PENDING", "ACTIVE"])
+      expect(orderLabel({ status })).toBe("进行中");
+    expect(orderLabel({ status: "CLOSED" })).toBe("已结束");
   });
 });

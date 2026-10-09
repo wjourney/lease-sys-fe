@@ -709,3 +709,30 @@
 .finance-filter-panel > .finance-filters + .finance-filters {
   margin-top: 0;
 }
+
+/* Order detail uses one content scroller; avoid nested table height limits. */
+.order-detail-tabs .list-scroll-area {
+  max-height: none;
+  overflow-y: visible;
+}
+.order-detail-tabs .ant-card-head-title {
+  font-size: 16px;
+}
+.order-detail-tabs .ant-table-tbody > tr > td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+@media (max-width: 1000px) {
+  .order-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .order-figures > div {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+@media (max-width: 520px) {
+  .order-figures {
+    grid-template-columns: 1fr !important;
+  }
+}

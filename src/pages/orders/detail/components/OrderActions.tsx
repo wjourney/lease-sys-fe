@@ -1,109 +1,56 @@
-import { OrderDeleteButton } from "../../components/OrderDeleteButton";
-import { DownloadOutlined, MoreOutlined } from "@ant-design/icons";
-import { Button, Dropdown } from "antd";
-import type { MenuProps } from "antd";
+import { ReloadOutlined, StopOutlined } from "@ant-design/icons";
+import { Button, Space, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
-import { api, errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { orderDisplayStatus } from "../../../../shared/order-status";
+import { OrderLeaseAction } from "./OrderLeaseAction";
 
 export const OrderActions = observer(function OrderActions() {
-  const [preparingContract, setPreparingContract] = useState(false);
-  const { row, root, modal, run, id, openAction, message, setTab, navigate } =
-    useRecordDetail();
-
-  async function downloadContract() {
-    setPreparingContract(true);
-    try {
-      if (!root.salesRole) {
-        await api.post(`/orders/${id}/contract/ensure`);
-        root.invalidate();
-      }
-      const link = document.createElement("a");
-      link.href = `/api/v1/orders/${id}/contract/download`;
-      link.download = `${row.orderNo} 租赁合同.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      message.error(errorMessage(error));
-    } finally {
-      setPreparingContract(false);
-    }
-  }
-
-  const items: MenuProps["items"] = [
-    ...(root.manageOrders && row.actions?.moveIn
-      ? [{ key: "moveIn", label: t("办理入住") }]
-      : []),
-    ...(root.manageOrders && row.actions?.terminate
-      ? [{ key: "terminate", label: t("登记退租") }]
-      : []),
-    ...(root.manageOrders && row.actions?.handover
-      ? [{ key: "handover", label: t("确认交还") }]
-      : []),
-    ...(root.canWrite("orders") && row.actions?.close
-      ? [{ key: "close", label: t("关闭订单"), danger: true }]
-      : []),
-  ];
-
-  function onMore({ key }: { key: string }) {
-    if (key === "moveIn") {
-      openAction(
-        "办理入住",
-        [
-          { key: "date", label: "实际入住日期", type: "date" },
-          { key: "reason", label: "说明", type: "textarea" },
-        ],
-        `/orders/${id}/move-in`,
-      );
-    } else if (key === "close") {
-      modal.confirm({
-        title: t("确认关闭此订单？"),
-        content: t("关闭后释放单位占用，并作废未收款的账单。"),
-        onOk: () => run(`/orders/${id}/close`),
-      });
-    } else if (key === "terminate") {
-      openAction(
-        "登记退租",
-        [
-          { key: "date", label: "实际退租日期", type: "date" },
-          { key: "reason", label: "退租原因", type: "textarea" },
-        ],
-        `/orders/${id}/terminate`,
-      );
-    } else if (key === "handover") {
-      openAction(
-        "登记交还",
-        [
-          { key: "date", label: "交还日期", type: "date" },
-          { key: "note", label: "交还说明", type: "textarea" },
-        ],
-        `/orders/${id}/handover`,
-      );
-    }
-  }
-
+  const { row, root } = useRecordDetail();
+  const [action, setAction] = useState<"renew" | "terminate">();
+  if (!root.manageOrders) return null;
+  const ended = orderDisplayStatus(row.status) === "ENDED";
+  const unavailable = row.status === "DRAFT";
+  const hint = ended
+    ? t("租约已结束")
+    : unavailable
+      ? t("请先完善租约资料")
+      : undefined;
   return (
     <>
-      <Button disabled={row.status === "DRAFT"}
-        icon={<DownloadOutlined aria-hidden />}
-        loading={preparingContract}
-        onClick={() => void downloadContract()}
-      >
-        {t("下载合同")}
-      </Button>
-      {root.finance && (row.actions?.settle || row.actions?.refund) && (
-        <Button type="primary" onClick={() => setTab("deposit")}>
-          {t(row.actions?.refund ? "处理退款" : "处理押金")}
-        </Button>
-      )}
-      <OrderDeleteButton order={row} onDeleted={() => navigate("/orders", { replace: true })} />
-      {items.length > 0 && (
-        <Dropdown menu={{ items, onClick: onMore }} trigger={["click"]}>
-          <Button icon={<MoreOutlined aria-hidden />}>{t("更多")}</Button>
-        </Dropdown>
+      <Space size={8} wrap>
+        <Tooltip title={hint}>
+          <span>
+            <Button
+              icon={<ReloadOutlined aria-hidden />}
+              disabled={ended || unavailable}
+              onClick={() => setAction("renew")}
+            >
+              {t("一键续约")}
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={hint}>
+          <span>
+            <Button
+              danger
+              icon={<StopOutlined aria-hidden />}
+              disabled={ended || unavailable}
+              onClick={() => setAction("terminate")}
+            >
+              {t("提前结束租约")}
+            </Button>
+          </span>
+        </Tooltip>
+      </Space>
+      {action && (
+        <OrderLeaseAction
+          key={action}
+          action={action}
+          onClose={() => setAction(undefined)}
+        />
       )}
     </>
   );

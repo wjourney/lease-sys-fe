@@ -1,4 +1,4 @@
-import { Card, Empty, Timeline } from "antd";
+import { OrderTable } from "./OrderTable";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { amount, Row } from "../../../../shared/api";
 import { dateTimeText } from "../../../../shared/date-time";
@@ -12,19 +12,16 @@ const names: Record<string, string> = {
   paidAmount: "已付金额",
   receivedOn: "收款日期",
   paidOn: "付款日期",
-  actualTerminationOn: "退租日期",
-  handedOverAt: "交还日期",
-  handoverNote: "交还说明",
+  actualTerminationOn: "实际结束日期",
   depositDeductionAmount: "扣款合计",
   depositDeductionReason: "结算说明",
   depositSettledAt: "押金结算时间",
   bankReference: "交易流水",
   remark: "说明",
-  handoverStatus: "交还状态",
 };
 const states: Record<string, string> = {
   PENDING: "待确认",
-  ACTIVE: "租赁中",
+  ACTIVE: "进行中",
   COMPLETED: "已结束",
   CLOSED: "已关闭",
   CONFIRMED: "已确认",
@@ -44,6 +41,20 @@ function text(value: unknown, key: string) {
   if (/amount/i.test(key) || key === "monthlyRent") return amount(value);
   return states[String(value)] ?? String(value);
 }
+function operationText(log: Row) {
+  const subject = String(log.subject || "");
+  const resource = subject.startsWith("CM")
+    ? "佣金"
+    : subject.startsWith("B")
+      ? "账单"
+      : subject.startsWith("E")
+        ? "支出"
+        : "订单";
+  const action =
+    { CREATE: "创建", UPDATE: "修改", DELETE: "删除" }[String(log.action)] ||
+    "更新";
+  return `${log.reason || `${action}${resource}`}${subject ? ` · ${subject}` : ""}`;
+}
 export function OrderHistory() {
   const { logs } = useRecordDetail();
   const labels = {
@@ -55,10 +66,11 @@ export function OrderHistory() {
     ...names,
   };
   const entries = logs
-    .filter((log) => log.action !== "CREATE")
     .map((log) => ({
       log,
-      changes: Object.entries(log.changes ?? {})
+      changes: Object.entries(
+        log.action === "CREATE" ? {} : (log.changes ?? {}),
+      )
         .filter(
           ([key, c]) =>
             labels[key] &&
@@ -74,42 +86,60 @@ export function OrderHistory() {
           after: (c as Row).after,
         })),
     }))
-    .filter((x) => x.log.reason || x.changes.length)
-    .reverse();
+    .sort((a, b) =>
+      String(b.log.operatedAt ?? "").localeCompare(
+        String(a.log.operatedAt ?? ""),
+      ),
+    );
   return (
-    <Card
-      title={t("订单变更记录")}
-      className="!border-[#e5eaf0] [&_.ant-card-head]:!min-h-14 [&_.ant-card-body]:!px-6 [&_.ant-card-body]:!py-6"
-    >
-      {entries.length ? (
-        <Timeline
-          className="[&_.ant-timeline-item]:!pb-7 [&_.ant-timeline-item-last]:!pb-0"
-          items={entries.map(({ log, changes }) => ({
-            key: log.eventId,
-            color: "#193a68",
-            children: (
-              <div className="border-b border-[#edf0f4] pb-5 last:border-0">
-                <div className="text-sm text-[#7b8a9e]">
-                  {dateTimeText(log.operatedAt)} · {t(log.actorName || "系统")}
-                </div>
-                <div className="mt-1 font-medium text-[#253650]">
-                  {t(log.reason || log.subject || "修改订单信息")}
-                </div>
-                <div className="mt-1 text-sm leading-6 text-[#718197]">
-                  {changes.map((c) => (
-                    <div key={c.key}>
-                      {t(labels[c.key])}：{t(text(c.before, c.key))} →{" "}
-                      {t(text(c.after, c.key))}
-                    </div>
-                  ))}
-                </div>
+    <OrderTable
+      title="操作记录"
+      rows={entries.map(({ log, changes }, index) => ({
+        ...log,
+        id: log.eventId || `${log.operatedAt}:${index}`,
+        displayChanges: changes,
+      }))}
+      actions={
+        <span className="text-sm text-[#78869a]">
+          {t(`共 ${entries.length} 条`)}
+        </span>
+      }
+      columns={[
+        {
+          title: t("时间"),
+          dataIndex: "operatedAt",
+          width: 180,
+          render: (value) => dateTimeText(value),
+        },
+        {
+          title: t("操作内容"),
+          render: (_, log) => (
+            <div className="max-w-[700px] whitespace-normal leading-6">
+              <div>{t(operationText(log))}</div>
+              <div className="text-xs text-[#78869a]">
+                {log.displayChanges.map((change: Row) => (
+                  <div key={change.key}>
+                    {t(labels[change.key])}：
+                    {t(text(change.before, change.key))} →{" "}
+                    {t(text(change.after, change.key))}
+                  </div>
+                ))}
               </div>
-            ),
-          }))}
-        />
-      ) : (
-        <Empty description={t("暂无变更记录")} />
-      )}
-    </Card>
+            </div>
+          ),
+        },
+        {
+          title: t("操作人"),
+          dataIndex: "actorName",
+          width: 140,
+          render: (value) => t(value || "系统"),
+        },
+      ]}
+      supplementary={
+        <p className="mb-0 mt-4 border-t border-[#edf0f4] pt-4 text-xs text-[#8793a4]">
+          {t("操作记录由系统自动保存")}
+        </p>
+      }
+    />
   );
 }
