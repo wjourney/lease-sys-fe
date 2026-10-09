@@ -148,7 +148,7 @@
   }
 
   .sales-company-detail-layout {
-    gap: 20px;
+    gap: 16px;
     max-height: 100%;
   }
 
@@ -168,6 +168,202 @@
 
   .viewport-detail-content footer {
     display: none;
+  }
+}
+
+.sales-company-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.sales-company-gallery {
+  border-right: 1px solid #e1e7ef;
+  padding-right: 24px;
+}
+
+.sales-company-gallery-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.sales-company-gallery-body.has-thumbnails {
+  grid-template-columns: minmax(0, 1fr) 86px;
+}
+
+.sales-company-gallery-main {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border: 1px solid #e1e7ef;
+  border-radius: 8px;
+}
+
+.sales-company-gallery-main .ant-image,
+.sales-company-gallery-main .ant-image-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sales-company-gallery-main .ant-image-img {
+  object-fit: cover;
+}
+
+.sales-company-gallery-arrow {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #172b4d;
+  box-shadow: 0 1px 4px #172b4d33;
+  cursor: pointer;
+}
+
+.sales-company-gallery-arrow:hover {
+  background: #f1f5fa;
+}
+
+.sales-company-gallery-arrow:focus-visible,
+.sales-company-gallery-thumb:focus-visible {
+  outline: 2px solid #216bd9;
+  outline-offset: 2px;
+}
+
+.sales-company-gallery-count {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  border-radius: 4px;
+  background: #172b4dcc;
+  padding: 2px 7px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.sales-company-gallery-thumbs {
+  display: flex;
+  min-height: 0;
+  max-height: 210px;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.sales-company-gallery-thumb {
+  position: relative;
+  flex: 0 0 86px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 7px;
+  padding: 0;
+  background: #f7f8fa;
+  cursor: pointer;
+}
+
+.sales-company-gallery-thumb.is-active {
+  border-color: #172b4d;
+}
+
+.sales-company-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sales-company-gallery-thumb span {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  border-radius: 3px;
+  background: #172b4de6;
+  padding: 1px 4px;
+  color: #fff;
+  font-size: 11px;
+}
+
+.sales-company-overview-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.sales-company-overview-fields > dl + dl {
+  border-left: 1px solid #e1e7ef;
+  padding-left: 24px;
+}
+
+.sales-company-payout {
+  display: grid;
+  grid-template-columns: 140px repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  border-radius: 7px;
+  background: #f0f6ff;
+  padding: 12px 16px;
+}
+
+.sales-company-payout > div + div {
+  border-left: 1px solid #d6e4f7;
+  padding-left: 16px;
+}
+
+@media (max-width: 1250px) {
+  .sales-company-overview-grid {
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  }
+
+  .sales-company-payout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sales-company-payout h3 {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 950px) {
+  .sales-company-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sales-company-gallery {
+    border-right: 0;
+    border-bottom: 1px solid #e1e7ef;
+    padding-right: 0;
+    padding-bottom: 16px;
+  }
+
+  .sales-company-gallery-body {
+    max-width: 440px;
+  }
+}
+
+@media (max-width: 650px) {
+  .sales-company-overview-fields,
+  .sales-company-payout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .sales-company-overview-fields > dl + dl,
+  .sales-company-payout > div + div {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .sales-company-payout h3 {
+    grid-column: auto;
   }
 }
 

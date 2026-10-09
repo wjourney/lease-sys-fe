@@ -1,8 +1,11 @@
 import { RequestError } from "../../../components/feedback/RequestError";
 import {
   ArrowLeftOutlined,
+  BankOutlined,
+  LeftOutlined,
   PictureOutlined,
   PlusOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -51,6 +54,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
   const navigate = useNavigate();
   const [company, setCompany] = useState<Row>();
   const [images, setImages] = useState<Row[]>([]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [members, setMembers] = useState<Page>({
@@ -108,6 +112,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     options("materials", { salesCompanyId: id })
       .then((rows) => {
         if (!active) return;
+        setActiveImageIndex(0);
         setImages(
           rows
             .filter(
@@ -209,34 +214,33 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       <h1 className="record-header-title">{t(company.name)}</h1>
     </div>
   );
-  const featuredImage = images[0];
-  const otherImages = images.filter((image) => image.id !== featuredImage?.id);
+  const selectedImageIndex = Math.min(activeImageIndex, images.length - 1);
+  const selectedImage = images[selectedImageIndex];
+  const imageUrl = (image: Row) =>
+    image.previewUrl || `/api/v1/materials/${image.id}/download`;
   const overviewColumns = [
     [
+      { label: "联系人", value: company.contactName },
+      { label: "电话", value: company.phone ? maskedPhone(company.phone) : "" },
+      { label: "邮箱", value: company.email },
+      { label: "公司地址", value: company.address },
+    ],
+    [
+      { label: "商业登记", value: company.registrationNo },
       {
-        label: "公司",
-        value: (
-          <>
-            {t(blank(company.name))}
-            {company.nameEn ? ` / ${company.nameEn}` : ""}
-          </>
-        ),
+        label: "登记届满",
+        value: company.registrationExpiresOn
+          ? dateText(company.registrationExpiresOn)
+          : "",
       },
-      { label: "联系人", value: t(blank(company.contactName)) },
+      { label: "服务区域", value: company.serviceArea },
+      ...(company.nameEn ? [{ label: "英文名称", value: company.nameEn }] : []),
     ],
-    [
-      { label: "电话", value: maskedPhone(company.phone) },
-      { label: "邮箱", value: blank(company.email) },
-      { label: "地址", value: t(blank(company.address)) },
-      { label: "服务区域", value: t(blank(company.serviceArea)) },
-    ],
-    [
-      { label: "商业登记", value: blank(company.registrationNo) },
-      { label: "登记届满", value: dateText(company.registrationExpiresOn) },
-      { label: "开户银行", value: t(blank(company.payoutBankName)) },
-      { label: "账户名称", value: t(blank(company.payoutAccountName)) },
-      { label: "银行账号", value: blank(company.payoutAccountNo) },
-    ],
+  ];
+  const payoutFields = [
+    { label: "开户银行", value: company.payoutBankName },
+    { label: "账户名称", value: company.payoutAccountName },
+    { label: "银行账号", value: company.payoutAccountNo },
   ];
   const columns = [
     {
@@ -287,13 +291,165 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
       {headerHost ? createPortal(heading, headerHost) : heading}
       <Spin spinning={loading}>
         <div className="sales-company-detail-layout">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap gap-2">
-              {root.canWrite("sales-companies") && (
-                <Button onClick={() => setEditingCompany(true)}>
-                  {t("编辑销售公司")}
-                </Button>
-              )}
+          {root.canWrite("sales-companies") && (
+            <div>
+              <Button onClick={() => setEditingCompany(true)}>
+                {t("编辑销售公司")}
+              </Button>
+            </div>
+          )}
+          <section
+            className="sales-company-overview rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
+            aria-label={t("公司资料")}
+          >
+            <div className="sales-company-overview-grid">
+              <div className="sales-company-gallery min-w-0">
+                <h2 className="mb-3 text-base font-semibold text-[#26344a]">
+                  {t(`公司图片（${images.length}）`)}
+                </h2>
+                <div
+                  className={`sales-company-gallery-body ${images.length > 1 ? "has-thumbnails" : ""}`}
+                >
+                  <div className="sales-company-gallery-main">
+                    {selectedImage ? (
+                      <Image.PreviewGroup
+                        items={images.map(imageUrl)}
+                        preview={{
+                          current: selectedImageIndex,
+                          onChange: (current) => setActiveImageIndex(current),
+                        }}
+                      >
+                        <Image
+                          src={imageUrl(selectedImage)}
+                          alt={
+                            selectedImage.originalName ||
+                            selectedImage.title ||
+                            t("公司图片")
+                          }
+                        />
+                      </Image.PreviewGroup>
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-2 bg-[#f7f8fa] text-xs text-[#9aa6b8]">
+                        <PictureOutlined className="text-3xl" />
+                        {t("暂无公司图片")}
+                      </div>
+                    )}
+                    {images.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          className="sales-company-gallery-arrow left-2"
+                          aria-label={t("上一张公司图片")}
+                          onClick={() =>
+                            setActiveImageIndex(
+                              (selectedImageIndex - 1 + images.length) %
+                                images.length,
+                            )
+                          }
+                        >
+                          <LeftOutlined />
+                        </button>
+                        <button
+                          type="button"
+                          className="sales-company-gallery-arrow right-2"
+                          aria-label={t("下一张公司图片")}
+                          onClick={() =>
+                            setActiveImageIndex(
+                              (selectedImageIndex + 1) % images.length,
+                            )
+                          }
+                        >
+                          <RightOutlined />
+                        </button>
+                        <span className="sales-company-gallery-count">
+                          {selectedImageIndex + 1}/{images.length}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {images.length > 1 && (
+                    <div
+                      className="sales-company-gallery-thumbs"
+                      aria-label={t("公司图片列表")}
+                    >
+                      {images.map((image, index) => (
+                        <button
+                          key={image.id}
+                          type="button"
+                          className={`sales-company-gallery-thumb ${index === selectedImageIndex ? "is-active" : ""}`}
+                          aria-label={t(`查看第 ${index + 1} 张公司图片`)}
+                          aria-pressed={index === selectedImageIndex}
+                          onClick={() => setActiveImageIndex(index)}
+                        >
+                          <img src={imageUrl(image)} alt="" loading="lazy" />
+                          {index === 0 && <span>{t("封面")}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <h2 className="mb-3 text-base font-semibold text-[#26344a]">
+                  {t("基本资料")}
+                </h2>
+                <div className="sales-company-overview-fields">
+                  {overviewColumns.map((column, index) => (
+                    <dl
+                      key={index}
+                      className="m-0 min-w-0 space-y-2 text-sm leading-6"
+                    >
+                      {column.map(({ label, value }) => (
+                        <div
+                          key={label}
+                          className="grid min-w-0 grid-cols-[96px_minmax(0,1fr)] gap-x-3 max-[440px]:grid-cols-[80px_minmax(0,1fr)]"
+                        >
+                          <dt className="whitespace-nowrap text-[#8190a4]">
+                            {t(label)}
+                          </dt>
+                          <dd
+                            className={`m-0 min-w-0 break-words ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
+                          >
+                            {value ? t(String(value)) : t("未填写")}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ))}
+                </div>
+                <div className="sales-company-payout">
+                  <h3 className="m-0 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#26344a]">
+                    <BankOutlined className="text-[#216bd9]" />
+                    {t("收款账户")}
+                  </h3>
+                  {payoutFields.map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex min-w-0 items-center gap-2 text-sm"
+                    >
+                      <span className="shrink-0 text-[#8190a4]">
+                        {t(label)}
+                      </span>
+                      <span
+                        className={`min-w-0 truncate ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
+                        title={value ? String(value) : undefined}
+                      >
+                        {value ? t(String(value)) : t("未填写")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+          <section
+            className="company-member-section rounded-lg border border-[#e1e7ef] bg-white"
+            aria-label={t("公司成员")}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3 max-[700px]:px-4">
+              <h2 className="m-0 text-base font-semibold text-[#26344a]">
+                {t(`公司成员（${members.total}）`)}
+              </h2>
               {root.canWrite("users") && (
                 <Button
                   type="primary"
@@ -304,98 +460,17 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                 </Button>
               )}
             </div>
-          </div>
-          <section
-            className="rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
-            aria-label={t("公司资料")}
-          >
-            <div className="grid grid-cols-[152px_minmax(0,1fr)] gap-5 max-[700px]:grid-cols-1 max-[700px]:gap-4">
-              <div className="min-w-0">
-                {featuredImage ? (
-                  <Image.PreviewGroup>
-                    <div className="relative h-[140px] w-[152px]">
-                      <Image
-                        src={
-                          featuredImage.previewUrl ||
-                          `/api/v1/materials/${featuredImage.id}/download`
-                        }
-                        alt={
-                          featuredImage.originalName ||
-                          featuredImage.title ||
-                          t("公司图片")
-                        }
-                        width={152}
-                        height={140}
-                        className="rounded-md border border-[#e1e7ef] object-cover"
-                      />
-                      {otherImages.length > 0 && (
-                        <div className="absolute bottom-2 left-2 flex max-w-[136px] gap-1 overflow-x-auto rounded bg-white/80 p-1">
-                          {otherImages.map((image) => (
-                            <Image
-                              key={image.id}
-                              src={
-                                image.previewUrl ||
-                                `/api/v1/materials/${image.id}/download`
-                              }
-                              alt={
-                                image.originalName ||
-                                image.title ||
-                                t("公司图片")
-                              }
-                              width={30}
-                              height={28}
-                              className="rounded border border-[#e1e7ef] object-cover"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </Image.PreviewGroup>
-                ) : (
-                  <div className="flex h-[140px] w-[152px] flex-col items-center justify-center gap-2 rounded-md border border-[#e1e7ef] bg-[#f7f8fa] text-xs text-[#9aa6b8]">
-                    <PictureOutlined className="text-3xl" />
-                    {t("暂无公司图片")}
-                  </div>
-                )}
-              </div>
-              <div className="grid min-w-0 grid-cols-3 gap-6 max-[1050px]:grid-cols-1">
-                {overviewColumns.map((column, index) => (
-                  <dl
-                    key={index}
-                    className={`m-0 min-w-0 space-y-2 text-sm leading-6 ${index > 0 ? "border-l border-[#e1e7ef] pl-6 max-[1050px]:border-0 max-[1050px]:pl-0" : ""}`}
-                  >
-                    {column.map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] gap-x-3 max-[440px]:grid-cols-1"
-                      >
-                        <dt className="whitespace-nowrap text-[#8190a4]">
-                          {t(label)}：
-                        </dt>
-                        <dd className="m-0 min-w-0 break-words font-medium text-[#26344a]">
-                          {value}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                ))}
-              </div>
-            </div>
-          </section>
-          <section
-            className="company-member-section rounded-lg border border-[#e1e7ef] bg-white"
-            aria-label={t("公司成员")}
-          >
-            <div className="flex flex-wrap items-end gap-3 p-5 max-[700px]:p-4">
-              <div className="w-[280px] max-[650px]:w-full">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 pb-4 max-[700px]:px-4">
+              <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
                 <label
                   htmlFor="company-member-keyword"
-                  className="mb-2 block text-sm text-[#8190a4]"
+                  className="shrink-0 whitespace-nowrap text-sm text-[#8190a4]"
                 >
                   {t("关键词")}
                 </label>
                 <Input
                   id="company-member-keyword"
+                  className="w-[280px] max-[650px]:min-w-0 max-[650px]:flex-1"
                   value={keyword}
                   onChange={(event) => changeKeyword(event.target.value)}
                   onPressEnter={(event) => {
@@ -406,16 +481,16 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                   allowClear
                 />
               </div>
-              <div className="w-[180px] max-[650px]:w-full">
+              <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
                 <label
                   htmlFor="company-member-role"
-                  className="mb-2 block text-sm text-[#8190a4]"
+                  className="shrink-0 whitespace-nowrap text-sm text-[#8190a4]"
                 >
                   {t("成员角色")}
                 </label>
                 <Select
                   id="company-member-role"
-                  className="w-full"
+                  className="w-[180px] max-[650px]:min-w-0 max-[650px]:flex-1"
                   value={role}
                   onChange={(value) => {
                     setRole(value);
