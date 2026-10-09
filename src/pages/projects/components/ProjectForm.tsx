@@ -1,3 +1,4 @@
+import { syncMaterials } from "../../../shared/material-sync";
 import { RecordFormPage } from "../../../components/record-editor/RecordFormPage";
 import { useUnsavedChanges } from "../../../components/record-editor/useUnsavedChanges";
 import { RequestError } from "../../../components/feedback/RequestError";
@@ -13,7 +14,6 @@ import {
   projectPayload,
   projectUploadCategories,
   projectUploadsFromMaterials,
-  uploadProjectFiles,
 } from "../project-data";
 import { ProjectUnitTypesFields } from "./ProjectUnitTypesFields";
 import {
@@ -122,29 +122,13 @@ export function ProjectForm({
       current.current = data;
       saved.current = true;
       recordSaved = true;
-      const selectedKeys = new Set(
-        projectUploadCategories.flatMap((category) =>
-          uploads[category].map((file) => `${category}:${file.uid}`),
-        ),
-      );
-      for (const [key, id] of uploaded.current) {
-        if (selectedKeys.has(key) || removed.current.has(id)) continue;
-        await api.delete(`/materials/${id}`, {
-          data: { reason: "项目编辑时移除资料" },
-        });
-        removed.current.add(id);
-      }
-      await uploadProjectFiles(
-        data.id,
+      await syncMaterials(
+        { projectId: data.id },
         uploads,
         uploaded.current,
+        removed.current,
         (completed, total) => setUploadProgress({ completed, total }),
       );
-      const imageIds = uploads.PHOTO.map((file) =>
-        uploaded.current.get(`PHOTO:${file.uid}`),
-      );
-      if (imageIds.some((id) => !id)) throw new Error("项目图片上传未完成");
-      await api.patch(`/projects/${data.id}/images/order`, { ids: imageIds });
       message.success(row ? "项目修改已保存" : "项目创建成功");
       root.invalidate();
       allowLeave();

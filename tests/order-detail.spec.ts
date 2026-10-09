@@ -27,7 +27,9 @@ test("order tabs use detail data, remove filters and show readable tenant fields
   page.on("pageerror", (e) => errors.push(e.message));
   await login(page);
   const orders = await call(page, "GET", "/orders");
-  const order = orders.items.find((o: any) => o.status === "PENDING");
+  const order = orders.items.find((o: any) =>
+    ["PENDING", "ACTIVE"].includes(o.status),
+  );
   const requests: string[] = [];
   page.on("request", (r) => {
     if (r.method() === "GET" && r.url().includes("/api/v1/"))
@@ -78,7 +80,7 @@ test("order tabs use detail data, remove filters and show readable tenant fields
   expect(errors).toEqual([]);
 });
 
-test("new order requires commission and defaults to one-deposit one-payment", async ({
+test("new order requires project, unit and rent and defaults to one-deposit one-payment", async ({
   page,
 }) => {
   await login(page);
@@ -96,12 +98,9 @@ test("new order requires commission and defaults to one-deposit one-payment", as
       .getByText("押一付一"),
   ).toBeVisible();
   await drawer.getByRole("button", { name: "提交订单" }).click();
-  await expect(
-    drawer
-      .locator(".ant-form-item")
-      .filter({ hasText: "佣金总额（HKD）" })
-      .getByText("请填写此项"),
-  ).toBeVisible();
+  await expect(drawer.locator("label.ant-form-item-required")).toHaveCount(4);
+  await expect(drawer.locator("#projectId_help")).toContainText("请选择项目");
+  await expect(drawer.locator("#unitId_help")).toContainText("请选择单位");
 });
 
 test("editing contact details does not resend unchanged payment or commission", async ({
@@ -110,7 +109,9 @@ test("editing contact details does not resend unchanged payment or commission", 
   await login(page);
   const orders = await call(page, "GET", "/orders");
   const order = orders.items.find(
-    (item: any) => item.status === "PENDING" && item.tenantType === "PERSON",
+    (item: any) =>
+      ["PENDING", "ACTIVE"].includes(item.status) &&
+      item.tenantType === "PERSON",
   );
   expect(order).toBeTruthy();
   const detail = await call(page, "GET", `/orders/${order.id}`);
@@ -141,7 +142,9 @@ test("editing payment and commission saves both through the order API", async ({
   await login(page);
   const orders = await call(page, "GET", "/orders");
   const order = orders.items.find(
-    (item: any) => item.status === "PENDING" && item.tenantType === "PERSON",
+    (item: any) =>
+      ["PENDING", "ACTIVE"].includes(item.status) &&
+      item.tenantType === "PERSON",
   );
   expect(order).toBeTruthy();
   await page.goto(`/orders/${order.id}`);
@@ -174,21 +177,19 @@ test("deposit settlement and partial refund are usable from the order", async ({
   const template = await call(page, "GET", `/units/${existing.unitId}`);
   const unit = await call(page, "POST", "/units", {
     projectId: template.projectId,
-    unitNo: `结算界面-${Date.now()}`,
+    roomNo: `结算界面-${Date.now()}`,
     unitTypeCode: template.unitTypeCode,
-    area: "30",
-    referenceRent: "1000",
-    minRent: "900",
-    maxRent: "1500",
     minLeaseMonths: 1,
   });
   const order = await call(page, "POST", "/orders", {
+    projectId: template.projectId,
     unitId: unit.id,
     salesUserId: existing.salesUserId,
     tenantType: "PERSON",
     tenantName: "结算界面租客",
     monthlyRent: "1000",
     depositAmount: "500",
+    depositPlan: "OTHER",
     commission: {
       mode: "ONE_TIME",
       amount: "100",
@@ -226,10 +227,6 @@ test("deposit settlement and partial refund are usable from the order", async ({
   });
   await page.goto(`/orders/${order.id}`);
   await page.getByRole("tab", { name: "收款与账单" }).click();
-  await expect(
-    page.locator(".embedded-resource-list").getByText("录单时的首期填报"),
-  ).toBeVisible();
-  await expect(page.getByText("仅为录单声明，不代表财务确认")).toBeVisible();
   await page.getByRole("button", { name: "处理押金", exact: true }).click();
   await page.getByRole("button", { name: "办理押金结算", exact: true }).click();
   const drawer = page.locator(".ant-drawer-content");
@@ -240,12 +237,10 @@ test("deposit settlement and partial refund are usable from the order", async ({
   await drawer.getByLabel("结算说明", { exact: true }).fill("核对完成");
   await drawer.getByRole("button", { name: "确认结算", exact: true }).click();
   await expect(drawer).toHaveCount(0);
-  await expect(
-    page.getByText("押金待退款", { exact: true }).first(),
-  ).toBeVisible();
+
   await page.getByRole("button", { name: "登记退款", exact: true }).click();
   await drawer.getByLabel("本次退款金额", { exact: true }).fill("150");
-  await expect(drawer.getByLabel("平台账户", { exact: true })).toBeDisabled();
+  await expect(drawer.getByLabel("银行账户", { exact: true })).toBeDisabled();
   await expect(drawer.getByText(account.name, { exact: true })).toBeVisible();
   await drawer.getByRole("button", { name: "确认提交", exact: true }).click();
   await expect(drawer).toHaveCount(0);

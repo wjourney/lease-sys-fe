@@ -118,15 +118,20 @@ export function ProjectDetailView({
                 </Button>
                 <Tooltip
                   title={
-                    Number(row.unitCount) > 0
-                      ? t("请先删除项目下的单位")
+                    row.canDelete === false ||
+                    (row.canDelete === undefined && Number(row.unitCount) > 0)
+                      ? t(row.deleteReason || "请先删除项目下的单位")
                       : undefined
                   }
                 >
                   <span>
                     <Button
                       danger
-                      disabled={Number(row.unitCount) > 0}
+                      disabled={
+                        row.canDelete === false ||
+                        (row.canDelete === undefined &&
+                          Number(row.unitCount) > 0)
+                      }
                       icon={<DeleteOutlined aria-hidden />}
                       onClick={() => setShowDelete(true)}
                     >

@@ -1,3 +1,4 @@
+import { syncMaterials } from "../../../../shared/material-sync";
 import { RequestError } from "../../../../components/feedback/RequestError";
 import { App, Button, DatePicker, Drawer, Form, Input, Select } from "antd";
 import type { UploadFile } from "antd";
@@ -30,9 +31,9 @@ export function SalesCompanyDrawer({
   const [images, setImages] = useState<UploadFile[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [createdCompany, setCreatedCompany] = useState<Row>();
+  const currentCompany = useRef<Row | undefined>(company);
   const [imagesLoading, setImagesLoading] = useState(!!company);
-  const existingImageIds = useRef(new Set<string>());
+  const removedImageIds = useRef(new Set<string>());
   const currentRevision = useRef<number>(company?.revision ?? 0);
   const uploaded = useRef(new Map<string, string>());
   useEffect(() => {
@@ -78,7 +79,6 @@ export function SalesCompanyDrawer({
         const existing = rows.filter(
           (row) => ["LOGO", "PHOTO"].includes(row.category) && row.storageKey,
         );
-        existingImageIds.current = new Set(existing.map((row) => row.id));
         const sorted = existing.sort(
           (a, b) =>
             Number(a.sortOrder || 0) - Number(b.sortOrder || 0) ||
@@ -87,7 +87,8 @@ export function SalesCompanyDrawer({
             String(a.createdAt).localeCompare(String(b.createdAt)),
         );
         setImages(sorted.map(toFile));
-        for (const row of sorted) uploaded.current.set(row.id, row.id);
+        for (const row of sorted)
+          uploaded.current.set(`PHOTO:${row.id}`, row.id);
       })
       .catch((cause) => {
         if (active) setError(t(`图片加载失败：${errorMessage(cause)}`));
@@ -108,30 +109,10 @@ export function SalesCompanyDrawer({
       )
     : undefined;
 
-  async function uploadImages(companyId: string) {
-    for (const [index, file] of images.entries()) {
-      if (!file.originFileObj || uploaded.current.has(file.uid)) continue;
-      const payload = new FormData();
-      payload.append(
-        "payload",
-        JSON.stringify({
-          salesCompanyId: companyId,
-          category: "PHOTO",
-          title: file.name,
-          visibility: "SHARED",
-          sortOrder: index,
-        }),
-      );
-      payload.append("file", file.originFileObj, file.name);
-      const { data } = await api.post<Row>("/materials/upload", payload);
-      uploaded.current.set(file.uid, data.id);
-    }
-  }
-
   async function save(values: Row) {
     setSaving(true);
     setError("");
-    let savedCompany = createdCompany;
+    let savedCompany = currentCompany.current;
     let detailsSaved = false;
     try {
       const serviceStartsOn = (
@@ -168,35 +149,26 @@ export function SalesCompanyDrawer({
         )?.format("YYYY-MM-DD"),
         ...(!root.companyAdmin ? { serviceStartsOn, serviceEndsOn } : {}),
       };
-      if (company) {
+      if (savedCompany) {
         savedCompany = (
-          await api.patch<Row>(`/sales-companies/${company.id}`, {
+          await api.patch<Row>(`/sales-companies/${savedCompany.id}`, {
             ...payload,
             revision: currentRevision.current,
           })
         ).data;
         currentRevision.current = savedCompany.revision;
-      } else if (!savedCompany) {
+      } else {
         savedCompany = (await api.post<Row>("/sales-companies", payload)).data;
-        setCreatedCompany(savedCompany);
+        currentRevision.current = savedCompany.revision;
       }
+      currentCompany.current = savedCompany;
       detailsSaved = true;
-      await uploadImages(savedCompany!.id);
-      if (company) {
-        const retained = new Set(images.map((file) => file.uid));
-        for (const id of existingImageIds.current) {
-          if (retained.has(id)) continue;
-          await api.delete(`/materials/${id}`, {
-            data: { reason: t("更新销售公司图片") },
-          });
-          existingImageIds.current.delete(id);
-        }
-      }
-      const imageIds = images.map((file) => uploaded.current.get(file.uid));
-      if (imageIds.some((id) => !id)) throw new Error(t("公司图片上传未完成"));
-      await api.patch(`/sales-companies/${savedCompany!.id}/images/order`, {
-        ids: imageIds,
-      });
+      await syncMaterials(
+        { salesCompanyId: savedCompany!.id },
+        { PHOTO: images },
+        uploaded.current,
+        removedImageIds.current,
+      );
       message.success(t(company ? "销售公司修改成功" : "销售公司创建成功"));
       root.invalidate();
       onSaved();
@@ -211,14 +183,23 @@ export function SalesCompanyDrawer({
     }
   }
 
+  function close() {
+    if (saving) return;
+    if (
+      currentCompany.current &&
+      (!company || currentCompany.current.revision !== company.revision)
+    ) {
+      root.invalidate();
+      onSaved();
+    } else onClose();
+  }
+
   return (
     <Drawer
       open
       width="min(880px, 100vw)"
       title={t(company ? "编辑销售公司" : "新建销售公司")}
-      onClose={() => {
-        if (!saving) onClose();
-      }}
+      onClose={close}
       closable={!saving}
       maskClosable={!saving}
       destroyOnClose
@@ -229,7 +210,7 @@ export function SalesCompanyDrawer({
       }}
       footer={
         <div className="flex justify-end gap-2">
-          <Button onClick={onClose} disabled={saving}>
+          <Button onClick={close} disabled={saving}>
             {t("取消")}
           </Button>
           <Button
@@ -240,8 +221,8 @@ export function SalesCompanyDrawer({
             {t(
               company
                 ? "保存修改"
-                : createdCompany
-                  ? "继续上传图片"
+                : currentCompany.current
+                  ? "保存并重试图片"
                   : "创建公司",
             )}
           </Button>

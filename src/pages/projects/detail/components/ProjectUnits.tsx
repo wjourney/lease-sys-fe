@@ -218,8 +218,10 @@ const UnitGrid = observer(function UnitGrid({
                     </Button>
                     <Tooltip
                       title={
-                        unit.occupancyStatus === "OCCUPIED"
-                          ? t("已租单位不能删除")
+                        unit.canDelete === false ||
+                        (unit.canDelete === undefined &&
+                          unit.occupancyStatus === "OCCUPIED")
+                          ? t(unit.deleteReason || "已租单位不能删除")
                           : undefined
                       }
                     >
@@ -228,7 +230,11 @@ const UnitGrid = observer(function UnitGrid({
                           size="small"
                           className="w-full"
                           danger
-                          disabled={unit.occupancyStatus === "OCCUPIED"}
+                          disabled={
+                            unit.canDelete === false ||
+                            (unit.canDelete === undefined &&
+                              unit.occupancyStatus === "OCCUPIED")
+                          }
                           icon={<DeleteOutlined aria-hidden />}
                           onClick={() => onDeleteUnit(unit)}
                         >

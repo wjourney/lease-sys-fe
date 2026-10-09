@@ -77,7 +77,7 @@ export function orderNotice(row: Row) {
     return "租赁进行中；退租并交还单位后办理押金结算。";
   return row.firstPaymentStatus === "PENDING"
     ? "存在历史待核对收款，请先处理；新登记收款提交后直接入账。"
-    : "首期租金及约定押金确认收齐后，订单自动生效。";
+    : "订单进行中；收款进度可在账单中查看，退租并交还单位后办理结算。";
 }
 export function cents(value: unknown) {
   return Math.round(Number(value ?? 0) * 100);

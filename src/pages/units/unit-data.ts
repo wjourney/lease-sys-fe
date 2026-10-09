@@ -1,5 +1,6 @@
+import { syncMaterials } from "../../shared/material-sync";
 import type { UploadFile } from "antd";
-import { api, Row } from "../../shared/api";
+import { Row } from "../../shared/api";
 import type { UnitMedia, UnitMediaCategory } from "./components/UnitMediaField";
 
 export const unitMediaCategories: UnitMediaCategory[] = [
@@ -41,35 +42,5 @@ export async function syncUnitMedia(
   uploaded: Map<string, string>,
   removed: Set<string>,
 ) {
-  const selected = new Set(
-    unitMediaCategories.flatMap((category) =>
-      media[category].map((file) => `${category}:${file.uid}`),
-    ),
-  );
-  for (const [key, id] of uploaded) {
-    if (selected.has(key) || removed.has(id)) continue;
-    await api.delete(`/materials/${id}`, {
-      data: { reason: "编辑单位时移除文件" },
-    });
-    removed.add(id);
-  }
-  for (const category of unitMediaCategories) {
-    for (const file of media[category]) {
-      const key = `${category}:${file.uid}`;
-      if (!file.originFileObj || uploaded.has(key)) continue;
-      const data = new FormData();
-      data.append(
-        "payload",
-        JSON.stringify({
-          unitId,
-          category,
-          title: file.name,
-          visibility: "SHARED",
-        }),
-      );
-      data.append("file", file.originFileObj, file.name);
-      const { data: item } = await api.post<Row>("/materials/upload", data);
-      uploaded.set(key, item.id);
-    }
-  }
+  await syncMaterials({ unitId }, media, uploaded, removed);
 }

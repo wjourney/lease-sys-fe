@@ -127,8 +127,10 @@ export const ProjectGrid = observer(function ProjectGrid({
                       </Button>
                       <Tooltip
                         title={
-                          Number(row.unitCount) > 0
-                            ? t("请先删除项目下的单位")
+                          row.canDelete === false ||
+                          (row.canDelete === undefined &&
+                            Number(row.unitCount) > 0)
+                            ? t(row.deleteReason || "请先删除项目下的单位")
                             : undefined
                         }
                       >
@@ -137,7 +139,11 @@ export const ProjectGrid = observer(function ProjectGrid({
                             size="small"
                             className="w-full"
                             danger
-                            disabled={Number(row.unitCount) > 0}
+                            disabled={
+                              row.canDelete === false ||
+                              (row.canDelete === undefined &&
+                                Number(row.unitCount) > 0)
+                            }
                             icon={<DeleteOutlined aria-hidden />}
                             onClick={() => setDeleting(row)}
                           >

@@ -253,16 +253,10 @@ export function OrderDrawer({
         setCompanies(
           withCurrentChoice(
             root.canRead("sales-companies")
-              ? companyRows
-                  .filter(
-                    (company) =>
-                      company.status === "ACTIVE" ||
-                      company.id === row?.salesCompanyId,
-                  )
-                  .map((company) => ({
-                    value: company.id,
-                    label: company.name,
-                  }))
+              ? companyRows.map((company) => ({
+                  value: company.id,
+                  label: company.name,
+                }))
               : root.user?.salesCompanyId
                 ? [
                     {

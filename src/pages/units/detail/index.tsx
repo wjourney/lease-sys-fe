@@ -179,8 +179,10 @@ export default observer(function UnitDetailPage() {
                 </Button>
                 <Tooltip
                   title={
-                    detail.occupancyStatus === "OCCUPIED"
-                      ? t("已租单位不能删除")
+                    detail.canDelete === false ||
+                    (detail.canDelete === undefined &&
+                      detail.occupancyStatus === "OCCUPIED")
+                      ? t(detail.deleteReason || "已租单位不能删除")
                       : undefined
                   }
                 >
@@ -188,7 +190,11 @@ export default observer(function UnitDetailPage() {
                     <Button
                       danger
                       icon={<DeleteOutlined aria-hidden />}
-                      disabled={detail.occupancyStatus === "OCCUPIED"}
+                      disabled={
+                        detail.canDelete === false ||
+                        (detail.canDelete === undefined &&
+                          detail.occupancyStatus === "OCCUPIED")
+                      }
                       onClick={() => setShowDelete(true)}
                     >
                       {t("删除单位")}

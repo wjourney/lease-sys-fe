@@ -189,7 +189,7 @@ test("unit edit preserves the project's filters and pagination on save", async (
 }) => {
   const writes = await mockApi(page);
   const origin =
-    "/projects/project?status=AVAILABLE&unitTypeCode=LARGE&sort=asc&q=海景&page=2";
+    "/projects/project?tab=units&status=AVAILABLE&unitTypeCode=LARGE&sort=asc&q=海景&page=2";
   await page.goto(origin);
   await page
     .locator(".project-card")
@@ -200,6 +200,8 @@ test("unit edit preserves the project's filters and pagination on save", async (
   await expect(page.locator("#projectId")).toBeDisabled();
   await page.locator("#roomNo").fill("1203");
   await page.getByRole("button", { name: "保存单位" }).click();
+  await expect(page).toHaveURL(/\/projects\/project\/units\/unit$/);
+  await page.getByRole("button", { name: "返回上级", exact: true }).click();
   await expect
     .poll(() =>
       decodeURI(new URL(page.url()).pathname + new URL(page.url()).search),
@@ -263,7 +265,7 @@ test("create project submits through the independent page", async ({
     }
   }
   await page.getByRole("button", { name: "创建项目", exact: true }).click();
-  await expect(page).toHaveURL(/\/projects$/);
+  await expect(page).toHaveURL(/\/projects\/project$/);
   expect(writes[0]).toMatchObject({
     path: "/projects",
     method: "POST",
@@ -324,7 +326,7 @@ test("new unit keeps project selected and supports narrow-screen creation", asyn
   expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.width + 1);
   expect(geometry.footerBottom).toBeLessThanOrEqual(geometry.height + 1);
   await page.getByRole("button", { name: "保存单位" }).click();
-  await expect(page).toHaveURL(/\/projects\/project$/);
+  await expect(page).toHaveURL(/\/projects\/project\/units\/unit$/);
   expect(writes[0]).toMatchObject({
     path: "/units",
     method: "POST",

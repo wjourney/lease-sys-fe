@@ -140,7 +140,7 @@ async function mock(page: Page, role = "SUPER_ADMIN") {
   return writes;
 }
 
-test("new order accepts company name alone and shows no other required fields", async ({
+test("new order requires project, unit and monthly rent and starts unpaid", async ({
   page,
 }) => {
   const writes = await mock(page);
@@ -158,7 +158,7 @@ test("new order accepts company name alone and shows no other required fields", 
   await expect(
     drawer.getByText("每月佣金（HKD）", { exact: true }),
   ).toBeVisible();
-  await expect(drawer.locator("label.ant-form-item-required")).toHaveCount(1);
+  await expect(drawer.locator("label.ant-form-item-required")).toHaveCount(4);
   await expect(drawer.getByText("更多账单设置", { exact: true })).toHaveCount(
     0,
   );
@@ -168,11 +168,20 @@ test("new order accepts company name alone and shows no other required fields", 
     ),
   ).toHaveCount(0);
   await drawer.getByRole("button", { name: "提交订单" }).click();
+  await expect(
+    drawer.locator("#projectId_help").getByText("请选择项目", { exact: true }),
+  ).toBeVisible();
+  expect(writes).toHaveLength(0);
+  await drawer.locator("#projectId").click();
+  await page.getByTitle("海湾项目", { exact: true }).click();
+  await drawer.locator("#unitId").click();
+  await page.getByTitle("A101", { exact: true }).click();
+  await drawer.getByRole("button", { name: "提交订单" }).click();
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].body.tenantName).toBe("仅名称公司");
   expect(writes[0].body.paymentIntervalMonths).toBe(1);
-  expect(writes[0].body.unitId).toBeUndefined();
-  expect(writes[0].body.monthlyRent).toBeUndefined();
+  expect(writes[0].body.unitId).toBe(unitId);
+  expect(Number(writes[0].body.monthlyRent)).toBe(15000);
   expect(writes[0].body.commission.amount).toBeUndefined();
   expect(writes[0].body.commission.mode).toBe("RECURRING_MONTHLY");
   expect(writes[0].body.initialPayment.paid).toBe(false);
@@ -186,7 +195,7 @@ test("draft edit shares optional fields, unit prefill and direct first-payment d
   await page.getByRole("button", { name: /编\s*辑/, exact: true }).click();
   const drawer = page.locator(".ant-drawer-content");
   await expect(drawer.locator("#tenantName")).toHaveValue("海湾公司");
-  await expect(drawer.locator("label.ant-form-item-required")).toHaveCount(1);
+  await expect(drawer.locator("label.ant-form-item-required")).toHaveCount(4);
   await expect(drawer.getByText("更多账单设置", { exact: true })).toHaveCount(
     0,
   );

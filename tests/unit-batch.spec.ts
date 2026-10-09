@@ -108,7 +108,7 @@ test("paste preserves leading zeroes, preview checks server and creates minimal 
     fullPage: true,
   });
   await page.getByRole("button", { name: "确认批量创建" }).click();
-  await expect(page).toHaveURL(`/projects/${projectId}`);
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
   expect(writes[1].body.requestId).toBe(writes[0].body.requestId);
   expect(writes[1].body.rows).toEqual(
     ["01", "02", "03"].map((roomNo) => ({
@@ -186,7 +186,7 @@ test("network failure survives reload and retries the exact batch once", async (
   ).toBeDisabled();
   await page.reload();
   await page.getByRole("button", { name: "重试并确认创建结果" }).click();
-  await expect(page).toHaveURL(`/projects/${projectId}`);
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
   expect(writes).toHaveLength(2);
   expect(writes[0].body).toEqual(writes[1].body);
 });

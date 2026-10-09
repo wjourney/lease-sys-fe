@@ -1,6 +1,6 @@
 import type { UploadFile } from "antd";
 import dayjs from "dayjs";
-import { api, Row } from "../../shared/api";
+import { Row } from "../../shared/api";
 import type {
   ProjectUploadCategory,
   ProjectUploads,
@@ -126,47 +126,4 @@ export function projectPayload(values: Row, currentExtra: Row = {}): Row {
     extra,
     ...(values.status ? { status: values.status } : {}),
   };
-}
-
-export async function uploadProjectFiles(
-  projectId: string,
-  uploads: ProjectUploads,
-  uploaded: Map<string, string>,
-  onProgress?: (completed: number, total: number) => void,
-) {
-  const total = projectUploadCategories.reduce(
-    (count, category) =>
-      count + uploads[category].filter((file) => !!file.originFileObj).length,
-    0,
-  );
-  let completed = 0;
-  onProgress?.(completed, total);
-  for (const category of projectUploadCategories) {
-    for (const [index, file] of uploads[category].entries()) {
-      const key = `${category}:${file.uid}`;
-      if (file.originFileObj) {
-        if (!uploaded.has(key)) {
-          const data = new FormData();
-          data.append(
-            "payload",
-            JSON.stringify({
-              projectId,
-              category,
-              title: file.name,
-              visibility: "SHARED",
-              ...(category === "PHOTO" ? { sortOrder: index } : {}),
-            }),
-          );
-          data.append("file", file.originFileObj, file.name);
-          const { data: material } = await api.post<Row>(
-            "/materials/upload",
-            data,
-          );
-          uploaded.set(key, material.id);
-        }
-        completed += 1;
-        onProgress?.(completed, total);
-      }
-    }
-  }
 }
