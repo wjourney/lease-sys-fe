@@ -125,7 +125,10 @@ export function errorMessage(error: unknown): string {
   if (e.code === "ERR_NETWORK" || e.message === "Network Error")
     return "网络连接失败，请检查网络后重试";
   const status = e.response?.status;
-  if (status === 429) return "操作过于频繁，请稍后重试";
+  if (status === 429)
+    return e.response?.data?.message === "尝试过多，请 15 分钟后重试"
+      ? "登录尝试过多，请 15 分钟后重试"
+      : "操作过于频繁，请稍后重试";
   if (status && status >= 500) return "服务暂时不可用，请稍后再试";
   const serverMessage = e.response?.data?.message;
   if (
@@ -141,7 +144,17 @@ export function errorMessage(error: unknown): string {
   )
     return "该记录已关联业务，无法删除。可改为停用。";
   if (status === 401) return "登录状态已失效，请重新登录";
-  if (status === 403) return "当前账号没有操作权限";
+  if (status === 403) {
+    const hints: Record<string, string> = {
+      "尝试过多，请 15 分钟后重试": "登录尝试过多，请 15 分钟后重试",
+      "请求校验失败，请刷新页面": "请求校验失败，请刷新页面后重试",
+      请求来源不被允许: "当前访问地址未获允许，请使用系统配置的地址登录",
+    };
+    return (
+      (typeof serverMessage === "string" && hints[serverMessage]) ||
+      "当前账号没有操作权限"
+    );
+  }
   if (status === 404) return "操作暂时无法完成，请稍后再试";
   if (status === 409) return "内容已被修改，请刷新后重试";
   if (status === 413) return "文件过大，请选择较小的文件";

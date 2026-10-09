@@ -55,6 +55,32 @@ describe("errorMessage", () => {
     expect(errorMessage(hint)).toBe(hint);
   });
 
+  it("distinguishes login throttling and request validation from permissions", () => {
+    for (const status of [403, 429]) {
+      expect(
+        errorMessage({
+          response: { status, data: { message: "尝试过多，请 15 分钟后重试" } },
+        }),
+      ).toBe("登录尝试过多，请 15 分钟后重试");
+    }
+    expect(
+      errorMessage({
+        response: {
+          status: 403,
+          data: { message: "请求校验失败，请刷新页面" },
+        },
+      }),
+    ).toBe("请求校验失败，请刷新页面后重试");
+    expect(
+      errorMessage({
+        response: { status: 403, data: { message: "请求来源不被允许" } },
+      }),
+    ).toContain("访问地址未获允许");
+    expect(
+      errorMessage({ response: { status: 403, data: { message: "unknown" } } }),
+    ).toBe("当前账号没有操作权限");
+  });
+
   it("uses a safe fallback for unknown errors", () => {
     expect(errorMessage(new Error("Unexpected token <"))).toBe(
       "操作未完成，请稍后再试",
