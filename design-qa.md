@@ -200,3 +200,32 @@ final result: blocked
 - [x] No actionable P0/P1/P2 findings remain.
 
 final result: passed
+
+## 2026-10-09 — Compact common uploads and per-row editing
+
+Source: `/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-42cbc0b1-2eaf-42f7-a356-fe0922bfb496.png` (1536 × 1024).
+Implementation: `/tmp/lease-batch-design-desktop.png` (1536 × 1024 content crop from 1744 × 1024 CSS viewport, deviceScaleFactor 1). Narrow capture: `/tmp/lease-batch-design-mobile.png` (390 × 844).
+Combined full-view comparison: `/tmp/lease-batch-design-comparison.png`; focused type-strip comparison: `/tmp/lease-batch-type-comparison.png`.
+State: generator A01–A08, selected project type, eight locally valid rows. The reference contains five sample uploads; the implementation capture deliberately shows zero uploads to verify the user's latest request to remove empty upload panels. Source photos represent user-selected files, not bundled decorative assets. Uploaded images/video/file behavior is separately verified in browser tests.
+
+Findings and fixes:
+- [P2, fixed] Initial table rows were too tall to display eight rows above the footer. Scoped compact table cell padding and small row actions now show all eight rows without affecting other tables.
+- [P2, fixed] Ant Design reset margins overrode the type strip's definition-list margins, leaving values above the title's center. Explicit zero margins and center alignment now align the title, info icon, labels and values. Focused final comparison confirms the fix.
+- User-approved deviations: “添加房号” and tabs on separate lines; row Edit action opens a right drawer; no empty media panels; existing navy theme and public header retained. Per-row media overrides are independent of common uploads.
+
+Required surfaces:
+- Typography: existing sans-serif family, 16 px public header and existing form/control typography retained; titles, labels and values remain readable. Long file names have title text and truncate within file rows.
+- Spacing: 16 px card padding, 12 px section gaps, centered compact type strip, common uploads above preview, eight visible desktop rows. Narrow controls reflow without page overflow; table scrolls within its region and footer remains visible.
+- Colors: existing navy/white/pale gray scheme; green valid rows and red validation feedback. Bill selected rows use pale blue `#eef4fb`, hover `#e4eef9`; screenshot `/tmp/lease-bills-selected-light.png` confirms readable foregrounds.
+- Imagery: real selected files use browser object URLs; thumbnails use object-cover. Existing Ant Design icons are retained. No new decorative assets or simulated image art.
+- Copy: replacement explicitly includes individually edited room numbers/materials, shared upload behavior is explained, and drawer changes remain pending until the final batch submission.
+
+Verification: 33 targeted browser regressions passed across final runs, including project types (one empty default, retain last/used types), bill selection, batch generation/replacement, private material overrides, uncertain retry/reload, drawer validation/save/cancel and desktop/narrow layout. No page errors in layout verification. Frontend 38 unit tests, typecheck and build passed. Backend 162 tests passed, including authenticated media uploads, actor/project-bound tickets, atomic rollback, retries and 100-row HTTP creation. Mock browser requests and a dedicated local backend test schema were used; no production units were created. Development frontend continues to use the server API.
+
+Checklist:
+- [x] Compact four-section hierarchy and requested follow-up adjustments implemented.
+- [x] Shared uploads and per-row drawer edits verified.
+- [x] Full-view and focused comparisons repeated after both P2 fixes.
+- [x] No actionable P0/P1/P2 findings remain.
+
+final result: passed
