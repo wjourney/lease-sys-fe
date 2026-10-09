@@ -465,28 +465,26 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                       </dl>
                     ))}
                   </div>
-                  <div className="sales-company-payout">
-                    <h3 className="m-0 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#26344a]">
-                      <BankOutlined className="text-[#216bd9]" />
-                      {t("收款账户")}
-                    </h3>
-                    {payoutFields.map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="sales-company-payout-field flex min-w-0 items-start gap-2 text-sm"
-                      >
-                        <span className="shrink-0 text-[#8190a4]">
-                          {t(label)}
-                        </span>
-                        <span
-                          className={`min-w-0 break-words [overflow-wrap:anywhere] ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
-                        >
-                          {value ? t(String(value)) : t("未填写")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
+              </div>
+              <div className="sales-company-payout">
+                <h3 className="m-0 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#26344a]">
+                  <BankOutlined className="text-[#216bd9]" />
+                  {t("收款账户")}
+                </h3>
+                {payoutFields.map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="sales-company-payout-field flex min-w-0 items-start gap-2 text-sm"
+                  >
+                    <span className="shrink-0 text-[#8190a4]">{t(label)}</span>
+                    <span
+                      className={`min-w-0 break-words [overflow-wrap:anywhere] ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
+                    >
+                      {value ? t(String(value)) : t("未填写")}
+                    </span>
+                  </div>
+                ))}
               </div>
             </section>
           ) : (
