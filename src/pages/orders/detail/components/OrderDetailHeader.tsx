@@ -51,7 +51,7 @@ export function OrderDetailHeader({
         )}
         {actions}
       </Space>
-      <p className="m-0 min-w-0 break-words text-sm text-[#718197]">
+      <div className="order-detail-summary min-w-0 break-words text-sm leading-5 text-[#718197]">
         {[
           row.orderNo && `订单 ${row.orderNo}`,
           row.tenantName && `租客 ${row.tenantName}`,
@@ -60,7 +60,7 @@ export function OrderDetailHeader({
           .filter(Boolean)
           .map(t)
           .join(" · ")}
-      </p>
+      </div>
     </div>
   );
 }

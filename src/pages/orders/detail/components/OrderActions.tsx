@@ -1,4 +1,4 @@
-import { ReloadOutlined, StopOutlined } from "@ant-design/icons";
+import { LogoutOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Space, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
@@ -36,7 +36,7 @@ export const OrderActions = observer(function OrderActions() {
           <span>
             <Button
               danger
-              icon={<StopOutlined aria-hidden />}
+              icon={<LogoutOutlined aria-hidden />}
               disabled={ended || unavailable}
               onClick={() => setAction("terminate")}
             >

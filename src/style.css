@@ -381,6 +381,7 @@
   flex-direction: column;
   height: calc(100dvh - 54px);
   overflow: hidden;
+  padding-top: 12px;
 }
 
 .order-detail-content > .ant-spin-nested-loading,
