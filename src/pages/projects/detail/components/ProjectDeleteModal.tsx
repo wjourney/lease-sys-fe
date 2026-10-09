@@ -64,7 +64,7 @@ export function ProjectDeleteModal({
       <p className="text-sm text-[#52617a]">
         {t("确定删除项目")}
         <strong className="mx-1 text-[#243248]">{t(projectName)}</strong>
-        {t("吗？请填写删除原因后确认。")}
+        {t("吗？删除后，该项目下的所有单位将一并删除。请填写删除原因后确认。")}
       </p>
       {error && (
         <RequestError

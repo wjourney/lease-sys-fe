@@ -129,8 +129,8 @@ export const ProjectGrid = observer(function ProjectGrid({
                         title={
                           row.canDelete === false ||
                           (row.canDelete === undefined &&
-                            Number(row.unitCount) > 0)
-                            ? t(row.deleteReason || "请先删除项目下的单位")
+                            Number(row.occupiedCount) > 0)
+                            ? t(row.deleteReason || "有在租单位，不可删除项目")
                             : undefined
                         }
                       >
@@ -142,7 +142,7 @@ export const ProjectGrid = observer(function ProjectGrid({
                             disabled={
                               row.canDelete === false ||
                               (row.canDelete === undefined &&
-                                Number(row.unitCount) > 0)
+                                Number(row.occupiedCount) > 0)
                             }
                             icon={<DeleteOutlined aria-hidden />}
                             onClick={() => setDeleting(row)}

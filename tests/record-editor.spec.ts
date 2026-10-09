@@ -334,3 +334,42 @@ test("new unit keeps project selected and supports narrow-screen creation", asyn
   });
   expect(writes[0].body).not.toHaveProperty("referenceRent");
 });
+
+for (const occupiedCount of [0, 2]) {
+  test(`project deletion uses occupancy on cards and detail (${occupiedCount})`, async ({
+    page,
+  }) => {
+    await mockApi(page, "SUPER_ADMIN", {
+      ...project,
+      occupiedCount,
+      availableCount: 25 - occupiedCount,
+      canDelete: occupiedCount === 0,
+      deleteReason: occupiedCount ? "有在租单位，不可删除项目" : null,
+    });
+    for (const path of ["/projects", "/projects/project"]) {
+      await page.goto(path);
+      const button =
+        path === "/projects"
+          ? page
+              .locator(".project-card")
+              .getByRole("button", { name: /删\s*除/, exact: true })
+          : page.getByRole("button", { name: "删除项目", exact: true });
+      if (occupiedCount) {
+        await expect(button).toBeDisabled();
+        await button.locator("..").hover();
+        await expect(page.getByRole("tooltip")).toHaveText(
+          "有在租单位，不可删除项目",
+        );
+      } else {
+        await expect(button).toBeEnabled();
+        await button.click();
+        await expect(page.getByRole("dialog")).toContainText(
+          "所有单位将一并删除",
+        );
+        await page
+          .getByRole("button", { name: /取\s*消/, exact: true })
+          .click();
+      }
+    }
+  });
+}
