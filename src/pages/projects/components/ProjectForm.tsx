@@ -36,6 +36,7 @@ export function ProjectForm({
   onSaved: (project: Row) => void;
 }) {
   const [form] = Form.useForm();
+  const [blankType] = useState(() => ({ code: crypto.randomUUID() }));
   const root = useRoot();
   const { message } = App.useApp();
   const [uploads, setUploads] = useState<ProjectUploads>(emptyProjectUploads);
@@ -191,13 +192,12 @@ export function ProjectForm({
           scrollToFirstError={{ block: "center", focus: true }}
           className="space-y-4"
           initialValues={{
-            typeConfigs: [
-              { code: "LARGE", name: "大单位" },
-              { code: "SMALL", name: "小单位" },
-            ],
             usage: "住宅",
             salesCanViewExactRent: false,
             ...(row ? projectFormValues(row) : {}),
+            typeConfigs: row?.typeConfigs?.length
+              ? row.typeConfigs
+              : [blankType],
           }}
           disabled={!loaded || saving}
           onValuesChange={markDirty}

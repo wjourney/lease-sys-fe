@@ -1,10 +1,12 @@
 import { unitTypeProblems } from "./unit-type-display";
 import type { Row } from "../../shared/api";
+import type { UnitMedia } from "./components/UnitMediaField";
 
 export type BatchUnitRow = {
   key: string;
   roomNo: string;
   unitTypeCode: string;
+  media?: UnitMedia;
 };
 export const BATCH_UNIT_LIMIT = 100;
 export function parseRoomNumbers(text: string) {

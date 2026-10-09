@@ -12,7 +12,9 @@ export function ProjectUnitTypesFields({
   const required = [{ required: true, message: t("请填写此项") }];
   return (
     <section className="rounded-lg border border-[#e0e6ed] bg-white p-6 max-[640px]:p-4">
-      <h2 className="mb-2 text-sm font-semibold">{t("项目单位类型（必填）")}</h2>
+      <h2 className="mb-2 text-sm font-semibold">
+        {t("项目单位类型（必填）")}
+      </h2>
       <p className="mb-4 text-sm text-[#73819a]">
         {t(
           "每个类型固定期/座、楼层、面积等信息，创建单位时自动带入。不同楼层或户型请分别配置；已有单位使用的类型不能删除。",
@@ -61,13 +63,17 @@ export function ProjectUnitTypesFields({
                       title={
                         usage[typeConfigs[name]?.code]
                           ? t("已有单位使用该类型，无法删除")
-                          : undefined
+                          : fields.length === 1
+                            ? t("至少保留一个单位类型")
+                            : undefined
                       }
                     >
                       <span
                         className="inline-flex"
                         tabIndex={
-                          usage[typeConfigs[name]?.code] ? 0 : undefined
+                          usage[typeConfigs[name]?.code] || fields.length === 1
+                            ? 0
+                            : undefined
                         }
                       >
                         <Button
@@ -75,7 +81,10 @@ export function ProjectUnitTypesFields({
                           type="text"
                           icon={<DeleteOutlined />}
                           aria-label={t("删除类型")}
-                          disabled={!!usage[typeConfigs[name]?.code]}
+                          disabled={
+                            !!usage[typeConfigs[name]?.code] ||
+                            fields.length === 1
+                          }
                           onClick={() => remove(name)}
                         />
                       </span>
@@ -87,7 +96,7 @@ export function ProjectUnitTypesFields({
                 </Form.Item>
                 <div className="grid grid-cols-2 gap-x-5 max-[640px]:grid-cols-1">
                   {[
-                    ["name", "类型名称", "例如：A座12楼大单位"],
+                    ["name", "类型名称", "例如：A座12楼两房"],
                     ["building", "期 / 座", "例如：A座"],
                     ["floor", "楼层", "例如：12"],
                     ["layout", "间隔", "例如：1室1厅"],

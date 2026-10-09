@@ -277,7 +277,9 @@ test("single commission payment records the selected balance and refreshes the l
     .toBeGreaterThan(before);
 });
 
-test("commission payment method stays in the payment drawer", async ({ page }) => {
+test("commission payment method stays in the payment drawer", async ({
+  page,
+}) => {
   await mock(page);
   await page.goto("/commissions");
   const row = page.locator(".ant-table-row").filter({ hasText: "C001" });
@@ -287,10 +289,14 @@ test("commission payment method stays in the payment drawer", async ({ page }) =
   await page.locator(".ant-select-dropdown:visible").getByTitle("现金").click();
   await expect(page).toHaveURL(/\/commissions$/);
   await expect(drawer.getByText("登记佣金付款", { exact: true })).toBeVisible();
-  await expect(drawer.locator(".ant-select-selection-item[title='现金']")).toBeVisible();
+  await expect(
+    drawer.locator(".ant-select-selection-item[title='现金']"),
+  ).toBeVisible();
 });
 
-test("bill receipt payment method stays in the receipt drawer", async ({ page }) => {
+test("bill receipt payment method stays in the receipt drawer", async ({
+  page,
+}) => {
   await mock(page);
   await page.goto("/incomes");
   const row = page.locator(".ant-table-row").filter({ hasText: "B001" });
@@ -300,7 +306,9 @@ test("bill receipt payment method stays in the receipt drawer", async ({ page })
   await page.locator(".ant-select-dropdown:visible").getByTitle("现金").click();
   await expect(page).toHaveURL(/\/incomes$/);
   await expect(drawer.getByText("登记收款", { exact: true })).toBeVisible();
-  await expect(drawer.locator(".ant-select-selection-item[title='现金']")).toBeVisible();
+  await expect(
+    drawer.locator(".ant-select-selection-item[title='现金']"),
+  ).toBeVisible();
 });
 
 test("reserved pending bill shows disabled receipt action with reason and a compact detail drawer", async ({
@@ -514,4 +522,21 @@ test("invoice download failure shows a toast and allows retry", async ({
   );
   await expect(button).toHaveAttribute("aria-busy", "false");
   await expect(button).toBeEnabled();
+});
+
+test("selected bill rows use light highlights and keep selection readable on hover", async ({
+  page,
+}) => {
+  await mock(page);
+  await page.goto("/incomes");
+  const row = page.getByRole("row").filter({ hasText: "B001" });
+  await row.getByRole("checkbox").check();
+  await expect(row).toHaveClass(/ant-table-row-selected/);
+  const cell = row.locator("td").nth(1);
+  await expect(cell).toHaveCSS("background-color", "rgb(228, 238, 249)");
+  await page.getByRole("button", { name: /重.*置/ }).hover();
+  await expect(cell).toHaveCSS("background-color", "rgb(238, 244, 251)");
+  await row.hover();
+  await expect(cell).toHaveCSS("background-color", "rgb(228, 238, 249)");
+  await page.screenshot({ path: "/tmp/lease-bills-selected-light.png" });
 });

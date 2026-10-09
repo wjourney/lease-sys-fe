@@ -35,6 +35,8 @@ export const theme: ThemeConfig = {
     Table: {
       headerBg: "#f7f8fa",
       headerColor: "#7b8799",
+      rowSelectedBg: "#eef4fb",
+      rowSelectedHoverBg: "#e4eef9",
       cellPaddingBlock: 15,
     },
     Menu: {

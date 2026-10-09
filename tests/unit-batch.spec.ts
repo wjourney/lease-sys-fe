@@ -368,12 +368,20 @@ test("desktop and narrow layout show project title, all type fields and fixed ac
       .locator(".record-header-title")
       .evaluate((el) => getComputedStyle(el).fontSize),
   ).toBe("16px");
+  await page.getByRole("spinbutton", { name: "数量", exact: true }).fill("8");
+  await page.getByRole("button", { name: "更新预览" }).click();
+  await expect(page.getByRole("button", { name: "创建 8 套" })).toBeEnabled();
+  await expect(
+    page.getByText("请修改表格中标记的错误，本批次尚未创建任何单位", {
+      exact: true,
+    }),
+  ).not.toBeVisible();
   await page.screenshot({
     path: "/tmp/lease-batch-design-desktop.png",
     clip: { x: 208, y: 0, width: 1536, height: 1024 },
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("button", { name: "创建 4 套" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "创建 8 套" })).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -384,4 +392,264 @@ test("desktop and narrow layout show project title, all type fields and fixed ac
   });
   await page.screenshot({ path: "/tmp/lease-batch-design-mobile.png" });
   expect(errors).toEqual([]);
+});
+
+async function selectSharedMedia(page: Page) {
+  const files = [
+    {
+      name: "共用照片.png",
+      mimeType: "image/png",
+      buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+    },
+    {
+      name: "共用视频.mp4",
+      mimeType: "video/mp4",
+      buffer: Buffer.from("0000ftypmp42"),
+    },
+    {
+      name: "共用资料.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4"),
+    },
+  ];
+  for (const [index, file] of files.entries())
+    await page.locator('input[type="file"]').nth(index).setInputFiles(file);
+  return files;
+}
+
+test("batch uploads each shared file once and includes all three categories in creation", async ({
+  page,
+}) => {
+  const writes = await setup(page);
+  const uploads: string[] = [];
+  await page.route("**/api/v1/units/batch-media", async (route) => {
+    uploads.push(route.request().postData()!);
+    await route.fulfill({ json: { token: `ticket-${uploads.length}` } });
+  });
+  await chooseType(page);
+  await page.getByRole("spinbutton", { name: "数量", exact: true }).fill("2");
+  await page.getByRole("button", { name: "生成预览", exact: true }).click();
+  await expect(page.getByText("暂无图片", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("暂无视频", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("暂无文件", { exact: true })).toHaveCount(0);
+  const files = await selectSharedMedia(page);
+  await expect(page.getByText(/本批创建的每套单位共用/)).toBeVisible();
+  for (const file of files)
+    await expect(
+      page.getByRole("button", { name: `删除 ${file.name}`, exact: true }),
+    ).toBeVisible();
+  await page.getByRole("button", { name: "创建 2 套" }).click();
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
+  expect(uploads).toHaveLength(3);
+  for (const [index, category] of ["PHOTO", "VIDEO", "PROJECT_FILE"].entries())
+    expect(uploads[index]).toContain(category);
+  expect(writes[0].body.mediaTokens).toEqual([
+    "ticket-1",
+    "ticket-2",
+    "ticket-3",
+  ]);
+});
+
+test("failed upload creates no units and retry reuses successful uploads", async ({
+  page,
+}) => {
+  const writes = await setup(page);
+  let requests = 0;
+  await page.route("**/api/v1/units/batch-media", async (route) => {
+    requests++;
+    if (requests === 2)
+      return route.fulfill({
+        status: 503,
+        json: { message: "文件存储暂时不可用" },
+      });
+    await route.fulfill({ json: { token: `ticket-${requests}` } });
+  });
+  await chooseType(page);
+  await page.getByRole("button", { name: "生成预览", exact: true }).click();
+  await selectSharedMedia(page);
+  await page.getByRole("button", { name: "创建 10 套" }).click();
+  await expect(
+    page.getByText("服务暂时不可用，请稍后再试", { exact: true }),
+  ).toBeVisible();
+  expect(writes).toHaveLength(0);
+  await expect(page.getByRole("button", { name: "创建 10 套" })).toBeEnabled();
+  await page.getByRole("button", { name: "创建 10 套" }).click();
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
+  expect(requests).toBe(4);
+  expect(writes[0].body.mediaTokens).toEqual([
+    "ticket-1",
+    "ticket-3",
+    "ticket-4",
+  ]);
+});
+
+test("uncertain creation retains media tickets across reload without uploading or creating twice", async ({
+  page,
+}) => {
+  const writes = await setup(page, "SUPER_ADMIN", "timeout");
+  let uploads = 0;
+  await page.route("**/api/v1/units/batch-media", async (route) => {
+    await route.fulfill({ json: { token: `ticket-${++uploads}` } });
+  });
+  await chooseType(page);
+  await page.getByRole("button", { name: "生成预览", exact: true }).click();
+  await selectSharedMedia(page);
+  await page.getByRole("button", { name: "创建 10 套" }).click();
+  await expect(
+    page.getByRole("button", { name: "重试并确认创建结果" }),
+  ).toBeEnabled();
+  await page.reload();
+  await expect(page.getByText("共用资料.pdf", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "添加文件", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "重试并确认创建结果" }).click();
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
+  expect(uploads).toBe(3);
+  expect(writes).toHaveLength(2);
+  expect(writes[1].body).toEqual(writes[0].body);
+});
+
+test("row drawer reuses unit fields, rejects duplicates, saves only this row and cancels drafts", async ({
+  page,
+}) => {
+  const writes = await setup(page);
+  await chooseType(page);
+  await page.getByRole("spinbutton", { name: "数量", exact: true }).fill("2");
+  await page.getByRole("button", { name: "生成预览", exact: true }).click();
+  await page.getByRole("button", { name: "编辑第 1 行", exact: true }).click();
+  const drawer = page.getByRole("dialog", { name: "编辑待创建单位 · 01" });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByLabel("所属项目")).toBeDisabled();
+  await expect(
+    drawer.getByText("类型资料（自动带入）", { exact: true }),
+  ).toBeVisible();
+  for (const label of ["单位图片", "单位视频", "单位文件"])
+    await expect(drawer.getByText(label, { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/lease-batch-edit-drawer.png",
+    animations: "disabled",
+  });
+  await drawer.getByLabel("房号", { exact: true }).fill("02");
+  await drawer.getByRole("button", { name: "保存到待创建列表" }).click();
+  await expect(
+    drawer.getByText("与第 2 行房号重复", { exact: true }),
+  ).toBeVisible();
+  await drawer.getByLabel("房号", { exact: true }).fill("A99");
+  await drawer.getByTitle("大单位 · A座 / 3楼").click();
+  await page.getByTitle("小单位 · B座 / 4楼").filter({ visible: true }).click();
+  await expect(drawer.getByText("20 ㎡", { exact: true })).toBeVisible();
+  await drawer.getByRole("button", { name: "保存到待创建列表" }).click();
+  await expect(drawer).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "第 1 行房号" })).toHaveValue(
+    "A99",
+  );
+  await expect(page.getByRole("textbox", { name: "第 2 行房号" })).toHaveValue(
+    "02",
+  );
+  expect(writes).toHaveLength(0);
+  await page.getByRole("button", { name: "编辑第 2 行" }).click();
+  const second = page.getByRole("dialog", { name: "编辑待创建单位 · 02" });
+  await second.getByLabel("房号", { exact: true }).fill("discard");
+  await second.getByRole("button", { name: /取\s*消/ }).click();
+  await page.getByRole("button", { name: "放弃修改", exact: true }).click();
+  await expect(second).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "第 2 行房号" })).toHaveValue(
+    "02",
+  );
+  await page.getByRole("button", { name: "创建 2 套" }).click();
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
+  expect(writes[0].body.rows).toEqual([
+    { roomNo: "A99", unitTypeCode: "S" },
+    { roomNo: "02", unitTypeCode: "L" },
+  ]);
+});
+
+test("row-specific uploads and removals survive uncertain reload; inherited files upload once", async ({
+  page,
+}) => {
+  const writes = await setup(page, "SUPER_ADMIN", "timeout");
+  let uploads = 0;
+  await page.route("**/api/v1/units/batch-media", async (route) =>
+    route.fulfill({ json: { token: `ticket-${++uploads}` } }),
+  );
+  await chooseType(page);
+  await page.getByRole("spinbutton", { name: "数量", exact: true }).fill("2");
+  await page.getByRole("button", { name: "生成预览", exact: true }).click();
+  await selectSharedMedia(page);
+  await page.getByRole("button", { name: "编辑第 1 行" }).click();
+  const drawer = page.getByRole("dialog", { name: "编辑待创建单位 · 01" });
+  await drawer.getByRole("button", { name: "删除 共用视频.mp4" }).click();
+  await drawer
+    .locator('input[type="file"]')
+    .nth(2)
+    .setInputFiles({
+      name: "独立资料.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4 private"),
+    });
+  await drawer.getByRole("button", { name: "保存到待创建列表" }).click();
+  await expect(page.getByLabel("资料单独调整")).toHaveCount(1);
+  await page.getByRole("button", { name: "创建 2 套" }).click();
+  await expect(
+    page.getByRole("button", { name: "重试并确认创建结果" }),
+  ).toBeEnabled();
+  expect(uploads).toBe(4);
+  expect(writes[0].body.sharedMediaIndexes).toEqual([0, 1, 2]);
+  expect(writes[0].body.rows[0].mediaIndexes).toEqual([0, 2, 3]);
+  expect(writes[0].body.rows[1]).not.toHaveProperty("mediaIndexes");
+  await page.reload();
+  await expect(page.getByLabel("资料单独调整")).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "编辑第 1 行" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "重试并确认创建结果" }).click();
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
+  expect(uploads).toBe(4);
+  expect(writes[1].body).toEqual(writes[0].body);
+});
+
+test("regeneration replaces edited rows and their private media; title sits above tabs", async ({
+  page,
+}) => {
+  const writes = await setup(page);
+  await chooseType(page);
+  await page.getByRole("spinbutton", { name: "数量", exact: true }).fill("2");
+  await page.getByRole("button", { name: "生成预览", exact: true }).click();
+  await page.getByRole("button", { name: "编辑第 1 行" }).click();
+  const drawer = page.getByRole("dialog", { name: "编辑待创建单位 · 01" });
+  await drawer.getByLabel("房号", { exact: true }).fill("private");
+  await drawer
+    .locator('input[type="file"]')
+    .nth(2)
+    .setInputFiles({
+      name: "私有资料.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4"),
+    });
+  await drawer.getByRole("button", { name: "保存到待创建列表" }).click();
+  await page.getByRole("textbox", { name: "房号前缀", exact: true }).fill("B");
+  await page.getByRole("button", { name: "更新预览", exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "第 1 行房号" })).toHaveValue(
+    "B01",
+  );
+  await expect(page.getByLabel("资料单独调整")).toHaveCount(0);
+  const title = await page
+    .getByRole("heading", { name: "添加房号", exact: true })
+    .boundingBox();
+  const tabs = await page
+    .getByRole("tab", { name: "连续生成", exact: true })
+    .boundingBox();
+  expect(title!.y + title!.height).toBeLessThanOrEqual(tabs!.y);
+  const media = await page
+    .getByRole("region", { name: "共用资料上传" })
+    .boundingBox();
+  const list = await page
+    .getByRole("heading", { name: "待创建列表（2）" })
+    .boundingBox();
+  expect(media!.y + media!.height).toBeLessThan(list!.y);
+  await page.getByRole("button", { name: "创建 2 套" }).click();
+  await expect(page).toHaveURL(`/projects/${projectId}?tab=units`);
+  expect(writes[0].body).not.toHaveProperty("mediaTokens");
+  expect(writes[0].body.rows[0]).not.toHaveProperty("mediaIndexes");
 });

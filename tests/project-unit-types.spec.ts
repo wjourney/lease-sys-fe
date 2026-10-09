@@ -72,21 +72,34 @@ test("project types are edited within projects and unit choices use their projec
   const editor = page.locator(".record-form-page");
   await expect(page).toHaveURL(/\/projects\/new$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(editor.getByText("项目单位类型", { exact: true })).toBeVisible();
-  await expect(editor.locator('input[value="大单位"]')).toBeVisible();
-  await expect(editor.locator('input[value="小单位"]')).toBeVisible();
+  await expect(
+    editor.getByText("项目单位类型（必填）", { exact: true }),
+  ).toBeVisible();
+  await expect(editor.locator("#typeConfigs_0_name")).toHaveValue("");
+  await expect(editor.locator("#typeConfigs_1_name")).toHaveCount(0);
+  await expect(
+    editor.getByRole("button", { name: "删除类型", exact: true }),
+  ).toBeDisabled();
+  await editor.getByRole("button", { name: /新增类型/ }).click();
+  await expect(editor.locator("#typeConfigs_1_name")).toHaveValue("");
+  await editor
+    .getByRole("button", { name: "删除类型", exact: true })
+    .nth(1)
+    .click();
+  await expect(editor.locator("#typeConfigs_1_name")).toHaveCount(0);
   await editor.locator("#typeConfigs_0_area").scrollIntoViewIfNeeded();
   await page.screenshot({
     path: "/tmp/lease-project-unit-types.png",
     animations: "disabled",
   });
   await editor.getByRole("button", { name: /取\s*消/ }).click();
+  await page.getByRole("button", { name: "放弃修改", exact: true }).click();
   await page.goto("/projects/project/edit");
   const deleteType = editor.getByRole("button", { name: "删除类型" });
   await expect(deleteType).toBeDisabled();
   await deleteType.locator("..").hover();
   await expect(page.getByText("已有单位使用该类型，无法删除")).toBeVisible();
-  await page.goto("/projects/project");
+  await page.goto("/projects/project?tab=units");
   await page.getByRole("button", { name: /新建单位/ }).click();
   await editor.locator("#unitTypeCode").click();
   await page.getByText("海景大单位", { exact: true }).last().click();
