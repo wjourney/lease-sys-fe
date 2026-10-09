@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { Row } from "../../shared/api";
 import { canEditFinancialRecord } from "../../shared/financial-record-actions";
 import { t } from "../../shared/i18n";
+import { orderDisplayStatus } from "../../shared/order-status";
 import { shouldOpenRow } from "../../shared/row-navigation";
 import { valueView } from "../../shared/ui";
 import { MaterialEditor } from "../forms/MaterialEditor";
@@ -77,7 +78,7 @@ export const ResourceList = observer(function ResourceList({
           c.key === "unitTypeCode"
             ? row.unitTypeName || v
             : c.key === "status" && resource === "orders"
-              ? row.lifecycleStatus || v
+              ? orderDisplayStatus(v)
               : v,
           resource,
         )

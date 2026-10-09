@@ -3,6 +3,7 @@ import { Button, Input, Select } from "antd";
 import { observer } from "mobx-react-lite";
 import type { ReactNode } from "react";
 import { t } from "../../shared/i18n";
+import { orderStatusFilterOptions } from "../../shared/order-status";
 export const ResourceFilters = observer(function ResourceFilters({
   q,
   setQ,
@@ -64,48 +65,47 @@ export const ResourceFilters = observer(function ResourceFilters({
               placeholder={t(resource === "commissions" ? "全部" : "全部状态")}
               value={status}
               onChange={setStatus}
-              options={Object.entries(
-                resource === "units"
-                  ? {
-                      AVAILABLE: "可租",
-                      OCCUPIED: "已租",
-                    }
-                  : resource === "orders"
-                    ? {
-                        DRAFT: "待完善",
-                        PENDING: "待确认",
-                        ACTIVE: "租赁中",
-                        COMPLETED: "已完成",
-                        CLOSED: "已关闭",
-                      }
-                    : resource === "incomes"
-                      ? {
-                          OPEN: "待付款",
-                          PAID: "已付款",
-                        }
-                      : resource === "expenses"
+              options={
+                resource === "orders"
+                  ? orderStatusFilterOptions.map((option) => ({
+                      ...option,
+                      label: t(option.label),
+                    }))
+                  : Object.entries(
+                      resource === "units"
                         ? {
-                            UNPAID: "待付款",
-                            PAID: "已付款",
+                            AVAILABLE: "可租",
+                            OCCUPIED: "已租",
                           }
-                        : resource === "commissions"
+                        : resource === "incomes"
                           ? {
                               OPEN: "待付款",
                               PAID: "已付款",
                             }
-                          : resource === "invoices"
+                          : resource === "expenses"
                             ? {
-                                ACTIVE: "有效",
-                                VOID: "已作废",
+                                UNPAID: "待付款",
+                                PAID: "已付款",
                               }
-                            : {
-                                ACTIVE: "启用",
-                                DISABLED: "停用",
-                              },
-              ).map(([value, label]) => ({
-                value,
-                label: t(label),
-              }))}
+                            : resource === "commissions"
+                              ? {
+                                  OPEN: "待付款",
+                                  PAID: "已付款",
+                                }
+                              : resource === "invoices"
+                                ? {
+                                    ACTIVE: "有效",
+                                    VOID: "已作废",
+                                  }
+                                : {
+                                    ACTIVE: "启用",
+                                    DISABLED: "停用",
+                                  },
+                    ).map(([value, label]) => ({
+                      value,
+                      label: t(label),
+                    }))
+              }
             />
           </div>
         )}

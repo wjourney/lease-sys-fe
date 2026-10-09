@@ -6,6 +6,7 @@ import { useRecordDetail } from "../../../../components/resource-detail/DetailCo
 import { dateText } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { orderLabel, orderNotice } from "../order-state";
+import { orderDisplayStatus } from "../../../../shared/order-status";
 
 export function OrderDetailHeader({
   actions,
@@ -40,11 +41,7 @@ export function OrderDetailHeader({
         <div className="flex min-w-0 flex-wrap items-center gap-3">
           <Tag
             color={
-              row.status === "ACTIVE"
-                ? "green"
-                : row.status === "PENDING"
-                  ? "gold"
-                  : "default"
+              orderDisplayStatus(row.status) === "ENDED" ? "default" : "green"
             }
             className="!m-0"
           >

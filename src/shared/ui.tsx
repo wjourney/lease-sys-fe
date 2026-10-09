@@ -14,6 +14,7 @@ export function Status({
 }) {
   const positive = [
     "ACTIVE",
+    "IN_PROGRESS",
     "AVAILABLE",
     "PAID",
     "CONFIRMED",
@@ -21,7 +22,14 @@ export function Status({
     "SENT",
     "DONE",
   ];
-  const negative = ["DISABLED", "REJECTED", "VOID", "FAILED", "CLOSED"];
+  const negative = [
+    "DISABLED",
+    "REJECTED",
+    "VOID",
+    "FAILED",
+    "CLOSED",
+    "ENDED",
+  ];
   const color = positive.includes(value)
     ? "green"
     : negative.includes(value)
@@ -38,8 +46,6 @@ export function Status({
         ? "gold"
         : "blue";
   let label = statusLabels[value] ?? value;
-  if (resource === "orders" && value === "DRAFT") label = "待完善";
-  if (resource === "orders" && value === "ACTIVE") label = "租赁中";
   if (resource === "incomes" && value === "PAID") label = "已付款";
   if (resource === "incomes" && ["OPEN", "PARTIAL"].includes(value))
     label = "待付款";

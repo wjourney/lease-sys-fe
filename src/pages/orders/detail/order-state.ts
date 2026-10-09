@@ -1,4 +1,5 @@
 import { Row } from "../../../shared/api";
+import { orderDisplayStatus } from "../../../shared/order-status";
 export const depositLabels: Record<string, string> = {
   NOT_READY: "待完善租约",
   COLLECTING: "押金未收齐",
@@ -46,18 +47,12 @@ export const paymentLabels: Record<string, string> = {
   PAID: "首期已收齐",
 };
 export function orderLabel(row: Row) {
-  return row.status === "COMPLETED"
-    ? row.handoverStatus === "DONE"
-      ? row.settlement?.complete
-        ? "已完结"
-        : "待结清"
-      : "待交还"
-    : ({
-        DRAFT: "待完善",
-        PENDING: "待确认",
-        ACTIVE: "租赁中",
-        CLOSED: "已关闭",
-      }[row.status as string] ?? row.status);
+  const status = orderDisplayStatus(row.status);
+  return status === "ENDED"
+    ? "已结束"
+    : status === "IN_PROGRESS"
+      ? "进行中"
+      : row.status;
 }
 export function orderNotice(row: Row) {
   if (row.status === "DRAFT")

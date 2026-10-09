@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Row } from "../../shared/api";
 import { configs } from "../../shared/config";
 import { SEARCH_DEBOUNCE_MS } from "../../shared/search";
+import { normalizeOrderStatusFilter } from "../../shared/order-status";
 import { ListStore, useRoot } from "../../stores/root";
 export function useResourceList(
   resource: string,
@@ -47,7 +48,9 @@ export function useResourceList(
           : undefined
       : resource === "sales-companies"
         ? undefined
-        : filter;
+        : resource === "orders"
+          ? normalizeOrderStatusFilter(filter)
+          : filter;
   const urlFilters = Object.fromEntries(search.entries());
   if (resource === "commissions") delete urlFilters.mode;
   if (resource === "sales-companies") delete urlFilters.status;

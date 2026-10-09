@@ -7,7 +7,7 @@ describe("financial closure display", () => {
       handoverStatus: "DONE",
       settlement: { complete: false, blockers: ["1 笔付款单未付清"] },
     };
-    expect(orderLabel(order)).toBe("待结清");
+    expect(orderLabel(order)).toBe("已结束");
     expect(orderNotice(order)).toContain("1 笔付款单未付清");
   });
   it("shows completion only when server confirms closure conditions", () => {
@@ -16,7 +16,7 @@ describe("financial closure display", () => {
       handoverStatus: "DONE",
       settlement: { complete: true, blockers: [] },
     };
-    expect(orderLabel(order)).toBe("已完结");
+    expect(orderLabel(order)).toBe("已结束");
     expect(orderNotice(order)).toContain("均已结清");
   });
 });

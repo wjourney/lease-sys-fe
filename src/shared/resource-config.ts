@@ -44,6 +44,8 @@ export const roleLabels: Record<string, string> = {
   SALES: "销售员工",
 };
 export const statusLabels: Record<string, string> = {
+  IN_PROGRESS: "进行中",
+  ENDED: "已结束",
   ACTIVE: "启用",
   DISABLED: "停用",
   DRAFT: "待完善",
