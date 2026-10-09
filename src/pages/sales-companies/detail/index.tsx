@@ -302,9 +302,6 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
             className="sales-company-overview rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
             aria-label={t("公司资料")}
           >
-            <h2 className="mb-3 text-base font-semibold text-[#26344a]">
-              {t("公司信息")}
-            </h2>
             <div className="sales-company-overview-grid">
               <div className="sales-company-gallery min-w-0">
                 <div
@@ -443,21 +440,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
             className="company-member-section rounded-lg border border-[#e1e7ef] bg-white"
             aria-label={t("公司成员")}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3 max-[700px]:px-4">
-              <h2 className="m-0 text-base font-semibold text-[#26344a]">
-                {t(`公司成员（${members.total}）`)}
-              </h2>
-              {root.canWrite("users") && (
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setCreating(true)}
-                >
-                  {t("新建成员账号")}
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 pb-4 max-[700px]:px-4">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 pt-4 pb-4 max-[700px]:px-4">
               <div className="flex min-w-0 items-center gap-3 max-[650px]:w-full">
                 <label
                   htmlFor="company-member-keyword"
@@ -502,6 +485,15 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
               </div>
               <div className="ml-auto flex items-center gap-2 max-[650px]:w-full max-[650px]:justify-end">
                 <Button onClick={reset}>{t("重置")}</Button>
+                {root.canWrite("users") && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setCreating(true)}
+                  >
+                    {t("新建成员账号")}
+                  </Button>
+                )}
               </div>
             </div>
             {membersError && (
