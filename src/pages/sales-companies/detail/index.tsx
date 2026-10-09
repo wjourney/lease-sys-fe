@@ -302,13 +302,14 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
             className="sales-company-overview rounded-lg border border-[#e1e7ef] bg-white px-5 py-4 max-[700px]:px-4"
             aria-label={t("公司资料")}
           >
+            <h2 className="mb-3 text-base font-semibold text-[#26344a]">
+              {t("公司信息")}
+            </h2>
             <div className="sales-company-overview-grid">
               <div className="sales-company-gallery min-w-0">
-                <h2 className="mb-3 text-base font-semibold text-[#26344a]">
-                  {t(`公司图片（${images.length}）`)}
-                </h2>
                 <div
                   className={`sales-company-gallery-body ${images.length > 1 ? "has-thumbnails" : ""}`}
+                  aria-label={t(`公司图片（${images.length}）`)}
                 >
                   <div className="sales-company-gallery-main">
                     {selectedImage ? (
@@ -390,14 +391,11 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                 </div>
               </div>
               <div className="min-w-0">
-                <h2 className="mb-3 text-base font-semibold text-[#26344a]">
-                  {t("基本资料")}
-                </h2>
                 <div className="sales-company-overview-fields">
                   {overviewColumns.map((column, index) => (
                     <dl
                       key={index}
-                      className="m-0 min-w-0 space-y-2 text-sm leading-6"
+                      className="m-0 min-w-0 space-y-1.5 text-sm leading-6"
                     >
                       {column.map(({ label, value }) => (
                         <div
@@ -425,7 +423,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                   {payoutFields.map(({ label, value }) => (
                     <div
                       key={label}
-                      className={`flex min-w-0 items-start gap-2 text-sm ${label === "银行账号" ? "sales-company-payout-account" : ""}`}
+                      className="sales-company-payout-field flex min-w-0 items-start gap-2 text-sm"
                     >
                       <span className="shrink-0 text-[#8190a4]">
                         {t(label)}
