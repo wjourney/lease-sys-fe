@@ -173,7 +173,7 @@
 
 .sales-company-overview-grid {
   display: grid;
-  grid-template-columns: minmax(0, 430px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 350px) minmax(0, 1fr);
   gap: 20px;
 }
 
@@ -327,7 +327,7 @@
 
 @media (max-width: 1250px) {
   .sales-company-overview-grid {
-    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
   }
 
   .sales-company-payout {
@@ -352,7 +352,7 @@
   }
 
   .sales-company-gallery-body {
-    max-width: 440px;
+    max-width: 350px;
   }
 }
 

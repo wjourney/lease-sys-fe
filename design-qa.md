@@ -131,3 +131,11 @@ final result: blocked
 - `pnpm build`、Prettier 检查和 `git diff --check` 通过。运行时视觉检查仍受本地预览登录限制。
 
 final result: blocked
+
+## 销售公司详情左右宽度（2026-10-09）
+
+- 桌面端图片区最大宽度由 430 px 缩至 350 px；中等宽度下由 360 px 缩至 300 px，剩余宽度分配给右侧资料及收款账户。
+- 单列断点下图片区最大宽度同步缩至 350 px，图片与银行账号的换行规则保持不变。
+- `pnpm build` 和 `git diff --check` 通过；本地预览登录限制仍阻碍实际截图核对。
+
+final result: blocked
