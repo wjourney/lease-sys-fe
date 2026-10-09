@@ -157,3 +157,46 @@ final result: blocked
 - `pnpm test` 的 33 项测试、`pnpm build` 与差异检查通过。当前本地预览登录限制仍阻碍实际截图核对。
 
 final result: blocked
+
+---
+
+# 批量创建单位页面设计核对（2026-10-09）
+
+- Source visual truth: `/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-bd55cb77-86c7-4dab-9bc9-fb645ff25bce.png`
+- Implementation screenshot: `/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/batch-units/desktop.png`
+- Narrow viewport screenshot: `/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/batch-units/mobile.png`
+- Viewport: 1744 × 1024 CSS px; narrow viewport 390 × 844 CSS px; deviceScaleFactor 1.
+- Density normalization: source 1536 × 1024 px; desktop implementation cropped to the 1536 × 1024 content region after the existing 208 px sidebar, without scaling.
+- State: continuous generation, A-prefix, 4 preview rows, fourth row server conflict; source count text was illustrative (10 with only 4 rows). Implementation counts actual rows.
+
+## Findings and comparison history
+
+1. First desktop comparison: [P2] Generate and clear actions did not align right because Ant Design's margin rule overrode utility styles. Applied explicit margin utilities; final screenshot shows both actions aligned with the right content edge.
+2. User-approved refinements: project name added to the shared 16 px header, project/type field labels placed horizontally, generation action changed to update/replace rather than append, replacement explanation added. Existing sidebar, typography, primary button color and public header retained.
+3. Full-view comparison: three white sections follow the reference hierarchy, a compact type strip precedes input-mode tabs, horizontal table fields are visible, and fixed footer shows quantity/error counts and create/cancel actions.
+4. Focused review: field label/control alignment, type strip, generator controls, table columns and error row inspected at full resolution. Duplicate room is red; readonly rent is inherited from the chosen type. No clipped desktop columns or page-width overflow on the narrow viewport. Narrow table scrolls inside its own region.
+
+## Required fidelity surfaces
+
+- Fonts/typography: existing system sans-serif, 14 px form/table content and 16 px shared header. Header size verified in browser regression; narrow titles truncate with full title available.
+- Spacing/layout rhythm: 20 px card padding, 16 px section gaps, compact horizontal inputs and fixed actions. Type fields reflow at smaller widths.
+- Colors/tokens: existing navy, pale gray, white cards and subtle borders; green local format checks, red conflicts and amber changed-generation notice.
+- Image quality/assets: no new raster assets are required; public header retains the existing avatar and icon library. Information and return icons use Ant Design icons.
+- Copy/content: generation replaces the preview, paste appends, monthly rent is readonly, and local format checks are distinguished from server duplicate checks at submission.
+
+## Interaction verification
+
+- 11 browser regressions passed: paste leading zeroes, duplicate detection, changing per-row type/rent inheritance, removal/100-row limit, generator prefix/count replacement, repeat update without accumulation, server conflicts without partial success, failed submission/reload with identical retry payload, write permissions, incomplete legacy types, project-aware header, tab panels and desktop/narrow layout.
+- Browser page errors: none in the layout regression.
+- 38 unit tests passed; TypeScript and production build passed.
+- Real local preview was opened through the in-app browser with the server account; project types and preview generation verified. Preview operations did not create real units. Browser regression API responses are mocked.
+- Development frontend remains connected to the server API via the existing default proxy.
+
+## Implementation checklist
+
+- [x] Reference layout with approved changes implemented.
+- [x] Replacement behavior and duplicate-safe submission verified.
+- [x] Desktop and narrow screenshots reviewed.
+- [x] No actionable P0/P1/P2 findings remain.
+
+final result: passed

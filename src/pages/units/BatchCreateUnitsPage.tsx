@@ -1,7 +1,6 @@
 import {
   typeValue,
   typeFloor,
-  typePriceRange,
   unitTypeDetails,
   unitTypeLabel,
   unitTypeProblems,
@@ -9,7 +8,6 @@ import {
 import {
   App,
   Button,
-  Descriptions,
   Empty,
   Input,
   InputNumber,
@@ -17,8 +15,10 @@ import {
   Select,
   Spin,
   Table,
-  Tag,
+  Tabs,
+  Tooltip,
 } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -71,12 +71,15 @@ const BatchEditor = observer(function BatchEditor({
   const [start, setStart] = useState<number | null>(1);
   const [count, setCount] = useState<number | null>(10);
   const [digits, setDigits] = useState<number | null>(2);
-  const [busy, setBusy] = useState<"preview" | "create">();
+  const [inputMode, setInputMode] = useState("generate");
+  const [generatedSignature, setGeneratedSignature] = useState<string | null>(
+    null,
+  );
+  const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [uncertain, setUncertain] = useState(false);
   const attempt = useRef<Attempt | null>(null);
   const storageKey = `unit-batch:${root.user?.id}:${projectId}`;
-  const [checked, setChecked] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const { markDirty, allowLeave } = useUnsavedChanges(!!busy);
   const types: Row[] = project?.typeConfigs ?? [];
@@ -90,6 +93,23 @@ const BatchEditor = observer(function BatchEditor({
   }));
   const errors = { ...serverErrors, ...validateBatchRows(rows, types) };
   const disabled = !!busy || uncertain;
+  const generatedRooms = generateRoomNumbers(
+    prefix,
+    start ?? -1,
+    count ?? 0,
+    digits ?? 0,
+  );
+  const generationSignature = JSON.stringify([
+    prefix,
+    start,
+    count,
+    digits,
+    typeCode,
+  ]);
+  const generationChanged =
+    generatedSignature !== null && generatedSignature !== generationSignature;
+  const errorCount = Object.keys(errors).length;
+  const tableRef = useRef<HTMLElement>(null);
   const close = () =>
     navigate(unitListReturnTo(projectId, location.state?.returnTo));
 
@@ -144,11 +164,10 @@ const BatchEditor = observer(function BatchEditor({
   function changeRows(next: BatchUnitRow[]) {
     markDirty();
     setRows(next);
-    setChecked(false);
     setServerErrors({});
     attempt.current = null;
   }
-  function addRooms(rooms: string[]) {
+  function updateRooms(rooms: string[], replace: boolean) {
     if (!typeCode) {
       message.warning(t("请先选择单位类型"));
       return;
@@ -161,35 +180,36 @@ const BatchEditor = observer(function BatchEditor({
       message.warning(t("请填写房号或有效的连续生成规则"));
       return;
     }
-    if (rows.length + rooms.length > BATCH_UNIT_LIMIT) {
+    if ((replace ? 0 : rows.length) + rooms.length > BATCH_UNIT_LIMIT) {
       message.warning(t("每批最多创建 100 个单位"));
       return;
     }
     changeRows([
-      ...rows,
+      ...(replace ? [] : rows),
       ...rooms.map((roomNo) => ({
         key: crypto.randomUUID(),
         roomNo,
         unitTypeCode: typeCode,
       })),
     ]);
-    setRoomText("");
+    setGeneratedSignature(replace ? generationSignature : null);
+    if (!replace) setRoomText("");
   }
   function patchRow(key: string, patch: Partial<BatchUnitRow>) {
     changeRows(
       rows.map((row) => (row.key === key ? { ...row, ...patch } : row)),
     );
   }
-  async function submit(preview: boolean) {
+  async function submit() {
     if (
       busyRef.current ||
       !project ||
       !rows.length ||
-      (!uncertain && Object.keys(errors).length)
+      (!uncertain && (errorCount || generationChanged))
     )
       return;
     busyRef.current = true;
-    setBusy(preview ? "preview" : "create");
+    setBusy(true);
     const payload = attempt.current ?? {
       requestId: crypto.randomUUID(),
       projectId,
@@ -199,19 +219,15 @@ const BatchEditor = observer(function BatchEditor({
       })),
     };
     attempt.current = payload;
-    if (!preview) {
-      try {
-        sessionStorage.setItem(storageKey, JSON.stringify(payload));
-      } catch {
-        /* Retry works in memory. */
-      }
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(payload));
+    } catch {
+      /* Retry works in memory. */
     }
     try {
-      const { data } = await api.post<BatchResult>(
-        preview ? "/units/batch-preview" : "/units/batch",
-        payload,
-        { timeout: 90000 },
-      );
+      const { data } = await api.post<BatchResult>("/units/batch", payload, {
+        timeout: 90000,
+      });
       if (!data.ok) {
         setUncertain(false);
         try {
@@ -227,10 +243,10 @@ const BatchEditor = observer(function BatchEditor({
           ),
         );
         message.warning(t("请修改表格中标记的错误，本批次尚未创建任何单位"));
-      } else if (preview && !data.replayed) {
-        setServerErrors({});
-        setChecked(true);
-        message.success(t("校验通过，可以批量创建"));
+        tableRef.current?.scrollIntoView({
+          block: "start",
+          behavior: "smooth",
+        });
       } else {
         try {
           sessionStorage.removeItem(storageKey);
@@ -244,63 +260,174 @@ const BatchEditor = observer(function BatchEditor({
       }
     } catch (error) {
       // Keep the exact payload and request ID until a definitive response arrives.
-      if (!preview) {
-        const status = (error as { response?: { status?: number } }).response
-          ?.status;
-        if (status && status >= 400 && status < 500 && status !== 408) {
-          setUncertain(false);
-          attempt.current = null;
-          try {
-            sessionStorage.removeItem(storageKey);
-          } catch {
-            /* no-op */
-          }
-        } else setUncertain(true);
-      }
+      const status = (error as { response?: { status?: number } }).response
+        ?.status;
+      if (status && status >= 400 && status < 500 && status !== 408) {
+        setUncertain(false);
+        attempt.current = null;
+        try {
+          sessionStorage.removeItem(storageKey);
+        } catch {
+          /* no-op */
+        }
+      } else setUncertain(true);
       message.error(t(errorMessage(error)));
     } finally {
       busyRef.current = false;
-      setBusy(undefined);
+      setBusy(false);
     }
   }
+  const roomInputs =
+    inputMode === "paste" ? (
+      <>
+        <label className="mb-2 block" htmlFor="batch-rooms">
+          {t("粘贴房号（换行或逗号分隔）")}
+        </label>
+        <Input.TextArea
+          id="batch-rooms"
+          disabled={disabled}
+          value={roomText}
+          rows={3}
+          placeholder={"01\n02\n03"}
+          onChange={(event) => {
+            markDirty();
+            setRoomText(event.target.value);
+          }}
+        />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-[#73819a]">
+            {t(
+              `已识别 ${parseRoomNumbers(roomText).length} 个房号，添加后可在列表调整`,
+            )}
+          </span>
+          <Button
+            disabled={
+              disabled ||
+              !selectedType ||
+              !!selectedTypeProblems.length ||
+              !parseRoomNumbers(roomText).length
+            }
+            onClick={() => updateRooms(parseRoomNumbers(roomText), false)}
+          >
+            {t("添加到待创建列表")}
+          </Button>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <label className="flex items-center gap-3">
+            <span>{t("房号前缀（选填）")}</span>
+            <Input
+              aria-label={t("房号前缀")}
+              className="!w-32"
+              disabled={disabled}
+              value={prefix}
+              maxLength={80}
+              onChange={(e) => {
+                markDirty();
+                setPrefix(e.target.value);
+              }}
+            />
+          </label>
+          {(
+            [
+              ["起始编号", start, setStart, 0, 99999999],
+              ["数量", count, setCount, 1, 100],
+              ["编号位数", digits, setDigits, 1, 8],
+            ] as const
+          ).map(([label, value, setter, min, max]) => (
+            <label key={label} className="flex items-center gap-3">
+              <span>{t(label)}</span>
+              <InputNumber
+                aria-label={t(label)}
+                className="!w-28"
+                disabled={disabled}
+                value={value}
+                min={min}
+                max={max}
+                precision={0}
+                onChange={(value) => {
+                  markDirty();
+                  setter(value);
+                }}
+              />
+            </label>
+          ))}
+          <Button
+            className="lg:!ml-auto"
+            disabled={
+              disabled ||
+              !selectedType ||
+              !!selectedTypeProblems.length ||
+              !generatedRooms.length
+            }
+            onClick={() => updateRooms(generatedRooms, true)}
+          >
+            {t(rows.length ? "更新预览" : "生成预览")}
+          </Button>
+        </div>
+        <p className="mt-3 break-words text-[#73819a]">
+          {t("生成预览：")}
+          {generatedRooms.length
+            ? generatedRooms.length > 4
+              ? `${generatedRooms.slice(0, 3).join("、")} … ${generatedRooms.at(-1)}`
+              : generatedRooms.join("、")
+            : t("请填写有效的生成规则")}
+        </p>
+        <p
+          className={`mt-2 ${generationChanged ? "text-[#ad6800]" : "text-[#73819a]"}`}
+          role={generationChanged ? "status" : undefined}
+        >
+          {t(
+            generationChanged
+              ? "生成规则已修改，请更新预览后再创建。"
+              : "更新预览会替换当前列表，包括逐行修改的房号，不会继续追加。",
+          )}
+        </p>
+      </>
+    );
   return (
     <RecordFormPage
-      title="批量创建单位"
+      title={
+        project
+          ? `批量创建单位 · ${project.name}`
+          : `批量创建单位 · ${loading ? "正在加载项目" : "项目资料未加载"}`
+      }
       onBack={close}
-      saving={!!busy}
+      saving={busy}
       footer={
         allowed && project ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-sm text-[#73819a]">
-              {t(`共 ${rows.length} 个单位`)}
-              {Object.keys(errors).length
-                ? t(` · ${Object.keys(errors).length} 行待修改`)
-                : ""}
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span>
+              {t(`待创建 ${rows.length} 套`)}
+              {errorCount > 0 && (
+                <span className="ml-3 text-red-600">
+                  {t(`· ${errorCount} 行待修改`)}
+                </span>
+              )}
+              {generationChanged && (
+                <span className="ml-3 text-[#ad6800]">{t("· 请更新预览")}</span>
+              )}
             </span>
             <div className="flex gap-3">
-              <Button disabled={!!busy} onClick={close}>
+              <Button disabled={busy} onClick={close}>
                 {t("取消")}
               </Button>
               <Button
-                disabled={
-                  disabled || !rows.length || !!Object.keys(errors).length
-                }
-                loading={busy === "preview"}
-                onClick={() => submit(true)}
-              >
-                {t("检查房号")}
-              </Button>
-              <Button
                 type="primary"
-                loading={busy === "create"}
+                aria-label={t(
+                  uncertain ? "重试并确认创建结果" : `创建 ${rows.length} 套`,
+                )}
+                loading={busy}
                 disabled={
-                  !!busy ||
+                  busy ||
                   !rows.length ||
-                  (!uncertain && !!Object.keys(errors).length)
+                  (!uncertain && (!!errorCount || generationChanged))
                 }
-                onClick={() => submit(false)}
+                onClick={() => submit()}
               >
-                {t(uncertain ? "重试并确认创建结果" : "确认批量创建")}
+                {t(uncertain ? "重试并确认创建结果" : `创建 ${rows.length} 套`)}
               </Button>
             </div>
           </div>
@@ -316,7 +443,7 @@ const BatchEditor = observer(function BatchEditor({
       ) : !project ? (
         <Button onClick={() => setReload((n) => n + 1)}>{t("重新加载")}</Button>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4 text-sm">
           {uncertain && (
             <p role="status" className="rounded-lg bg-[#fffbe6] p-4">
               {t(
@@ -324,12 +451,42 @@ const BatchEditor = observer(function BatchEditor({
               )}
             </p>
           )}
-          <section className="rounded-lg border border-[#e0e6ed] bg-white p-6">
-            <h2 className="mb-5 text-base font-semibold">
-              {t(project.name)} · {t("批量规则")}
+          <section className="rounded-lg border border-[#e0e6ed] bg-white p-5">
+            <h2 className="mb-3 text-base font-semibold">
+              {t("选择单位类型")}
             </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="flex min-w-0 items-center gap-3">
+                <span className="shrink-0">{t("所属项目")}</span>
+                <Input
+                  aria-label={t("所属项目")}
+                  value={project.name}
+                  readOnly
+                  className="min-w-0 flex-1 !bg-[#f5f7fa]"
+                />
+              </label>
+              <label className="flex min-w-0 items-center gap-3">
+                <span className="shrink-0">
+                  <span className="mr-1 text-red-500">*</span>
+                  {t("单位类型")}
+                </span>
+                <Select
+                  aria-label={t("单位类型")}
+                  className="min-w-0 flex-1"
+                  placeholder={t("请选择单位类型")}
+                  disabled={disabled || !types.length}
+                  value={typeCode}
+                  options={typeOptions}
+                  onChange={(value) => {
+                    markDirty();
+                    setTypeCode(value);
+                  }}
+                />
+              </label>
+            </div>
             {!types.length ? (
               <Empty
+                className="mt-4"
                 description={t(
                   "当前项目尚未配置单位类型，请先编辑项目添加类型。",
                 )}
@@ -338,144 +495,114 @@ const BatchEditor = observer(function BatchEditor({
                   {t("编辑项目")}
                 </Button>
               </Empty>
-            ) : (
-              <>
-                <div className="mb-5 max-w-[480px]">
-                  <label>
-                    <span className="mb-2 block">{t("默认单位类型")}</span>
-                    <Select
-                      aria-label={t("默认单位类型")}
-                      className="w-full"
-                      disabled={disabled}
-                      value={typeCode}
-                      options={typeOptions}
-                      onChange={(value) => {
-                        markDirty();
-                        setTypeCode(value);
-                      }}
-                    />
-                  </label>
-                </div>
-                {selectedType && (
-                  <Descriptions
-                    size="small"
-                    className="mb-4 rounded-md bg-[#f5f7fa] p-4"
-                    column={{ xs: 1, sm: 2, md: 3 }}
-                    items={unitTypeDetails(selectedType).map(
-                      ([label, value]) => ({
-                        key: label,
-                        label: t(label),
-                        children: value,
-                      }),
+            ) : selectedType ? (
+              <div className="mt-4 rounded-md bg-[#f5f7fa] p-4">
+                <div className="mb-3 flex items-center gap-2 font-semibold">
+                  {t("类型资料（自动带入）")}
+                  <Tooltip
+                    title={t(
+                      "以上资料由项目的单位类型统一配置，在此不可修改。",
                     )}
-                  />
-                )}
-                {!!selectedTypeProblems.length && (
-                  <div
-                    className="mb-5 rounded-md bg-[#fffbe6] p-4"
-                    role="status"
                   >
-                    <p className="mb-2">
-                      {t(
-                        `所选类型资料未完善：${selectedTypeProblems.join("、")}。请先编辑项目补充后再创建单位。`,
-                      )}
-                    </p>
-                    <Button
-                      disabled={disabled}
-                      onClick={() => navigate(`/projects/${projectId}/edit`)}
-                    >
-                      {t("编辑项目，完善类型")}
-                    </Button>
-                  </div>
-                )}
-                <label className="mb-2 block" htmlFor="batch-rooms">
-                  {t("粘贴房号（换行或逗号分隔）")}
-                </label>
-                <Input.TextArea
-                  id="batch-rooms"
-                  disabled={disabled}
-                  value={roomText}
-                  rows={3}
-                  placeholder={"01\n02\n03"}
-                  onChange={(event) => {
-                    markDirty();
-                    setRoomText(event.target.value);
-                  }}
-                />
-                <Button
-                  className="mt-3"
-                  disabled={disabled || !!selectedTypeProblems.length}
-                  onClick={() => addRooms(parseRoomNumbers(roomText))}
-                >
-                  {t("添加到预览")}
-                </Button>
-                <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-[#e0e6ed] pt-5">
-                  <label>
-                    <span className="mb-2 block">{t("房号前缀（选填）")}</span>
-                    <Input
-                      aria-label={t("房号前缀")}
-                      className="!w-36"
-                      disabled={disabled}
-                      value={prefix}
-                      maxLength={80}
-                      onChange={(e) => setPrefix(e.target.value)}
+                    <InfoCircleOutlined
+                      className="inline-flex items-center"
+                      tabIndex={0}
+                      aria-label={t("类型资料说明")}
                     />
-                  </label>
-                  {(
-                    [
-                      ["起始编号", start, setStart, 0, 99999999],
-                      ["数量", count, setCount, 1, 100],
-                      ["编号位数", digits, setDigits, 1, 8],
-                    ] as const
-                  ).map(([label, value, setter, min, max]) => (
-                    <label key={label}>
-                      <span className="mb-2 block">{t(label)}</span>
-                      <InputNumber
-                        aria-label={t(label)}
-                        disabled={disabled}
-                        value={value}
-                        min={min}
-                        max={max}
-                        precision={0}
-                        onChange={setter}
-                      />
-                    </label>
-                  ))}
-                  <Button
-                    disabled={disabled || !!selectedTypeProblems.length}
-                    onClick={() =>
-                      addRooms(
-                        generateRoomNumbers(
-                          prefix,
-                          start ?? -1,
-                          count ?? 0,
-                          digits ?? 0,
-                        ),
-                      )
-                    }
-                  >
-                    {t("连续生成并添加")}
-                  </Button>
+                  </Tooltip>
                 </div>
-              </>
+                <dl className="grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+                  {unitTypeDetails(selectedType).map(([label, value]) => (
+                    <div key={label} className="min-w-0">
+                      <dt className="mb-1 text-[#73819a]">{t(label)}</dt>
+                      <dd className="break-words">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
+            {!!selectedTypeProblems.length && (
+              <div className="mt-4 rounded-md bg-[#fffbe6] p-3" role="status">
+                <p className="mb-2">
+                  {t(
+                    `所选类型资料未完善：${selectedTypeProblems.join("、")}。请先编辑项目补充后再创建单位。`,
+                  )}
+                </p>
+                <Button
+                  disabled={disabled}
+                  onClick={() => navigate(`/projects/${projectId}/edit`)}
+                >
+                  {t("编辑项目，完善类型")}
+                </Button>
+              </div>
             )}
           </section>
-          <section className="rounded-lg border border-[#e0e6ed] bg-white p-6">
-            <h2 className="mb-2 text-base font-semibold">{t("单位预览")}</h2>
-            <p className="mb-5 text-sm text-[#73819a]">
-              {t(
-                "每批最多 100 个。类型资料自动带入，不可单独修改；房号与价格可以逐行调整，整批校验通过后统一创建。",
-              )}
-            </p>
+          <section className="rounded-lg border border-[#e0e6ed] bg-white p-5">
+            <h2 className="text-base font-semibold">{t("添加房号")}</h2>
+            <Tabs
+              activeKey={inputMode}
+              onChange={setInputMode}
+              items={[
+                {
+                  key: "paste",
+                  label: t("粘贴房号"),
+                  disabled,
+                  children: inputMode === "paste" ? roomInputs : null,
+                },
+                {
+                  key: "generate",
+                  label: t("连续生成"),
+                  disabled,
+                  children: inputMode === "generate" ? roomInputs : null,
+                },
+              ]}
+            />
+          </section>
+          <section
+            ref={tableRef}
+            className="rounded-lg border border-[#e0e6ed] bg-white p-5"
+          >
+            <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <h2 className="text-base font-semibold">
+                {t(`待创建列表（${rows.length}）`)}
+              </h2>
+              <span className="text-[#73819a]">
+                {t("每批最多 100 套，月租及类型资料自动带入")}
+              </span>
+              <Button
+                className="!ml-auto"
+                type="link"
+                danger
+                disabled={disabled || !rows.length}
+                onClick={() => {
+                  changeRows([]);
+                  setGeneratedSignature(null);
+                }}
+              >
+                {t("清空列表")}
+              </Button>
+            </div>
             <Table<BatchUnitRow>
               rowKey="key"
+              size="small"
               dataSource={rows}
               pagination={false}
-              scroll={{ x: 950 }}
+              scroll={{ x: 1200 }}
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={t(
+                      "选择单位类型并生成或粘贴房号，预览将在这里展示",
+                    )}
+                  />
+                ),
+              }}
               columns={[
+                { title: t("序号"), width: 55, render: (_, _row, i) => i + 1 },
                 {
                   title: t("房号"),
-                  width: 125,
+                  width: 120,
                   render: (_, row, i) => (
                     <Input
                       aria-label={t(`第 ${i + 1} 行房号`)}
@@ -491,7 +618,7 @@ const BatchEditor = observer(function BatchEditor({
                 },
                 {
                   title: t("单位类型"),
-                  width: 210,
+                  width: 215,
                   render: (_, row, i) => (
                     <Select
                       aria-label={t(`第 ${i + 1} 行类型`)}
@@ -505,51 +632,45 @@ const BatchEditor = observer(function BatchEditor({
                     />
                   ),
                 },
-                {
-                  title: t("类型资料（只读）"),
-                  width: 210,
-                  render: (_, row) => {
+                ...(
+                  [
+                    ["期 / 座", 85, (type: Row) => typeValue(type.building)],
+                    ["楼层", 75, (type: Row) => typeFloor(type.floor)],
+                    [
+                      "实用面积",
+                      95,
+                      (type: Row) => typeValue(type.area, " ㎡"),
+                    ],
+                    ["间隔", 100, (type: Row) => typeValue(type.layout)],
+                    [
+                      "月租（HKD）",
+                      160,
+                      (type: Row) =>
+                        type.referenceRent == null
+                          ? "待完善"
+                          : amount(type.referenceRent),
+                    ],
+                  ] as const
+                ).map(([title, width, render]) => ({
+                  title: t(title),
+                  width,
+                  render: (_: unknown, row: BatchUnitRow) => {
                     const type = types.find(
                       (item) => item.code === row.unitTypeCode,
                     );
-                    return type ? (
-                      <div className="text-sm">
-                        <div>
-                          {typeValue(type.building)} / {typeFloor(type.floor)}
-                        </div>
-                        <div className="text-[#73819a]">
-                          {typeValue(type.area, " ㎡")} ·{" "}
-                          {typeValue(type.layout)}
-                        </div>
-                        <div>{typePriceRange(type)}</div>
-                      </div>
-                    ) : (
-                      "—"
-                    );
+                    return type ? render(type) : "—";
                   },
-                },
+                })),
                 {
-                  title: t("月租（HKD）"),
-                  width: 140,
-                  render: (_, row) => {
-                    const type = types.find(
-                      (item) => item.code === row.unitTypeCode,
-                    );
-                    return type?.referenceRent == null
-                      ? "—"
-                      : amount(type.referenceRent);
-                  },
-                },
-                {
-                  title: t("校验"),
-                  width: 170,
+                  title: t("校验结果"),
+                  width: 190,
                   render: (_, row) =>
                     errors[row.key] ? (
-                      <span className="text-red-600">{t(errors[row.key])}</span>
+                      <span role="status" className="text-red-600">
+                        {t(errors[row.key])}
+                      </span>
                     ) : (
-                      <Tag color={checked ? "success" : undefined}>
-                        {t(checked ? "校验通过" : "待提交校验")}
-                      </Tag>
+                      <span className="text-green-700">{t("格式正常")}</span>
                     ),
                 },
                 {
@@ -571,6 +692,9 @@ const BatchEditor = observer(function BatchEditor({
                 },
               ]}
             />
+            <p className="mt-3 text-[#73819a]">
+              {t("提交时检查项目内重复房号，校验通过后整批创建。")}
+            </p>
           </section>
         </div>
       )}
