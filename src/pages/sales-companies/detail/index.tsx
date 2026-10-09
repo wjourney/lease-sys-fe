@@ -425,14 +425,13 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                   {payoutFields.map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex min-w-0 items-center gap-2 text-sm"
+                      className={`flex min-w-0 items-start gap-2 text-sm ${label === "银行账号" ? "sales-company-payout-account" : ""}`}
                     >
                       <span className="shrink-0 text-[#8190a4]">
                         {t(label)}
                       </span>
                       <span
-                        className={`min-w-0 truncate ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
-                        title={value ? String(value) : undefined}
+                        className={`min-w-0 break-words [overflow-wrap:anywhere] ${value ? "font-medium text-[#26344a]" : "text-[#9aa6b8]"}`}
                       >
                         {value ? t(String(value)) : t("未填写")}
                       </span>
