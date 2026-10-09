@@ -21,7 +21,7 @@ import { t } from "../../shared/i18n";
 import { Status } from "../../shared/ui";
 import { useRoot } from "../../stores/root";
 import { formatMoney } from "../finance/finance-data";
-import { billTitle, billTypes, useBillRequest } from "./bill-data";
+import { billTypes, useBillRequest } from "./bill-data";
 
 export function BillStatus({ row }: { row: Row }) {
   return <Status resource="incomes" value={row.status} />;
@@ -80,12 +80,7 @@ export const BillDrawer = observer(function BillDrawer({
           {row && (
             <>
               <div className="mb-5 flex items-center justify-between gap-3">
-                <div>
-                  <strong className="leading-6">{t(billTitle(row))}</strong>
-                  <div className="mt-1 text-xs text-[#738198]">
-                    {row.recordNo}
-                  </div>
-                </div>
+                <strong>{row.recordNo}</strong>
                 <BillStatus row={row} />
               </div>
               <Descriptions

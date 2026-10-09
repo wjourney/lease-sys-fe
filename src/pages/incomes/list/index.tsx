@@ -26,7 +26,6 @@ import {
   BillFilters,
   BillPage,
   billStates,
-  billTitle,
   billTypes,
   useBillRequest,
 } from "../bill-data";
@@ -209,10 +208,18 @@ export default observer(function IncomeListPage() {
                           width: 120,
                         },
                         {
-                          title: t("账单标题"),
-                          width: 310,
+                          title: t("类型 / 账期"),
+                          width: 215,
                           render: (_, r) => (
-                            <div className="leading-6">{t(billTitle(r))}</div>
+                            <>
+                              {t(billTypes[r.feeType] || r.feeType)}
+                              {r.periodStart && (
+                                <div className="text-[#738198]">
+                                  {dateText(r.periodStart)} ~{" "}
+                                  {dateText(r.periodEnd)}
+                                </div>
+                              )}
+                            </>
                           ),
                         },
                         ...[
