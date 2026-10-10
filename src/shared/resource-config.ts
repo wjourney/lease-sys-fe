@@ -58,7 +58,7 @@ export const statusLabels: Record<string, string> = {
   CONFIRMED: "已确认",
   REJECTED: "已驳回",
   WITHDRAWN: "已撤回",
-  REVERSED: "已冲正",
+  REVERSED: "已撤销",
   SETTLED: "已完结",
   SETTLING: "待结清",
   HANDOVER_PENDING: "待交还",

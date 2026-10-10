@@ -19,13 +19,12 @@ export const ReceiptActions = observer(function ReceiptActions({
 }) {
   const root = useRoot();
   const { modal, message } = App.useApp();
-  const [action, setAction] = useState<string>();
+  const [action, setAction] = useState<"reject" | "withdraw">();
   const [viewing, setViewing] = useState(false);
   const [upload, setUpload] = useState(false);
   const labels: Record<string, string> = {
     reject: "驳回收款",
     withdraw: "撤回登记",
-    reverse: "冲正收款",
   };
   return (
     <Space wrap data-row-action>
@@ -70,11 +69,6 @@ export const ReceiptActions = observer(function ReceiptActions({
             {t("撤回")}
           </Button>
         )}
-      {receipt.status === "CONFIRMED" && root.finance && (
-        <Button size="small" onClick={() => setAction("reverse")}>
-          {t("冲正")}
-        </Button>
-      )}
       {receipt.status === "PENDING" && !root.salesRole && (
         <Button size="small" onClick={() => setUpload(true)}>
           {t("补传凭证")}
@@ -89,10 +83,7 @@ export const ReceiptActions = observer(function ReceiptActions({
           fields={[
             {
               key: "reason",
-              label:
-                action === "reverse"
-                  ? "错误原因（冲正将作废原收据，实际退款请办理退款付款）"
-                  : "原因",
+              label: "原因",
               type: "textarea",
               required: true,
             },

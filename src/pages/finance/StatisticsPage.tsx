@@ -77,7 +77,7 @@ export default observer(function StatisticsPage() {
                   {
                     label: "实收收入",
                     value: money(data.summary.income),
-                    note: "租金及其他收入 · 扣除冲正，不含押金",
+                    note: "租金及其他收入，不含押金",
                     icon: <DollarOutlined />,
                   },
                   {
@@ -89,7 +89,7 @@ export default observer(function StatisticsPage() {
                   {
                     label: "净流入",
                     value: money(data.summary.net),
-                    note: "含押金流入流出 · 扣除收款冲正",
+                    note: "按有效收支统计，含押金流入流出",
                     icon: <FundOutlined />,
                   },
                 ].map((k) => (
@@ -116,7 +116,9 @@ export default observer(function StatisticsPage() {
                   ["实际流出", data.summary.outgoing],
                   ["押金实收", data.summary.depositReceived],
                   ["押金已退", data.summary.depositRefunded],
-                  ["冲正扣减", data.summary.corrections],
+                  ...(Number(data.summary.corrections) !== 0
+                    ? [["历史调整", data.summary.corrections]]
+                    : []),
                 ].map(([label, value]) => (
                   <div key={label}>
                     <span>{t(label)}</span>
@@ -128,7 +130,7 @@ export default observer(function StatisticsPage() {
                 <div className="finance-panel">
                   <h2>{t("收支趋势")}</h2>
                   <p className="finance-muted">
-                    {t("蓝色为确认流入，橙色为实际流出；冲正单列在下方明细。")}
+                    {t("蓝色为确认流入，橙色为实际流出。")}
                   </p>
                   <Trend data={data.trend} money={money} />
                 </div>
@@ -179,7 +181,11 @@ export default observer(function StatisticsPage() {
                     ...[
                       ["incoming", "确认流入"],
                       ["outgoing", "实际流出"],
-                      ["corrections", "冲正扣减"],
+                      ...(data.trend.some(
+                        (item) => Number(item.corrections) !== 0,
+                      )
+                        ? [["corrections", "历史调整"]]
+                        : []),
                       ["commissionPaid", "佣金实付"],
                       ["net", "净流入"],
                     ].map(([key, label]) => ({

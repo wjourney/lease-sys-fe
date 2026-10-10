@@ -314,7 +314,7 @@ export function OrderDepositSummary({
                             (
                               {
                                 PENDING: "历史收款待核对",
-                                REVERSED: "已冲正",
+                                REVERSED: "已撤销",
                                 REJECTED: "已驳回",
                                 WITHDRAWN: "已撤回",
                               } as Row

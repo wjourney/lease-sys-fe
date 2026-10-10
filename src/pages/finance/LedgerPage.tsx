@@ -109,7 +109,7 @@ export default observer(function LedgerPage() {
             onChange={(direction) => change({ direction })}
             options={[
               { value: "IN", label: t("收入") },
-              { value: "OUT", label: t("支出 / 冲正") },
+              { value: "OUT", label: t("支出") },
             ]}
           />
           <Select
@@ -122,7 +122,6 @@ export default observer(function LedgerPage() {
             options={[
               { value: "RECEIPT", label: t("已确认收款") },
               { value: "PAYMENT", label: t("实际付款") },
-              { value: "REVERSAL", label: t("收款冲正") },
             ]}
           />
           <Select
@@ -153,7 +152,9 @@ export default observer(function LedgerPage() {
                   {[
                     ["确认流入", data.summary.incoming],
                     ["实际流出", data.summary.outgoing],
-                    ["冲正扣减", data.summary.corrections],
+                    ...(Number(data.summary.corrections) !== 0
+                      ? [["历史调整", data.summary.corrections]]
+                      : []),
                     ["净流入", data.summary.net],
                   ].map(([label, val]) => (
                     <div key={label}>
@@ -205,7 +206,7 @@ export default observer(function LedgerPage() {
                             >
                               {t(
                                 v === "REVERSAL"
-                                  ? "收款冲正"
+                                  ? "历史调整"
                                   : v === "RECEIPT"
                                     ? "收入"
                                     : "支出",

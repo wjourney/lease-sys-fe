@@ -67,7 +67,7 @@ export function OrderBills() {
                   CONFIRMED: "已入账",
                   PENDING: "历史收款待核对",
                   REJECTED: "已驳回",
-                  REVERSED: "已冲正",
+                  REVERSED: "已撤销",
                   WITHDRAWN: "已撤回",
                 } as Row
               )[value] || value,
