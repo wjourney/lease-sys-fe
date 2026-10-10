@@ -1,27 +1,59 @@
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Card, Modal, Space, Table } from "antd";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RequestError } from "../../../../components/feedback/RequestError";
 import { MaterialEditor } from "../../../../components/forms/MaterialEditor";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
-import { useResourceList } from "../../../../components/resource-list/useResourceList";
-import { dateText, Row } from "../../../../shared/api";
+import { api, dateText, errorMessage, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { MediaGalleryModal } from "../../../projects/detail/components/MediaGalleryModal";
 
 export const ExpenseFiles = observer(function ExpenseFiles() {
   const { id, root } = useRecordDetail();
-  const { store, page, changePage, refresh } = useResourceList(
-    "materials",
-    { expenseId: id },
-    true,
-    8,
-    false,
-  );
+  const [page, changePage] = useState(1);
+  const [retry, setRetry] = useState(0);
+  const [store, setStore] = useState({
+    items: [] as Row[],
+    total: 0,
+    loading: true,
+    error: "",
+  });
+  const refresh = () => setRetry((v) => v + 1);
+  const allowed = root.canRead("materials");
+  const epoch = root.epoch;
+  useEffect(() => {
+    if (!allowed) return;
+    const controller = new AbortController();
+    setStore((v) => ({ ...v, loading: true, error: "" }));
+    api
+      .get("/materials", {
+        params: { expenseId: id, page, pageSize: 8 },
+        signal: controller.signal,
+      })
+      .then(({ data }) => {
+        if (!controller.signal.aborted)
+          setStore({
+            items: data.items,
+            total: data.total,
+            loading: false,
+            error: "",
+          });
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setStore({
+            items: [],
+            total: 0,
+            loading: false,
+            error: errorMessage(error),
+          });
+      });
+    return () => controller.abort();
+  }, [id, page, retry, allowed, epoch]);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<Row>();
-  if (!root.canRead("materials")) return null;
+  if (!allowed) return null;
   return (
     <>
       <Card
