@@ -9,8 +9,6 @@ export type FinanceFilters = {
   projectId?: string;
   accountId?: string;
   direction?: string;
-  kind?: string;
-  feeType?: string;
   q?: string;
   page?: number;
 };

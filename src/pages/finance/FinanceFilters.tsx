@@ -24,17 +24,20 @@ export function FinanceFilters({
   return (
     <div className="finance-filter-panel">
       <div className="finance-filters finance-filter-period">
-        <Segmented
-          aria-label={t("统计时间范围")}
-          value={period}
-          onChange={(p) => onPeriod(String(p))}
-          options={[
-            { label: t("本月"), value: "month" },
-            { label: t("本季度"), value: "quarter" },
-            { label: t("近半年"), value: "half" },
-            { label: t("自定义"), value: "custom" },
-          ]}
-        />
+        <div className="finance-filter-field">
+          <span>{t("时间")}</span>
+          <Segmented
+            aria-label={t("统计时间范围")}
+            value={period}
+            onChange={(p) => onPeriod(String(p))}
+            options={[
+              { label: t("本月"), value: "month" },
+              { label: t("本季度"), value: "quarter" },
+              { label: t("近半年"), value: "half" },
+              { label: t("自定义"), value: "custom" },
+            ]}
+          />
+        </div>
         <DatePicker.RangePicker
           aria-label={t("日期范围")}
           allowClear={false}
@@ -49,17 +52,20 @@ export function FinanceFilters({
             }
           }}
         />
-        <Select
-          aria-label={t("项目")}
-          placeholder={t("全部项目")}
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          value={value.projectId}
-          onChange={(projectId) => onChange({ projectId })}
-          options={projects.map((p) => ({ value: p.id, label: p.name }))}
-          style={{ width: 180 }}
-        />
+        <div className="finance-filter-field">
+          <span>{t("项目")}</span>
+          <Select
+            aria-label={t("项目")}
+            placeholder={t("全部项目")}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={value.projectId}
+            onChange={(projectId) => onChange({ projectId })}
+            options={projects.map((p) => ({ value: p.id, label: p.name }))}
+            style={{ width: 180 }}
+          />
+        </div>
         {!children && (
           <Button className="finance-filter-reset" onClick={onReset}>
             {t("重置")}

@@ -336,3 +336,33 @@ final result: passed
 - 无剩余 P0–P2 差异。当前真实数据没有退款或凭证文件，相关提交未在生产数据上执行。
 
 final result: passed
+
+
+## 2026-10-10 资金流水与财务统计双 Tab
+
+- Source visual truth：资金流水 `exec-7e52b6e7-5937-4bb3-b271-cc558e68619d.png`（1672 × 941）；财务统计 `exec-7ddabe25-f4e9-42a3-aa88-8cfbc741d41c.png`（1122 × 1402，上下分别为收支概览和月度明细），均位于 `/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/`。用户随后明确将支出去向改为环形图，属于已批准的参考差异。
+- Implementation：`http://127.0.0.1:5173/finance-ledger`、`http://127.0.0.1:5173/finance-statistics`。前端仍调用服务器接口。
+- Evidence root：`/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/finance-qa/`。资金流水 `ledger-implementation-v2.png`（1672 × 941 CSS px）；概览 `finance-overview-final.png`、月度 `finance-monthly-final.png`（1440 × 900 CSS px），1×；手机 `finance-mobile-final.png`（390 × 844 CSS 视口，全页截图）。
+- State：2026-10-01 至 2026-10-10、全部项目、HKD、真实服务器记录。流入 40,000、流出 2,000、净流入 38,000、业务实收及押金各 20,000；唯一实际支出为佣金 2,000，占比 100%。全程只读，没有新增或修改财务记录。
+- Comparison boards：`ledger-comparison-v2.png`，同尺寸 1672 × 941；`overview-comparison.png` 和 `monthly-comparison.png`，左侧参考页面分别裁切至 (16,37,1107,693)/(16,734,1107,1381)，保持比例归一至 1440 × 900，右侧实际同尺寸截图。`overview-focused-comparison.png`、`monthly-focused-comparison.png` 对照指标、图表、表格密度；全幅另核对合计行和底部布局。
+
+### Findings and comparison history
+
+1. 流水首次实现宽度过大，最后几列需横向滚动（P2）。优化列宽为 1349 px，总共 12 列全部保留；1672 px 复查操作列可见，每条均有查看按钮，分页固定底部。
+2. 月度首次截图表格卡片没有铺满剩余空间（P2）。定位 Ant Design Spin 外层与 className 实际位置的差异，补充容器伸展规则。复查 1440 × 900 和 1280 × 720，页面高度等于视口高度，合计行固定底部，无额外整页滚动。
+3. Tab 面板语义复查：内容置于对应 tabpanel，切换只切换展示，共用筛选与服务器数据请求；不再是空面板。
+4. 最终全幅与聚焦组合检查：概览只展示两层指标及双图；月度只展示表格与合计。遵循现有后台字体尺寸，未照搬位图中偏大的字体。环形图替代横条图，中心总支出及旁边类别、金额、占比均可读。
+
+### Fidelity and behavior
+
+- Typography：正文 14 px、指标 20/16 px、图表标题 16 px，说明与刻度 12 px，沿用后台字体；相比旧版大字号进一步压缩。
+- Spacing/layout：横排筛选、重置紧随最后筛选项；两层指标细线分隔、并排图表。月度表格占满剩余高度，合计淡蓝底，金额右对齐。手机无页面横向溢出，月度宽表在自身容器滚动。
+- Colors/tokens：深蓝侧栏、白卡片、浅灰边框；选中时间淡蓝底；流入蓝色/流出柔橙色；实际流水金额正负及收支颜色区分。
+- Assets：沿用系统品牌与 Ant Design 图标。Recharts 绘制实际数据图表，无截图或静态假图运行资产；图表代码随财务统计页面按路由加载。
+- Copy/content：流水保留原字段并增加查看，去掉类型/费用筛选。两 Tab 标签为收支概览、月度明细。历史调整仅非零时展示，不提供冲正入口。
+- Interactions：流水来源单号和查看均打开对应收款/支出抽屉；查看佣金打开佣金抽屉。收入过滤 2 条、支出 1 条、搜索小孩 2 条、重置恢复 3 条。统计切换保留近半年与指定项目；重置恢复默认。项目无收支时两图显示空状态；环形图键盘聚焦/方向键实际出现“佣金：HK$2,000.00 · 100%”提示。桌面及 760/390 px 窄屏检查无页面横向溢出。
+- Console：无新增运行异常；保留既有 Ant Design 5 / React 19 兼容开发警告，本次未改变该独立依赖配置。
+- Validation：TypeScript、生产构建、19 个测试文件 / 64 项测试通过。新增测试验证单类别、多类别、空支出与金额合计的分精度。未对真实财务数据执行付款、退款等写操作。
+- Backend：沿用现有 finance ledger/statistics 接口，字段和聚合口径不变，本次无需后端发布。
+
+final result: passed

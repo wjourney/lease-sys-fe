@@ -1,16 +1,11 @@
 import { RequestError } from "../../components/feedback/RequestError";
-import {
-  DollarOutlined,
-  FileTextOutlined,
-  FundOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
-import { Alert, Button, Empty, Spin, Table } from "antd";
+import { Alert, Button, Empty, Spin, Table, Tabs } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { feeLabels } from "../../shared/config";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
+import { ExpenseBreakdown, Trend } from "./FinanceCharts";
+import { monthlyTotals } from "./statistics-summary";
 import { FinanceFilters } from "./FinanceFilters";
 import {
   FinanceFilters as Filters,
@@ -22,6 +17,7 @@ import {
 
 export default observer(function StatisticsPage() {
   const root = useRoot();
+  const [tab, setTab] = useState("overview");
   const [period, setPeriod] = useState("month");
   const [filters, setFilters] = useState<Filters>({
     ...periodDates("month"),
@@ -37,9 +33,9 @@ export default observer(function StatisticsPage() {
     setFilters((v) => ({ ...v, ...value }));
   const money = (v: string | number) => formatMoney(v, filters.currency);
   if (!root.finance) return <Empty description={t("暂无此模块的访问权限")} />;
-  return (
-    <section className="finance-page">
-      <div className="finance-panel">
+  const content = (
+    <>
+      <div className="finance-panel finance-overview">
         <FinanceFilters
           value={filters}
           onChange={change}
@@ -63,212 +59,201 @@ export default observer(function StatisticsPage() {
           action={<Button onClick={reload}>{t("重试")}</Button>}
         />
       ) : (
-        <Spin spinning={loading}>
-          {data && (
-            <>
-              <div className="finance-kpis">
-                {[
-                  {
-                    label: "新增订单",
-                    value: data.summary.orderCount,
-                    note: "按创建日期 · 含已关闭订单，不区分币种",
-                    icon: <FileTextOutlined />,
-                  },
-                  {
-                    label: "实收收入",
-                    value: money(data.summary.income),
-                    note: "租金及其他收入，不含押金",
-                    icon: <DollarOutlined />,
-                  },
-                  {
-                    label: "应付佣金",
-                    value: money(data.summary.commissionDue),
-                    note: `期内到期 ${data.summary.commissionCount} 笔 · 实付 ${money(data.summary.commissionPaid)}`,
-                    icon: <TeamOutlined />,
-                  },
-                  {
-                    label: "净流入",
-                    value: money(data.summary.net),
-                    note: "按有效收支统计，含押金流入流出",
-                    icon: <FundOutlined />,
-                  },
-                ].map((k) => (
-                  <div className="finance-panel" key={k.label}>
-                    <span className="finance-kpi-label">
-                      {k.icon} {t(k.label)}
-                    </span>
-                    <strong>{k.value}</strong>
-                    <small>{t(k.note)}</small>
-                  </div>
-                ))}
-              </div>
-              {data.summary.unsetCommissionCount > 0 && (
-                <Alert
-                  type="warning"
-                  message={t(
-                    `有 ${data.summary.unsetCommissionCount} 笔历史佣金未设置金额，未计入应付金额。`,
-                  )}
-                />
-              )}
-              <div className="finance-panel finance-summary">
-                {[
-                  ["确认流入", data.summary.incoming],
-                  ["实际流出", data.summary.outgoing],
-                  ["押金实收", data.summary.depositReceived],
-                  ["押金已退", data.summary.depositRefunded],
-                  ...(Number(data.summary.corrections) !== 0
-                    ? [["历史调整", data.summary.corrections]]
-                    : []),
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <span>{t(label)}</span>
-                    <strong>{money(value)}</strong>
-                  </div>
-                ))}
-              </div>
-              <div className="finance-charts">
-                <div className="finance-panel">
-                  <h2>{t("收支趋势")}</h2>
-                  <p className="finance-muted">
-                    {t("蓝色为确认流入，橙色为实际流出。")}
-                  </p>
-                  <Trend data={data.trend} money={money} />
-                </div>
-                <div className="finance-panel">
-                  <h2>{t("支出去向")}</h2>
-                  {!data.expenses.length ? (
-                    <Empty description={t("此期间暂无实际支出")} />
-                  ) : (
-                    <div className="finance-breakdown">
-                      {data.expenses.map((e) => {
-                        const max = Math.max(
-                          ...data.expenses.map((v) => Number(v.amount)),
-                          1,
-                        );
-                        return (
-                          <div key={e.feeType}>
-                            <div>
-                              <span>
-                                {t(feeLabels[e.feeType] || e.feeType)}
-                              </span>
-                              <strong>{money(e.amount)}</strong>
-                            </div>
-                            <div className="finance-bar-track">
-                              <div
-                                style={{
-                                  width: `${(Number(e.amount) / max) * 100}%`,
-                                }}
-                              />
-                            </div>
+        <div className="finance-statistics-loading">
+          <Spin spinning={loading}>
+            {data && (
+              <div className="finance-statistics-body">
+                {tab === "overview" ? (
+                  <>
+                    <div className="finance-panel finance-overview">
+                      <div className="finance-kpis finance-overview-kpis">
+                        {[
+                          {
+                            label: "资金流入",
+                            value: money(data.summary.incoming),
+                          },
+                          {
+                            label: "资金流出",
+                            value: money(data.summary.outgoing),
+                          },
+                          {
+                            label: "净流入",
+                            value: money(data.summary.net),
+                            note: "含押金收退",
+                          },
+                          {
+                            label: "新增订单",
+                            value: data.summary.orderCount,
+                            note: "按创建日期",
+                          },
+                        ].map((k) => (
+                          <div key={k.label}>
+                            <span className="finance-kpi-label">
+                              {t(k.label)}
+                            </span>
+                            <strong>{k.value}</strong>
+                            {k.note && <small>{t(k.note)}</small>}
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                      <div className="finance-secondary-metrics">
+                        {[
+                          ["业务实收", data.summary.income, "不含押金"],
+                          ["押金收取", data.summary.depositReceived],
+                          ["押金退还", data.summary.depositRefunded],
+                          ["应付佣金", data.summary.commissionDue],
+                          ["实付佣金", data.summary.commissionPaid],
+                          ...(Number(data.summary.corrections) !== 0
+                            ? [["历史调整", data.summary.corrections]]
+                            : []),
+                        ].map(([label, value, note]) => (
+                          <div key={label}>
+                            <span>{t(label)}</span>
+                            <strong>{money(value)}</strong>
+                            {note && <small>{t(note)}</small>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
+
+                    {data.summary.unsetCommissionCount > 0 && (
+                      <Alert
+                        type="warning"
+                        message={t(
+                          `有 ${data.summary.unsetCommissionCount} 笔历史佣金未设置金额，未计入应付金额。`,
+                        )}
+                      />
+                    )}
+                    <div className="finance-charts">
+                      <div className="finance-panel">
+                        <div className="finance-chart-heading">
+                          <h2>{t("收支趋势")}</h2>
+                          <div className="finance-legend">
+                            <span className="finance-legend-in">
+                              {t("资金流入")}
+                            </span>
+                            <span className="finance-legend-out">
+                              {t("资金流出")}
+                            </span>
+                          </div>
+                        </div>
+                        <Trend
+                          data={data.trend}
+                          money={money}
+                          currency={filters.currency}
+                        />
+                      </div>
+                      <div className="finance-panel finance-expenses-chart">
+                        <h2>{t("支出去向")}</h2>
+                        <ExpenseBreakdown
+                          expenses={data.expenses}
+                          money={money}
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <MonthlyDetails data={data} money={money} />
+                )}
+                <div className="finance-table-note">
+                  <span>
+                    {t("金额单位")} {filters.currency}
+                  </span>
+                  <span>
+                    {t("统计范围")}：{filters.from} {t("至")} {filters.to}
+                  </span>
                 </div>
               </div>
-              <div className="finance-panel">
-                <h2>{t("月度明细")}</h2>
-                <Table
-                  rowKey="month"
-                  dataSource={data.trend}
-                  size="small"
-                  pagination={false}
-                  scroll={{ x: 800 }}
-                  columns={[
-                    { title: t("月份"), dataIndex: "month" },
-                    { title: t("新增订单"), dataIndex: "orderCount" },
-                    ...[
-                      ["incoming", "确认流入"],
-                      ["outgoing", "实际流出"],
-                      ...(data.trend.some(
-                        (item) => Number(item.corrections) !== 0,
-                      )
-                        ? [["corrections", "历史调整"]]
-                        : []),
-                      ["commissionPaid", "佣金实付"],
-                      ["net", "净流入"],
-                    ].map(([key, label]) => ({
-                      title: t(label),
-                      dataIndex: key,
-                      render: money,
-                    })),
-                  ]}
-                />
-              </div>
-            </>
-          )}
-        </Spin>
+            )}
+          </Spin>
+        </div>
       )}
+    </>
+  );
+  return (
+    <section
+      className={`finance-page finance-statistics ${tab === "monthly" ? "finance-statistics-monthly" : ""}`}
+    >
+      <Tabs
+        activeKey={tab}
+        onChange={setTab}
+        destroyOnHidden
+        items={[
+          {
+            key: "overview",
+            label: t("收支概览"),
+            children: tab === "overview" ? content : null,
+          },
+          {
+            key: "monthly",
+            label: t("月度明细"),
+            children: tab === "monthly" ? content : null,
+          },
+        ]}
+        className="finance-tabs"
+      />
     </section>
   );
 });
 
-function Trend({
+function MonthlyDetails({
   data,
   money,
 }: {
-  data: StatisticsData["trend"];
-  money: (v: string | number) => string;
+  data: StatisticsData;
+  money: (value: number | string) => string;
 }) {
-  if (!data.some((v) => Number(v.incoming) || Number(v.outgoing)))
-    return <Empty description={t("此期间暂无确认收付款")} />;
-  const max = Math.max(
-    ...data.flatMap((v) => [Number(v.incoming), Number(v.outgoing)]),
-    1,
-  );
-  const width = Math.max(580, data.length * 70),
-    step = (width - 40) / data.length;
+  const columns = [
+    { title: t("月份"), dataIndex: "month", width: 100 },
+    {
+      title: t("新增订单"),
+      dataIndex: "orderCount",
+      width: 100,
+      align: "right" as const,
+    },
+    ...[
+      ["incoming", "资金流入"],
+      ["outgoing", "资金流出"],
+      ...(data.trend.some((row) => Number(row.corrections) !== 0)
+        ? [["corrections", "历史调整"]]
+        : []),
+      ["commissionPaid", "佣金实付"],
+      ["net", "净流入"],
+    ].map(([key, label]) => ({
+      title: t(label),
+      dataIndex: key,
+      width: 175,
+      align: "right" as const,
+      render: money,
+    })),
+  ];
   return (
-    <div className="finance-trend">
-      <svg
-        role="img"
-        aria-label={t("月度收支柱状图，完整金额见月度明细")}
-        viewBox={`0 0 ${width} 240`}
-        style={{ minWidth: width }}
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <line
-            key={i}
-            x1={20}
-            x2={width - 10}
-            y1={20 + i * 60}
-            y2={20 + i * 60}
-            stroke="#edf0f4"
+    <div className="finance-panel finance-monthly">
+      <span className="finance-month-count">
+        {t(`共 ${data.trend.length} 个月`)}
+      </span>
+      <div className="finance-monthly-scroll">
+        <div className="finance-monthly-sheet">
+          <Table
+            rowKey="month"
+            dataSource={data.trend}
+            columns={columns}
+            size="middle"
+            pagination={false}
+            tableLayout="fixed"
           />
-        ))}
-        {data.map((m, i) => (
-          <g key={m.month}>
-            {[
-              { val: m.incoming, color: "#486b99" },
-              { val: m.outgoing, color: "#d49860" },
-            ].map((b, j) => (
-              <rect
-                key={j}
-                x={20 + i * step + step / 2 - 18 + j * 20}
-                y={200 - (Number(b.val) / max) * 170}
-                width={16}
-                height={(Number(b.val) / max) * 170}
-                fill={b.color}
-                rx={2}
-              >
-                <title>
-                  {m.month} {t(j ? "实际流出" : "确认流入")} {money(b.val)}
-                </title>
-              </rect>
-            ))}
-            <text
-              x={20 + i * step + step / 2}
-              y={225}
-              textAnchor="middle"
-              fontSize={12}
-              fill="#708097"
-            >
-              {m.month}
-            </text>
-          </g>
-        ))}
-      </svg>
+          <Table
+            className="finance-monthly-total"
+            rowKey="month"
+            dataSource={[{ ...monthlyTotals(data.trend), month: t("合计") }]}
+            columns={columns}
+            showHeader={false}
+            pagination={false}
+            size="middle"
+            tableLayout="fixed"
+          />
+        </div>
+      </div>
     </div>
   );
 }

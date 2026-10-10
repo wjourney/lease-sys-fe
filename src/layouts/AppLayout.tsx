@@ -79,6 +79,8 @@ export const AppLayout = observer(function AppLayout() {
   const isStandaloneList = standaloneListPaths.has(
     location.pathname.replace(/\/$/, ""),
   );
+  const isFinanceStatistics =
+    location.pathname.replace(/\/$/, "") === "/finance-statistics";
   const hasViewportList =
     !isRecordEditor &&
     /^\/(projects|sales-companies)\/[^/]+\/?$/.test(location.pathname);
@@ -265,7 +267,7 @@ export const AppLayout = observer(function AppLayout() {
           </div>
         </Header>
         <Content
-          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${hasViewportList ? "viewport-detail-content" : ""} ${isProjectDetail ? "project-detail-content" : ""} ${isOrderDetail ? "order-detail-content" : ""} ${isRecordEditor || isUnitDetail ? "record-editor-content" : ""}`}
+          className={`main-content min-w-0 px-[30px] pt-[30px] pb-0 min-[1600px]:mx-auto min-[1600px]:w-full min-[1600px]:max-w-[1600px] max-[1100px]:px-[18px] max-[1100px]:pt-[22px] max-[760px]:px-3 max-[760px]:py-[18px] ${isStandaloneList ? "standalone-list-content" : ""} ${isFinanceStatistics ? "finance-statistics-content" : ""} ${hasViewportList ? "viewport-detail-content" : ""} ${isProjectDetail ? "project-detail-content" : ""} ${isOrderDetail ? "order-detail-content" : ""} ${isRecordEditor || isUnitDetail ? "record-editor-content" : ""}`}
         >
           <Suspense
             fallback={

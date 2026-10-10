@@ -12,7 +12,7 @@ import {
   Tag,
 } from "antd";
 import { observer } from "mobx-react-lite";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ReceiptDrawer } from "../../components/receipts/ReceiptActions";
 import { feeLabels } from "../../shared/config";
@@ -28,6 +28,9 @@ import {
   useFinanceData,
 } from "./finance-data";
 
+const ExpenseDetail = lazy(() => import("../expenses/detail"));
+const CommissionDetail = lazy(() => import("../commissions/detail"));
+
 export default observer(function LedgerPage() {
   const root = useRoot();
   const [period, setPeriod] = useState("month");
@@ -38,6 +41,12 @@ export default observer(function LedgerPage() {
   });
   const [keyword, setKeyword] = useState("");
   const [receipt, setReceipt] = useState<string>();
+  const [expense, setExpense] = useState<string>();
+  const [commission, setCommission] = useState<string>();
+  const view = (row: Movement) =>
+    row.source === "incomes"
+      ? setReceipt(row.sourceId)
+      : setExpense(row.sourceId);
   const { data, error, loading, reload } = useFinanceData<LedgerData>(
     "ledger",
     filters,
@@ -60,7 +69,7 @@ export default observer(function LedgerPage() {
   }, [keyword]);
   if (!root.finance) return <Empty description={t("暂无此模块的访问权限")} />;
   return (
-    <section className="finance-page resource-list">
+    <section className="finance-page finance-ledger resource-list">
       <div className="finance-panel list-surface">
         <FinanceFilters
           value={filters}
@@ -77,65 +86,50 @@ export default observer(function LedgerPage() {
             setFilters({ ...periodDates("month"), currency: "HKD", page: 1 });
           }}
         >
-          <Input
-            aria-label={t("流水关键词")}
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder={t("编号、订单、往来方或银行参考号")}
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={{ width: 300 }}
-          />
-          <Select
-            aria-label={t("银行账户")}
-            placeholder={t("全部银行账户")}
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            style={{ width: 200 }}
-            value={filters.accountId}
-            onChange={(accountId) => change({ accountId })}
-            options={data?.accounts.map((a) => ({
-              value: a.id,
-              label: a.name,
-            }))}
-          />
-          <Select
-            aria-label={t("收支方向")}
-            placeholder={t("全部收支")}
-            allowClear
-            style={{ width: 120 }}
-            value={filters.direction}
-            onChange={(direction) => change({ direction })}
-            options={[
-              { value: "IN", label: t("收入") },
-              { value: "OUT", label: t("支出") },
-            ]}
-          />
-          <Select
-            aria-label={t("流水类型")}
-            placeholder={t("全部类型")}
-            allowClear
-            style={{ width: 130 }}
-            value={filters.kind}
-            onChange={(kind) => change({ kind })}
-            options={[
-              { value: "RECEIPT", label: t("已确认收款") },
-              { value: "PAYMENT", label: t("实际付款") },
-            ]}
-          />
-          <Select
-            aria-label={t("费用类型")}
-            placeholder={t("全部费用")}
-            allowClear
-            style={{ width: 130 }}
-            value={filters.feeType}
-            onChange={(feeType) => change({ feeType })}
-            options={Object.entries(feeLabels).map(([value, label]) => ({
-              value,
-              label: t(label),
-            }))}
-          />
+          <div className="finance-filter-field">
+            <span>{t("关键词")}</span>
+            <Input
+              aria-label={t("流水关键词")}
+              allowClear
+              prefix={<SearchOutlined />}
+              placeholder={t("编号、订单、往来方或银行参考号")}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              style={{ width: 300 }}
+            />
+          </div>
+          <div className="finance-filter-field">
+            <span>{t("银行账户")}</span>
+            <Select
+              aria-label={t("银行账户")}
+              placeholder={t("全部银行账户")}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              style={{ width: 200 }}
+              value={filters.accountId}
+              onChange={(accountId) => change({ accountId })}
+              options={data?.accounts.map((a) => ({
+                value: a.id,
+                label: a.name,
+              }))}
+            />
+          </div>
+          <div className="finance-filter-field">
+            <span>{t("收支")}</span>
+            <Select
+              aria-label={t("收支方向")}
+              placeholder={t("全部收支")}
+              allowClear
+              style={{ width: 120 }}
+              value={filters.direction}
+              onChange={(direction) => change({ direction })}
+              options={[
+                { value: "IN", label: t("收入") },
+                { value: "OUT", label: t("支出") },
+              ]}
+            />
+          </div>
         </FinanceFilters>
         {error ? (
           <RequestError
@@ -150,8 +144,8 @@ export default observer(function LedgerPage() {
               <>
                 <div className="finance-summary">
                   {[
-                    ["确认流入", data.summary.incoming],
-                    ["实际流出", data.summary.outgoing],
+                    ["资金流入", data.summary.incoming],
+                    ["资金流出", data.summary.outgoing],
                     ...(Number(data.summary.corrections) !== 0
                       ? [["历史调整", data.summary.corrections]]
                       : []),
@@ -170,30 +164,27 @@ export default observer(function LedgerPage() {
                       size="middle"
                       dataSource={data.items}
                       pagination={false}
-                      scroll={{ x: 1450 }}
+                      scroll={{ x: 1349 }}
                       columns={[
-                        { title: t("发生日期"), dataIndex: "date", width: 116 },
+                        { title: t("发生日期"), dataIndex: "date", width: 105 },
                         {
                           title: t("来源单号"),
                           dataIndex: "sourceNo",
-                          width: 210,
-                          render: (v, r) =>
-                            r.source === "incomes" ? (
-                              <Button
-                                type="link"
-                                className="!p-0"
-                                onClick={() => setReceipt(r.sourceId)}
-                              >
-                                {v}
-                              </Button>
-                            ) : (
-                              <Link to={`/expenses/${r.sourceId}`}>{v}</Link>
-                            ),
+                          width: 180,
+                          render: (v, r) => (
+                            <Button
+                              type="link"
+                              className="finance-table-link"
+                              onClick={() => view(r)}
+                            >
+                              {v}
+                            </Button>
+                          ),
                         },
                         {
                           title: t("类型"),
                           dataIndex: "kind",
-                          width: 120,
+                          width: 64,
                           render: (v) => (
                             <Tag
                               color={
@@ -201,7 +192,7 @@ export default observer(function LedgerPage() {
                                   ? "orange"
                                   : v === "RECEIPT"
                                     ? "green"
-                                    : "blue"
+                                    : "orange"
                               }
                             >
                               {t(
@@ -217,24 +208,38 @@ export default observer(function LedgerPage() {
                         {
                           title: t("费用"),
                           dataIndex: "feeType",
+                          width: 55,
                           render: (v) => t(feeLabels[v] || v),
                         },
                         {
                           title: t("金额"),
-                          width: 160,
+                          width: 140,
                           align: "right",
-                          render: (_, r) =>
-                            `${r.direction === "IN" ? "+" : "−"}${formatMoney(r.amount, r.currency)}`,
+                          render: (_, r) => (
+                            <span
+                              className={
+                                r.direction === "IN"
+                                  ? "finance-amount-in"
+                                  : "finance-amount-out"
+                              }
+                            >
+                              {`${r.direction === "IN" ? "+" : "−"}${formatMoney(r.amount, r.currency)}`}
+                            </span>
+                          ),
                         },
                         {
                           title: t("银行账户"),
                           dataIndex: "accountName",
-                          width: 160,
+                          width: 145,
                         },
-                        { title: t("往来方"), dataIndex: "counterparty" },
+                        {
+                          title: t("往来方"),
+                          dataIndex: "counterparty",
+                          width: 135,
+                        },
                         {
                           title: t("关联订单"),
-                          width: 210,
+                          width: 180,
                           render: (_, r) =>
                             r.orderId ? (
                               <Link to={`/orders/${r.orderId}`}>
@@ -244,18 +249,47 @@ export default observer(function LedgerPage() {
                               "—"
                             ),
                         },
-                        { title: t("项目"), dataIndex: "projectName" },
-                        { title: t("银行参考号"), dataIndex: "bankReference" },
+                        {
+                          title: t("项目"),
+                          dataIndex: "projectName",
+                          width: 100,
+                          render: (v) => v || "—",
+                        },
+                        {
+                          title: t("银行参考号"),
+                          dataIndex: "bankReference",
+                          width: 95,
+                          render: (v) => v || "—",
+                        },
                         {
                           title: t("佣金"),
+                          width: 80,
                           render: (_, r) =>
                             r.commissionId ? (
-                              <Link to={`/commissions/${r.commissionId}`}>
+                              <Button
+                                type="link"
+                                className="finance-table-link"
+                                onClick={() => setCommission(r.commissionId)}
+                              >
                                 {t("查看佣金")}
-                              </Link>
+                              </Button>
                             ) : (
                               "—"
                             ),
+                        },
+                        {
+                          title: t("操作"),
+                          width: 70,
+                          fixed: "right",
+                          render: (_, r) => (
+                            <Button
+                              size="small"
+                              className="finance-view-button"
+                              onClick={() => view(r)}
+                            >
+                              {t("查看")}
+                            </Button>
+                          ),
                         },
                       ]}
                     />
@@ -281,6 +315,20 @@ export default observer(function LedgerPage() {
       {receipt && (
         <ReceiptDrawer id={receipt} onClose={() => setReceipt(undefined)} />
       )}
+      <Suspense fallback={<Spin fullscreen />}>
+        {expense && (
+          <ExpenseDetail
+            recordId={expense}
+            onClose={() => setExpense(undefined)}
+          />
+        )}
+        {commission && (
+          <CommissionDetail
+            recordId={commission}
+            onClose={() => setCommission(undefined)}
+          />
+        )}
+      </Suspense>
     </section>
   );
 });
