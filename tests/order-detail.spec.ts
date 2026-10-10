@@ -168,7 +168,7 @@ test("editing payment and commission saves both through the order API", async ({
   expect(Number(updated.orderCommission.amount)).toBe(1350);
 });
 
-test("deposit settlement and partial refund are usable from the order", async ({
+test("deposit settlement refunds the full remaining amount from the order", async ({
   page,
 }) => {
   await login(page);
@@ -233,7 +233,12 @@ test("deposit settlement and partial refund are usable from the order", async ({
   await expect(drawer).toHaveCount(0);
 
   await page.getByRole("button", { name: "登记退款", exact: true }).click();
-  await drawer.getByLabel("本次退款金额", { exact: true }).fill("150");
+  await expect(
+    drawer.getByLabel("退款金额（一次退清）", { exact: true }),
+  ).toHaveAttribute("readonly", "");
+  await expect(
+    drawer.getByLabel("退款金额（一次退清）", { exact: true }),
+  ).toHaveValue("400.00");
   await expect(drawer.getByLabel("银行账户", { exact: true })).toBeDisabled();
   await expect(drawer.getByText(account.name, { exact: true })).toBeVisible();
   await drawer.getByRole("button", { name: "确认提交", exact: true }).click();
@@ -242,8 +247,8 @@ test("deposit settlement and partial refund are usable from the order", async ({
     page.getByText("剩余应退", { exact: true }).first(),
   ).toBeVisible();
   const updated = await call(page, "GET", `/orders/${order.id}`);
-  expect(Number(updated.deposit.refundDue)).toBe(250);
-  expect(Number(updated.deposit.refunded)).toBe(150);
+  expect(Number(updated.deposit.refundDue)).toBe(0);
+  expect(Number(updated.deposit.refunded)).toBe(400);
   await page.screenshot({
     path: "/tmp/order-detail-deposit.png",
     fullPage: true,

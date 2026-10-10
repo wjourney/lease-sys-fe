@@ -199,6 +199,13 @@ test("commission filter clears selection; batch payment retries only failed item
   await page.locator(".ant-table-thead .ant-checkbox-input").check();
   await page.getByRole("button", { name: "批量登记付款（2）" }).click();
   const drawer = page.locator(".ant-drawer-content");
+  for (const id of ids) {
+    await expect(drawer.locator(`#commission_${id}`)).toHaveAttribute(
+      "readonly",
+      "",
+    );
+    await expect(drawer.locator(`#commission_${id}`)).toHaveValue("100");
+  }
   await expect(drawer.locator("#fundAccountId")).toBeDisabled();
   await drawer.getByRole("button", { name: "确认提交" }).click();
   await expect(
@@ -260,6 +267,8 @@ test("single commission payment records the selected balance and refreshes the l
   await row.getByRole("button", { name: "登记付款", exact: true }).click();
   const drawer = page.locator(".ant-drawer-content");
   await expect(drawer.getByText("登记佣金付款", { exact: true })).toBeVisible();
+  await expect(drawer.locator("#amount")).toHaveAttribute("readonly", "");
+  await expect(drawer.locator("#amount")).toHaveValue("100");
   await expect(drawer.locator("#fundAccountId")).toBeDisabled();
   const before = requests.filter((r) => r.path === "/commissions").length;
   await drawer.getByRole("button", { name: "确认提交" }).click();

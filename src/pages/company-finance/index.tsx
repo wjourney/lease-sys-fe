@@ -82,7 +82,10 @@ export default observer(function CompanyFinancePage({
       : search.get("salesUserId") || undefined,
     q: search.get("q") || undefined,
     mode: search.get("mode") || undefined,
-    status: search.get("status") || undefined,
+    status:
+      search.get("status") === "PARTIAL"
+        ? "OPEN"
+        : search.get("status") || undefined,
     page: Number(search.get("page") || 1),
     pageSize: 12,
   };
@@ -224,7 +227,6 @@ export default observer(function CompanyFinancePage({
               options={[
                 ["", "有效佣金"],
                 ["OPEN", "待付款"],
-                ["PARTIAL", "部分付款"],
                 ["PAID", "已付清"],
                 ["UNSET", "待填写"],
                 ["VOID", "已作废"],

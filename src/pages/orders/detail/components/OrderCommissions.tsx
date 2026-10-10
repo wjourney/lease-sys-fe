@@ -23,14 +23,22 @@ export function OrderCommissions() {
     )[agreement?.mode] ||
     agreement?.mode ||
     "—";
-  const next = active.find((item) => Number(item.availableAmount) > 0);
+  const payable = (item: Row) =>
+    Number(item.availableAmount) > 0 &&
+    Number(item.availableAmount) === Number(item.remainingAmount);
+  const next = active.find(payable);
   const totalKnown =
     active.length > 0 && active.every((item) => item.amount != null);
   function pay(item: Row) {
     openAction(
       `登记佣金付款 · ${dateText(item.periodStart)}`,
       [
-        { key: "amount", label: "本次支付金额", type: "money" },
+        {
+          key: "amount",
+          label: "付款金额（一次付清）",
+          type: "money",
+          readOnly: true,
+        },
         ...financialFields,
       ],
       `/commissions/${item.id}/payments`,
@@ -133,13 +141,11 @@ export function OrderCommissions() {
           title: t("操作"),
           render: (_, item) => (
             <Space wrap size={4}>
-              {root.finance &&
-                item.status !== "VOID" &&
-                Number(item.availableAmount) > 0 && (
-                  <Button type="link" size="small" onClick={() => pay(item)}>
-                    {t("登记付款")}
-                  </Button>
-                )}
+              {root.finance && item.status !== "VOID" && payable(item) && (
+                <Button type="link" size="small" onClick={() => pay(item)}>
+                  {t("登记付款")}
+                </Button>
+              )}
               <Button
                 type="link"
                 size="small"

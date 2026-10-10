@@ -281,8 +281,9 @@ export function OrderBills() {
                         [
                           {
                             key: "amount",
-                            label: "本次退款金额",
+                            label: "退款金额（一次退清）",
                             type: "money",
+                            readOnly: true,
                           },
                           ...financialFields,
                         ],

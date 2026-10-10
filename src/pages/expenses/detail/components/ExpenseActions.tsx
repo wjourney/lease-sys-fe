@@ -20,10 +20,19 @@ export const ExpenseActions = observer(function ExpenseActions() {
           onClick={() =>
             openAction(
               "登记付款",
-              financialFields,
+              [
+                {
+                  key: "amount",
+                  label: "付款金额（一次付清）",
+                  type: "money",
+                  readOnly: true,
+                },
+                ...financialFields,
+              ],
               `/expenses/${id}/pay`,
               {
                 paymentMethod: "BANK",
+                amount: row.remainingAmount,
               },
               { sourceKey: crypto.randomUUID() },
             )

@@ -69,7 +69,7 @@ describe("errorMessage", () => {
         data: { code: "BUSINESS", message: "付款金额超过待付余额" },
       },
     });
-    expect(hint).toBe("退款金额超过待退余额，请核对后重新填写。");
+    expect(hint).toBe("付款金额超过待付余额，请刷新后重新登记。");
     expect(errorMessage(hint)).toBe(hint);
   });
 

@@ -86,7 +86,12 @@ export function OrderDepositSummary() {
     openAction(
       "登记押金退款",
       [
-        { key: "amount", label: "本次退款金额", type: "money" },
+        {
+          key: "amount",
+          label: "退款金额（一次退清）",
+          type: "money",
+          readOnly: true,
+        },
         ...financialFields,
       ],
       `/expenses/${refund.id}/pay`,

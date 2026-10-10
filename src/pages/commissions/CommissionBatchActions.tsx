@@ -19,7 +19,10 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
   const keys = useRef(new Map<string, string>());
   const paid = useRef(new Set<string>());
   const available = rows.filter(
-    (r) => r.status !== "VOID" && Number(r.availableAmount) > 0,
+    (r) =>
+      r.status !== "VOID" &&
+      Number(r.availableAmount) > 0 &&
+      Number(r.availableAmount) === Number(r.remainingAmount),
   );
   if (!root.finance) return null;
   const report = results.length ? (
@@ -59,7 +62,7 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
       {!commissions && report}
       {commissions && (
         <ActionForm
-          title="批量登记佣金付款"
+          title="批量登记佣金付款（每笔一次付清）"
           initial={{
             paymentMethod: "BANK",
             ...Object.fromEntries(
@@ -69,8 +72,9 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
           fields={[
             ...commissions.map((r) => ({
               key: `commission_${r.id}`,
-              label: `${r.commissionNo}（可付 HK$ ${r.availableAmount}）`,
+              label: `${r.commissionNo}（一次付清）`,
               type: "money" as const,
+              readOnly: true,
             })),
             ...financialFields,
           ]}
@@ -88,12 +92,12 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
               const amount = String(values[`commission_${row.id}`] ?? "0");
               if (
                 !(Number(amount) > 0) ||
-                Number(amount) > Number(row.availableAmount)
+                Number(amount) !== Number(row.availableAmount)
               ) {
                 next.push({
                   ...row,
                   ok: false,
-                  message: "付款金额须大于零且不超过可付余额",
+                  message: "付款须一次付清，请刷新后重新登记",
                 });
                 continue;
               }
