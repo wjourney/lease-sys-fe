@@ -29,7 +29,6 @@ import {
 } from "./finance-data";
 
 const ExpenseDetail = lazy(() => import("../expenses/detail"));
-const CommissionDetail = lazy(() => import("../commissions/detail"));
 
 export default observer(function LedgerPage() {
   const root = useRoot();
@@ -42,7 +41,6 @@ export default observer(function LedgerPage() {
   const [keyword, setKeyword] = useState("");
   const [receipt, setReceipt] = useState<string>();
   const [expense, setExpense] = useState<string>();
-  const [commission, setCommission] = useState<string>();
   const view = (row: Movement) =>
     row.source === "incomes"
       ? setReceipt(row.sourceId)
@@ -79,7 +77,6 @@ export default observer(function LedgerPage() {
             setPeriod(p);
             if (p !== "custom") change(periodDates(p));
           }}
-          projects={data?.projects || []}
           onReset={() => {
             setPeriod("month");
             setKeyword("");
@@ -164,7 +161,7 @@ export default observer(function LedgerPage() {
                       size="middle"
                       dataSource={data.items}
                       pagination={false}
-                      scroll={{ x: 1349 }}
+                      scroll={{ x: 1269 }}
                       columns={[
                         { title: t("发生日期"), dataIndex: "date", width: 105 },
                         {
@@ -262,22 +259,6 @@ export default observer(function LedgerPage() {
                           render: (v) => v || "—",
                         },
                         {
-                          title: t("佣金"),
-                          width: 80,
-                          render: (_, r) =>
-                            r.commissionId ? (
-                              <Button
-                                type="link"
-                                className="finance-table-link"
-                                onClick={() => setCommission(r.commissionId)}
-                              >
-                                {t("查看佣金")}
-                              </Button>
-                            ) : (
-                              "—"
-                            ),
-                        },
-                        {
                           title: t("操作"),
                           width: 70,
                           fixed: "right",
@@ -320,12 +301,6 @@ export default observer(function LedgerPage() {
           <ExpenseDetail
             recordId={expense}
             onClose={() => setExpense(undefined)}
-          />
-        )}
-        {commission && (
-          <CommissionDetail
-            recordId={commission}
-            onClose={() => setCommission(undefined)}
           />
         )}
       </Suspense>

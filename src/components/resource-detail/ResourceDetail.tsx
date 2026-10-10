@@ -45,6 +45,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   resource,
   actions,
   getTabs,
+  getDetailTabs,
   recordId,
   presentation = "page",
   onClose,
@@ -52,6 +53,10 @@ export const ResourceDetail = observer(function ResourceDetail({
   resource: string;
   actions?: ReactNode;
   getTabs?: (ctx: DetailContextValue) => NonNullable<TabsProps["items"]>;
+  getDetailTabs?: (
+    ctx: DetailContextValue,
+    sections: { basic: ReactNode; materials: ReactNode; history: ReactNode },
+  ) => NonNullable<TabsProps["items"]>;
   recordId?: string;
   presentation?: "page" | "drawer";
   onClose?: () => void;
@@ -185,25 +190,23 @@ export const ResourceDetail = observer(function ResourceDetail({
   ];
   tabs.push(...(getTabs?.(context) ?? []));
 
-  if (
+  const materials =
     resource !== "orders" &&
     resource !== "users" &&
     ownerFields[resource] &&
     resource !== "materials" &&
-    root.canRead("materials")
-  )
+    root.canRead("materials") ? (
+      <ResourceList
+        resource="materials"
+        fixed={{ [ownerFields[resource]]: id }}
+        embedded
+      />
+    ) : null;
+  if (materials)
     tabs.push({
       key: "materials",
       label: t("文件与资料"),
-      children: (
-        <ResourceList
-          resource="materials"
-          fixed={{
-            [ownerFields[resource]]: id,
-          }}
-          embedded
-        />
-      ),
+      children: materials,
     });
   if (resource !== "users" && resource !== "projects")
     tabs.push({
@@ -354,7 +357,13 @@ export const ResourceDetail = observer(function ResourceDetail({
                     ? "receipts"
                     : "basic"
               }
-              items={tabs}
+              items={
+                getDetailTabs?.(context, {
+                  basic: detail,
+                  materials,
+                  history,
+                }) ?? tabs
+              }
             />
           </>
         )}

@@ -6,7 +6,7 @@ export type FinanceFilters = {
   from: string;
   to: string;
   currency: string;
-  projectId?: string;
+  orderId?: string;
   accountId?: string;
   direction?: string;
   q?: string;

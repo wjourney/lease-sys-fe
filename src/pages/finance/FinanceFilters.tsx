@@ -1,15 +1,15 @@
-import { Button, DatePicker, Segmented, Select } from "antd";
+import { Button, DatePicker, Segmented } from "antd";
 import dayjs from "dayjs";
 import type { ReactNode } from "react";
 import { t } from "../../shared/i18n";
-import { Choice, FinanceFilters as Filters } from "./finance-data";
+import { OrderFilter } from "../../components/filters/OrderFilter";
+import { FinanceFilters as Filters } from "./finance-data";
 
 export function FinanceFilters({
   value,
   onChange,
   period,
   onPeriod,
-  projects,
   onReset,
   children,
 }: {
@@ -17,7 +17,6 @@ export function FinanceFilters({
   onChange: (next: Partial<Filters>) => void;
   period: string;
   onPeriod: (p: string) => void;
-  projects: Choice[];
   onReset: () => void;
   children?: ReactNode;
 }) {
@@ -52,20 +51,10 @@ export function FinanceFilters({
             }
           }}
         />
-        <div className="finance-filter-field">
-          <span>{t("项目")}</span>
-          <Select
-            aria-label={t("项目")}
-            placeholder={t("全部项目")}
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            value={value.projectId}
-            onChange={(projectId) => onChange({ projectId })}
-            options={projects.map((p) => ({ value: p.id, label: p.name }))}
-            style={{ width: 180 }}
-          />
-        </div>
+        <OrderFilter
+          value={value.orderId}
+          onChange={(orderId) => onChange({ orderId })}
+        />
         {!children && (
           <Button className="finance-filter-reset" onClick={onReset}>
             {t("重置")}

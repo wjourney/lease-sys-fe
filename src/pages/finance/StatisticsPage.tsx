@@ -44,7 +44,6 @@ export default observer(function StatisticsPage() {
             setPeriod(p);
             if (p !== "custom") change(periodDates(p));
           }}
-          projects={data?.projects || []}
           onReset={() => {
             setPeriod("month");
             setFilters({ ...periodDates("month"), currency: "HKD" });
@@ -186,7 +185,7 @@ export default observer(function StatisticsPage() {
           },
           {
             key: "monthly",
-            label: t("月度明细"),
+            label: t("收支明细"),
             children: tab === "monthly" ? content : null,
           },
         ]}

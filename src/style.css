@@ -608,6 +608,9 @@
 .finance-trend {
   overflow-x: auto;
 }
+.finance-trend-canvas {
+  height: 205px;
+}
 .finance-page.resource-list {
   min-height: 0;
 }
@@ -1208,11 +1211,11 @@
   }
 }
 @media (min-width: 761px) {
-  .finance-statistics-monthly {
+  .finance-statistics {
     height: calc(100dvh - 84px);
     min-height: 0;
   }
-  .finance-statistics-monthly .finance-statistics-body,
+  .finance-statistics .finance-statistics-body,
   .finance-statistics-monthly .finance-monthly {
     display: flex;
     flex-direction: column;
@@ -1242,15 +1245,13 @@
   gap: 16px;
 }
 @media (min-width: 761px) {
-  .finance-statistics-monthly .finance-tabs,
-  .finance-statistics-monthly .ant-tabs-content-holder,
-  .finance-statistics-monthly .ant-tabs-content,
-  .finance-statistics-monthly .ant-tabs-tabpane-active,
-  .finance-statistics-monthly .finance-statistics-loading,
-  .finance-statistics-monthly
-    .finance-statistics-loading
-    > .ant-spin-nested-loading,
-  .finance-statistics-monthly
+  .finance-statistics .finance-tabs,
+  .finance-statistics .ant-tabs-content-holder,
+  .finance-statistics .ant-tabs-content,
+  .finance-statistics .ant-tabs-tabpane-active,
+  .finance-statistics .finance-statistics-loading,
+  .finance-statistics .finance-statistics-loading > .ant-spin-nested-loading,
+  .finance-statistics
     .finance-statistics-loading
     > .ant-spin-nested-loading
     > .ant-spin-container {
@@ -1259,7 +1260,113 @@
     flex: 1;
     min-height: 0;
   }
-  .finance-statistics-monthly .ant-tabs-tabpane-active > .finance-panel {
+  .finance-statistics .ant-tabs-tabpane-active > .finance-panel {
     flex-shrink: 0;
   }
+  .finance-statistics {
+    overflow: hidden;
+    padding-bottom: 16px;
+  }
+  .finance-statistics .finance-panel {
+    padding: 14px 18px;
+  }
+  .finance-statistics .ant-tabs-tabpane-active,
+  .finance-statistics-body {
+    gap: 12px;
+  }
+  .finance-statistics .finance-overview {
+    flex-shrink: 0;
+  }
+  .finance-statistics .finance-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .finance-statistics .finance-kpis strong {
+    font-size: 18px;
+    margin: 4px 0 0;
+  }
+  .finance-statistics .finance-secondary-metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin-top: 12px;
+    padding-top: 10px;
+    gap: 12px;
+  }
+  .finance-statistics .finance-charts {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+  }
+  .finance-statistics .finance-charts > .finance-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .finance-statistics .finance-chart-heading {
+    flex-shrink: 0;
+    margin-bottom: 8px;
+  }
+  .finance-statistics .finance-trend {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .finance-statistics .finance-trend-canvas {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+  .finance-statistics .finance-expense-distribution {
+    flex-direction: row;
+    gap: 12px;
+    min-height: 0;
+  }
+  .finance-statistics .finance-donut {
+    flex: 0 1 220px;
+    min-width: 130px;
+    height: 100%;
+    max-height: 220px;
+  }
+  .finance-statistics .finance-expense-legend {
+    max-height: 100%;
+    overflow-y: auto;
+    gap: 8px;
+  }
+  .finance-statistics .finance-expense-legend li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .finance-statistics .finance-expense-name {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .finance-statistics .finance-secondary-metrics strong {
+    font-size: 14px;
+  }
+  .finance-statistics .finance-expense-legend li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .finance-statistics .finance-expense-name {
+    grid-column: 1;
+  }
+  .finance-statistics .finance-expense-legend strong {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 13px;
+  }
+  .finance-statistics .finance-expense-legend li > span:last-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .finance-statistics .finance-donut-total strong {
+    font-size: 14px;
+  }
+}
+
+.expense-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.expense-detail-info > .ant-card {
+  margin-bottom: 0;
 }

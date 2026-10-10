@@ -49,14 +49,14 @@ export function ExpenseBreakdown({
         role="img"
         aria-label={t(`支出去向环形图，总支出 ${money(total)}`)}
       >
-        <ResponsiveContainer width="100%" height={220} minWidth={0}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart accessibilityLayer>
             <Pie
               data={entries}
               dataKey="value"
               nameKey="name"
-              innerRadius={70}
-              outerRadius={95}
+              innerRadius="65%"
+              outerRadius="90%"
               paddingAngle={entries.length > 1 ? 2 : 0}
               stroke="none"
               startAngle={90}
@@ -113,8 +113,11 @@ export function Trend({
       <span className="finance-chart-unit">
         {t("金额")}（{currency}）
       </span>
-      <div style={{ minWidth: Math.max(440, data.length * 100) }}>
-        <ResponsiveContainer width="100%" height={205} minWidth={0}>
+      <div
+        className="finance-trend-canvas"
+        style={{ minWidth: Math.max(440, data.length * 100) }}
+      >
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <BarChart
             data={entries}
             margin={{ top: 22, right: 16, left: 8, bottom: 0 }}
