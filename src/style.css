@@ -700,7 +700,7 @@
   flex: 2 1 280px;
 }
 .finance-filter-reset {
-  margin-left: auto;
+  flex-shrink: 0;
 }
 @media (max-width: 760px) {
   .finance-filter-fields > .ant-select {

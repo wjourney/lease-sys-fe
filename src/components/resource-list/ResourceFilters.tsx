@@ -110,12 +110,7 @@ export const ResourceFilters = observer(function ResourceFilters({
           </div>
         )}
       {resource !== "commissions" && extraFilters}
-      {actions && (
-        <div className="flex shrink-0 flex-wrap gap-2 max-[760px]:w-full">
-          {actions}
-        </div>
-      )}
-      <div className="ml-auto flex gap-[9px] max-[760px]:ml-0">
+      <div className="flex shrink-0 gap-[9px]">
         <Button
           onClick={() => {
             resetFilters();
@@ -125,6 +120,11 @@ export const ResourceFilters = observer(function ResourceFilters({
           {t("重置")}
         </Button>
       </div>
+      {actions && (
+        <div className="flex shrink-0 flex-wrap gap-2 max-[760px]:w-full">
+          {actions}
+        </div>
+      )}
     </div>
   );
 });

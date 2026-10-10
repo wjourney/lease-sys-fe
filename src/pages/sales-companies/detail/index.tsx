@@ -537,7 +537,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
                     ]}
                   />
                 </div>
-                <div className="ml-auto flex items-center gap-2 max-[650px]:w-full max-[650px]:justify-end">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button onClick={reset}>{t("重置")}</Button>
                   {root.canWrite("users") && (
                     <Button

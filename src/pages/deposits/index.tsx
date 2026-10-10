@@ -67,6 +67,7 @@ export default observer(function DepositsPage() {
   const moneyColumn = (label: string, key: string) => ({
     title: t(label),
     width: 142,
+    className: "whitespace-nowrap",
     align: "right" as const,
     render: (_: unknown, row: Row) =>
       key === "refundable" && row.deposit[key] == null ? (
@@ -134,9 +135,6 @@ export default observer(function DepositsPage() {
             {t("重置")}
           </Button>
         </div>
-        <p className="mb-4 mt-0 text-sm text-[#8793a4]">
-          {t("租约结束后核算扣款并退还押金；续约期间继续持有。")}
-        </p>
         {error ? (
           <RequestError
             type="error"
@@ -151,11 +149,11 @@ export default observer(function DepositsPage() {
                   rowKey="id"
                   dataSource={data?.items ?? []}
                   pagination={false}
-                  scroll={{ x: 1640 }}
+                  scroll={{ x: 1320 }}
                   columns={[
                     {
                       title: t("租客 / 订单"),
-                      width: 220,
+                      width: 210,
                       render: (_, r) => (
                         <>
                           <div className="font-medium">{r.tenantName}</div>
@@ -170,7 +168,7 @@ export default observer(function DepositsPage() {
                     },
                     {
                       title: t("项目 / 单位"),
-                      width: 200,
+                      width: 160,
                       render: (_, r) => (
                         <>
                           <div>{r.projectName}</div>
@@ -182,26 +180,26 @@ export default observer(function DepositsPage() {
                     },
                     {
                       title: t("租约结束日"),
-                      width: 126,
+                      width: 110,
                       render: (_, r) =>
                         dateText(r.actualTerminationOn ?? r.endsOn),
                     },
-                    moneyColumn("实收押金", "received"),
-                    moneyColumn("扣款金额", "deduction"),
-                    moneyColumn("应退金额", "refundable"),
-                    moneyColumn("已退金额", "refunded"),
                     {
                       title: t("押金状态"),
-                      width: 105,
+                      width: 100,
                       render: (_, r) => (
                         <Tag color={depositColors[r.deposit.state]}>
                           {t(depositStates[r.deposit.state] || "—")}
                         </Tag>
                       ),
                     },
+                    moneyColumn("实收押金", "received"),
+                    moneyColumn("扣款金额", "deduction"),
+                    moneyColumn("应退金额", "refundable"),
+                    moneyColumn("已退金额", "refunded"),
                     {
                       title: t("操作"),
-                      width: 225,
+                      width: 160,
                       fixed: "right",
                       render: (_, r) => (
                         <Space size={4} wrap>
