@@ -1,3 +1,4 @@
+import { OperationActor } from "../../../../components/resource-detail/OperationActor";
 import { OrderTable } from "./OrderTable";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { amount, Row } from "../../../../shared/api";
@@ -130,9 +131,8 @@ export function OrderHistory() {
         },
         {
           title: t("操作人"),
-          dataIndex: "actorName",
-          width: 140,
-          render: (value) => t(value || "系统"),
+          width: 250,
+          render: (_, log) => <OperationActor actor={log} />,
         },
       ]}
       supplementary={

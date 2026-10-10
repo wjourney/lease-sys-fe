@@ -1,3 +1,4 @@
+import { OperationActor } from "../../components/resource-detail/OperationActor";
 import { DownloadBillInvoices } from "./DownloadBillInvoices";
 import { RequestError } from "../../components/feedback/RequestError";
 import {
@@ -210,8 +211,10 @@ export const BillDrawer = observer(function BillDrawer({
                           key: log.eventId,
                           children: (
                             <div>
-                              <strong>{log.actorName || t("系统")}</strong> ·{" "}
-                              {dateTimeText(log.operatedAt)}
+                              <strong>
+                                <OperationActor actor={log} />
+                              </strong>{" "}
+                              · {dateTimeText(log.operatedAt)}
                               <div>
                                 {log.subject || row.recordNo} ·{" "}
                                 {t(

@@ -1,3 +1,4 @@
+import { OperationActor } from "./OperationActor";
 import { Card, Empty, Timeline, Typography } from "antd";
 import { observer } from "mobx-react-lite";
 import { Row } from "../../shared/api";
@@ -121,7 +122,9 @@ export const RecordHistory = observer(function RecordHistory({
         items={entries.map(({ log: l, changes }) => ({
           children: (
             <div>
-              <strong>{t(l.actorName)}</strong>{" "}
+              <strong>
+                <OperationActor actor={l} />
+              </strong>{" "}
               <Text type="secondary">{dateTimeText(l.operatedAt)}</Text>
               <div>
                 {{

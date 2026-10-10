@@ -1,7 +1,8 @@
+import { OperationActor } from "../../../components/resource-detail/OperationActor";
 import { ResourceDetail } from "../../../components/resource-detail/ResourceDetail";
 import { ExpenseActions } from "./components/ExpenseActions";
 import { Card, Table } from "antd";
-import { amount, dateText } from "../../../shared/api";
+import { amount, dateText, Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
 export default function ExpenseDetailPage() {
   return (
@@ -14,7 +15,7 @@ export default function ExpenseDetailPage() {
           label: t("付款记录"),
           children: (
             <Card title={t("实际付款记录")}>
-              <Table
+              <Table<Row>
                 rowKey={(_, index) => String(index)}
                 dataSource={row.paymentRecords || []}
                 pagination={false}
@@ -35,7 +36,11 @@ export default function ExpenseDetailPage() {
                       v,
                   },
                   { title: t("银行参考号"), dataIndex: "bankReference" },
-                  { title: t("登记人"), dataIndex: "operator" },
+                  {
+                    title: t("登记人"),
+                    width: 250,
+                    render: (_, record) => <OperationActor actor={record} />,
+                  },
                 ]}
               />
             </Card>
