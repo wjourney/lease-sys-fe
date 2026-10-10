@@ -13,7 +13,6 @@ import {
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { RequestError } from "../../components/feedback/RequestError";
 import { dateText, Page, Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
@@ -45,6 +44,7 @@ export default observer(function DepositsPage() {
   >("/orders/deposits", filters, root.epoch);
   const change = (value: Partial<typeof filters>) =>
     setFilters((v) => ({ ...v, ...value, page: 1 }));
+  const viewDeposit = (id: string) => setViewing({ id });
   useEffect(() => {
     const timer = setTimeout(
       () =>
@@ -152,6 +152,21 @@ export default observer(function DepositsPage() {
               <div className="list-scroll-area">
                 <Table<Row>
                   rowKey="id"
+                  rowClassName="cursor-pointer"
+                  onRow={(record) => ({
+                    tabIndex: 0,
+                    "aria-label": t(`查看 ${record.tenantName} 的押金详情`),
+                    onClick: () => viewDeposit(record.id),
+                    onKeyDown: (event) => {
+                      if (
+                        event.target === event.currentTarget &&
+                        (event.key === "Enter" || event.key === " ")
+                      ) {
+                        event.preventDefault();
+                        viewDeposit(record.id);
+                      }
+                    },
+                  })}
                   dataSource={data?.items ?? []}
                   pagination={false}
                   scroll={{ x: 1320 }}
@@ -162,12 +177,9 @@ export default observer(function DepositsPage() {
                       render: (_, r) => (
                         <>
                           <div className="font-medium">{r.tenantName}</div>
-                          <Link
-                            className="text-xs"
-                            to={`/orders/${r.id}?tab=deposit`}
-                          >
+                          <div className="text-xs text-[#8793a4]">
                             {r.orderNo}
-                          </Link>
+                          </div>
                         </>
                       ),
                     },
@@ -210,7 +222,10 @@ export default observer(function DepositsPage() {
                         <Space size={4} wrap>
                           <Button
                             size="small"
-                            onClick={() => setViewing({ id: r.id })}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              viewDeposit(r.id);
+                            }}
                           >
                             {t("查看")}
                           </Button>
@@ -220,7 +235,7 @@ export default observer(function DepositsPage() {
                                 "",
                             )}
                           >
-                            <span>
+                            <span onClick={(event) => event.stopPropagation()}>
                               <Button
                                 size="small"
                                 type="primary"
@@ -245,7 +260,10 @@ export default observer(function DepositsPage() {
                             r.status !== "COMPLETED" && (
                               <Button
                                 size="small"
-                                onClick={() => setViewing({ id: r.id })}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  viewDeposit(r.id);
+                                }}
                               >
                                 {t("登记收款")}
                               </Button>
