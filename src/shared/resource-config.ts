@@ -12,6 +12,7 @@ export type Field = {
     | "password"
     | "json";
   required?: boolean;
+  readOnly?: boolean;
   options?: {
     label: string;
     value: string;

@@ -16,7 +16,8 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
   const keys = useRef(new Map<string, string>());
   const posted = useRef(new Map<string, Row>());
   const available = rows.filter(
-    (r) => r.canRegister && Number(r.available) > 0,
+    (r) =>
+      r.canRegister && Number(r.pending || 0) === 0 && Number(r.available) > 0,
   );
   async function downloadInvoices() {
     setDownloading(true);
@@ -91,7 +92,7 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
       {!bills && report}
       {bills && (
         <ActionForm
-          title="批量登记收款（提交后直接入账）"
+          title="批量登记收款（所选账单一次付清）"
           voucher
           initial={{
             paymentMethod: "BANK",
@@ -102,8 +103,9 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
           fields={[
             ...bills.map((b) => ({
               key: `bill_${b.id}`,
-              label: `${b.recordNo} · ${b.payerName}（可收 HK$ ${b.available}）`,
+              label: `${b.recordNo} · ${b.payerName}（本次付清）`,
               type: "money" as const,
+              readOnly: true,
             })),
             { key: "receivedOn", label: "到账日期", type: "date" },
             ...financialFields.filter((f) => f.key !== "paidOn"),
@@ -119,10 +121,10 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
                 const amount = String(values[`bill_${b.id}`] ?? "0");
                 if (
                   !(Number(amount) > 0) ||
-                  Number(amount) > Number(b.available)
+                  Number(amount) !== Number(b.available)
                 )
                   throw new Error(
-                    `${b.recordNo}：收款金额须大于 0 且不超过可收金额`,
+                    `${b.recordNo}：账单须一次付清，请刷新后重新登记`,
                   );
                 return {
                   billId: b.id,

@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { RequestError } from "../../../components/feedback/RequestError";
 import { api, errorMessage, options, type Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
+import { initialRentAmount } from "../../../shared/initial-rent";
 import { useRoot } from "../../../stores/root";
 
 type Choice = { label: string; value: string };
@@ -183,6 +184,7 @@ export function OrderDrawer({
   const hasInitialPayment =
     paymentDeclaration === "PARTIAL" || paymentDeclaration === "PAID";
   const depositPlan = Form.useWatch("depositPlan", form);
+  const depositAmount = Form.useWatch("depositAmount", form);
   // Historical agreements keep their mode when editing; new and draft orders
   // always create a monthly schedule.
   const commissionMode =
@@ -200,6 +202,25 @@ export function OrderDrawer({
   const lockedLease = !!row && row.actions?.editLease === false;
   const paymentIntervalMonths =
     row && row.status !== "DRAFT" ? Number(row.paymentIntervalMonths ?? 1) : 1;
+  const initialRent = initialRentAmount(
+    monthlyRent,
+    startsOn?.format("YYYY-MM-DD"),
+    endsOn?.format("YYYY-MM-DD"),
+    {
+      billingVersion:
+        row && row.status !== "DRAFT" ? (row.billingVersion ?? 1) : 2,
+      paymentIntervalMonths,
+      firstPeriodProration: row?.firstPeriodProration,
+      lastPeriodProration: row?.lastPeriodProration,
+    },
+  );
+  useEffect(() => {
+    if (paymentDeclaration !== "PAID" || lockedLease) return;
+    form.setFieldsValue({
+      initialRentReceived: initialRent,
+      initialDepositReceived: String(depositAmount ?? "0"),
+    });
+  }, [form, paymentDeclaration, lockedLease, initialRent, depositAmount]);
   const [fundAccounts, setFundAccounts] = useState<Choice[]>([]);
   const [projects, setProjects] = useState<Choice[]>([]);
   const [units, setUnits] = useState<Choice[]>([]);
@@ -371,16 +392,13 @@ export function OrderDrawer({
     const rentReceived = Number(values.initialRentReceived || 0);
     const depositReceived = Number(values.initialDepositReceived || 0);
     if (!lockedLease && values.paymentDeclaration !== "UNPAID") {
-      if (rentReceived + depositReceived <= 0) {
-        message.error(t("请填写首期租金或押金的实收金额"));
-        return;
-      }
       if (
-        values.paymentDeclaration === "PAID" &&
-        (!rentReceived ||
-          (Number(values.depositAmount) > 0 && !depositReceived))
+        values.paymentDeclaration !== "PAID" ||
+        rentReceived !== Number(initialRent) ||
+        depositReceived !== Number(values.depositAmount || 0) ||
+        rentReceived + depositReceived <= 0
       ) {
-        message.error(t("已付款时请填写首期租金和押金的实收金额"));
+        message.error(t("首期款项须一次付清租金及押金，请核对金额"));
         return;
       }
       if (!values.initialPaymentReceivedOn) {
@@ -656,7 +674,11 @@ export function OrderDrawer({
                 : undefined,
             depositPlan: initialDepositPlan(row),
             rentDueDay: row?.rentDueDay ?? dayjs().date(),
-            paymentDeclaration: initialDeclaration(row?.initialPayment),
+            paymentDeclaration:
+              !lockedLease &&
+              initialDeclaration(row?.initialPayment) === "PARTIAL"
+                ? "UNPAID"
+                : initialDeclaration(row?.initialPayment),
             initialRentReceived:
               row?.initialPayment?.rentReceived != null
                 ? String(row.initialPayment.rentReceived)
@@ -1003,6 +1025,11 @@ export function OrderDrawer({
           </Section>
 
           <Section title="首期收款">
+            <p className="mb-3 text-xs text-[#7e8da6]">
+              {t(
+                "仅支持未付款或一次付清首期租金及押金，实收金额自动按首期账单计算。",
+              )}
+            </p>
             <div className={gridClass}>
               <Form.Item
                 name="paymentDeclaration"
@@ -1018,36 +1045,21 @@ export function OrderDrawer({
                   disabled={lockedLease}
                   options={[
                     { value: "UNPAID", label: t("未付款") },
-                    { value: "PARTIAL", label: t("部分付款") },
+                    ...(lockedLease && paymentDeclaration === "PARTIAL"
+                      ? [
+                          {
+                            value: "PARTIAL",
+                            label: t("历史部分付款"),
+                            disabled: true,
+                          },
+                        ]
+                      : []),
                     { value: "PAID", label: t("已付首期租金及押金") },
                   ]}
                   onChange={(state: OrderValues["paymentDeclaration"]) => {
                     if (state !== "UNPAID") {
-                      const start = form.getFieldValue("startsOn") ?? dayjs();
-                      const end =
-                        form.getFieldValue("endsOn") ??
-                        start.add(1, "year").subtract(1, "day");
-                      const next = start.add(1, "month");
-                      const rent = Number(form.getFieldValue("monthlyRent"));
-                      const firstRent =
-                        end.isBefore(next.subtract(1, "day")) &&
-                        (row?.firstPeriodProration ?? true) &&
-                        (row?.lastPeriodProration ?? true)
-                          ? (rent * (end.diff(start, "day") + 1)) /
-                            next.diff(start, "day")
-                          : rent;
                       form.setFieldsValue({
                         initialPaymentReceivedOn: dayjs(),
-                        ...(state === "PAID"
-                          ? {
-                              initialRentReceived: firstRent.toFixed(2),
-                              initialDepositReceived: String(
-                                form.getFieldValue("depositAmount") ??
-                                  monthlyRent ??
-                                  0,
-                              ),
-                            }
-                          : {}),
                       });
                     }
                     if (state === "UNPAID") {
@@ -1067,13 +1079,13 @@ export function OrderDrawer({
                     name="initialRentReceived"
                     label={t("首期租金实收（HKD）")}
                   >
-                    <MoneyInput disabled={lockedLease} />
+                    <MoneyInput readOnly disabled={lockedLease} />
                   </Form.Item>
                   <Form.Item
                     name="initialDepositReceived"
                     label={t("押金实收（HKD）")}
                   >
-                    <MoneyInput disabled={lockedLease} />
+                    <MoneyInput readOnly disabled={lockedLease} />
                   </Form.Item>
                   <Form.Item name="initialFundAccountId" label={t("银行账户")}>
                     <Select

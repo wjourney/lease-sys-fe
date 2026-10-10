@@ -3,7 +3,6 @@ import { useState } from "react";
 import { ActionForm } from "../forms/ActionForm";
 import { financialFields } from "../resource-detail/financial-fields";
 import { Row } from "../../shared/api";
-import { formatMoney } from "../../shared/money-format";
 import { t } from "../../shared/i18n";
 import { registerReceiptWithVoucher } from "../../shared/receipt-voucher";
 import { useRoot } from "../../stores/root";
@@ -25,7 +24,10 @@ export function RegisterReceipt({
   const { message } = App.useApp();
   const available = bills.filter(
     (b) =>
-      b.canRegister !== false && b.status !== "VOID" && Number(b.available) > 0,
+      b.canRegister !== false &&
+      b.status !== "VOID" &&
+      Number(b.pending || 0) === 0 &&
+      Number(b.available) > 0,
   );
   if (root.salesRole) return null;
   if (!available.length) {
@@ -50,9 +52,9 @@ export function RegisterReceipt({
   const fields = [
     ...available.map((b) => ({
       key: `bill_${b.id}`,
-      label: `${({ RENT: "租金", DEPOSIT: "押金", OTHER: "其他费用" } as Row)[b.feeType] || b.feeType} · ${b.recordNo}（可登记 ${formatMoney(b.available, b.currency || "HKD")}）`,
+      label: `${({ RENT: "租金", DEPOSIT: "押金", OTHER: "其他费用" } as Row)[b.feeType] || b.feeType} · ${b.recordNo}（本次付清）`,
       type: "money" as const,
-      required: !multiple,
+      readOnly: true,
     })),
     { key: "receivedOn", label: "到账日期", type: "date" as const },
     ...financialFields.filter((f) => f.key !== "paidOn"),
@@ -71,39 +73,35 @@ export function RegisterReceipt({
         type={buttonType}
         onClick={() => setKey(crypto.randomUUID())}
       >
-        {t(multiple ? "登记收款 / 分配账单" : "登记收款")}
+        {t("登记收款")}
       </Button>
       {key && (
         <ActionForm
           title={
-            multiple
-              ? "登记收款（分别填写各账单金额，共用一份凭证）"
-              : "登记收款"
+            multiple ? "登记收款（所选账单一次付清，共用一份凭证）" : "登记收款"
           }
           fields={fields}
           initial={{
             payerName,
             paymentMethod: "BANK",
-            ...(!multiple
-              ? { [`bill_${available[0].id}`]: available[0].available }
-              : {}),
+            ...Object.fromEntries(
+              available.map((b) => [`bill_${b.id}`, b.available]),
+            ),
           }}
           voucher
           onClose={() => setKey(undefined)}
           onSubmit={async (values, file) => {
-            const allocations = available
-              .map((b) => ({
-                billId: b.id,
-                amount: String(values[`bill_${b.id}`] || "0"),
-              }))
-              .filter((a) => Number(a.amount) > 0);
+            const allocations = available.map((b) => ({
+              billId: b.id,
+              amount: String(values[`bill_${b.id}`] || "0"),
+            }));
             if (!allocations.length) throw new Error("请至少填写一笔收款金额");
             for (const a of allocations)
               if (
-                Number(a.amount) >
+                Number(a.amount) !==
                 Number(available.find((b) => b.id === a.billId)!.available)
               )
-                throw new Error("收款金额超过可登记余额");
+                throw new Error("账单须一次付清，请刷新后重新登记收款");
             const payment = Object.fromEntries(
               Object.entries(values).filter(([k]) => !k.startsWith("bill_")),
             );

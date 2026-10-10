@@ -150,16 +150,21 @@ test("editing payment and commission saves both through the order API", async ({
     .filter({ hasText: "首期付款情况" })
     .locator(".ant-select-selector")
     .click();
-  await page.getByText("部分付款", { exact: true }).last().click();
-  await drawer.getByLabel("首期租金实收（HKD）").fill("500");
+  await page.getByText("已付首期租金及押金", { exact: true }).last().click();
+  await expect(drawer.getByLabel("首期租金实收（HKD）")).toHaveAttribute(
+    "readonly",
+    "",
+  );
   await drawer.getByLabel("到账日期").fill("2026-10-03");
   await drawer.getByLabel("到账日期").press("Tab");
   await drawer.getByLabel("修改原因").fill("核对首期填报与佣金");
   await drawer.getByRole("button", { name: "保存修改" }).click();
   await expect(drawer).toHaveCount(0);
   const updated = await call(page, "GET", `/orders/${order.id}`);
-  expect(updated.initialPayment.paymentState).toBe("PARTIAL");
-  expect(Number(updated.initialPayment.rentReceived)).toBe(500);
+  expect(updated.initialPayment.paymentState).toBe("PAID");
+  expect(Number(updated.initialPayment.rentReceived)).toBe(
+    Number(updated.monthlyRent),
+  );
   expect(Number(updated.orderCommission.amount)).toBe(1350);
 });
 

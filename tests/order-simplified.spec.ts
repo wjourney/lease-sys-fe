@@ -151,9 +151,7 @@ test("new order requires project, unit and monthly rent and starts unpaid", asyn
   await expect(drawer.locator("#commissionMode")).toHaveCount(0);
   await expect(drawer.locator("#paymentIntervalMonths")).toHaveCount(0);
   await expect(
-    drawer.getByText("租金按月支付，保存后自动生成整个租期的月账单。", {
-      exact: true,
-    }),
+    drawer.getByText(/^租金按月支付，保存后自动生成整个租期的账单。/),
   ).toBeVisible();
   await expect(
     drawer.getByText("每月佣金（HKD）", { exact: true }),
@@ -213,8 +211,22 @@ test("draft edit shares optional fields, unit prefill and direct first-payment d
     .locator(".ant-select")
     .filter({ has: page.locator("#paymentDeclaration") })
     .click();
+  await expect(page.getByTitle("部分付款", { exact: true })).toHaveCount(0);
   await page.getByTitle("已付首期租金及押金", { exact: true }).click();
   await expect(drawer.locator("#initialRentReceived")).toHaveValue("15000.00");
+  await expect(drawer.locator("#initialRentReceived")).toHaveAttribute(
+    "readonly",
+    "",
+  );
+  await expect(drawer.locator("#initialDepositReceived")).toHaveAttribute(
+    "readonly",
+    "",
+  );
+  await drawer.locator("#monthlyRent").fill("16000");
+  await expect(drawer.locator("#initialRentReceived")).toHaveValue("16000.00");
+  await expect(drawer.locator("#initialDepositReceived")).toHaveValue(
+    "16000.00",
+  );
   await drawer.getByRole("button", { name: "保存修改" }).click();
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0].body.unitId).toBe(unitId);
