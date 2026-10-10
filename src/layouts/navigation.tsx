@@ -47,9 +47,9 @@ export function getNavigation(root: RootStore) {
         ["incomes", "账单管理"],
         ["deposits", "押金管理"],
         ["commissions", "佣金管理"],
+        ["expenses", "支出管理"],
         ["fund-ledger", "资金流水"],
         ["finance-statistics", "财务统计"],
-        ["expenses", "支出管理"],
       ]
         .filter(([resource]) =>
           ["deposits", "fund-ledger", "finance-statistics"].includes(resource)
