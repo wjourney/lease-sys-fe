@@ -1,5 +1,5 @@
 import { PlayCircleFilled } from "@ant-design/icons";
-import { Button, Card, Space, Table } from "antd";
+import { Button, Card, Space, Table, Tag, Tooltip } from "antd";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { dateText, Row } from "../../../../shared/api";
@@ -30,9 +30,20 @@ export function OrderFiles() {
       file.category !== "CONTRACT" &&
       (file.category === "VIDEO" || file.mimeType?.startsWith("video/")),
   );
-  const documents = files.filter(
-    (file) => !photos.includes(file) && !videos.includes(file),
-  );
+  const documents = files
+    .filter((file) => !photos.includes(file) && !videos.includes(file))
+    .sort((a, b) => {
+      if (a.category !== b.category)
+        return (
+          Number(b.category === "CONTRACT") - Number(a.category === "CONTRACT")
+        );
+      if (a.category === "CONTRACT")
+        return (
+          Number(Boolean(b.isCurrent)) - Number(Boolean(a.isCurrent)) ||
+          b.versionNo - a.versionNo
+        );
+      return 0;
+    });
   const hasMedia = photos.length > 0 || videos.length > 0;
   const items =
     preview?.category === "PHOTO"
@@ -66,9 +77,53 @@ export function OrderFiles() {
                   ),
                 },
                 {
-                  title: t("上传日期"),
+                  title: t("版本"),
+                  width: 70,
+                  render: (_, file) =>
+                    file.category === "CONTRACT"
+                      ? `V${file.versionNo || 1}`
+                      : "—",
+                },
+                {
+                  title: t("状态"),
+                  width: 112,
+                  render: (_, file) =>
+                    file.category === "CONTRACT" ? (
+                      <Tooltip
+                        title={
+                          !file.isCurrent || file.status === "VOID"
+                            ? [
+                                file.voidReason,
+                                file.voidedAt &&
+                                  `${t("作废时间")}：${dateText(file.voidedAt)}`,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")
+                            : undefined
+                        }
+                      >
+                        <Tag
+                          color={
+                            file.isCurrent && file.status !== "VOID"
+                              ? "green"
+                              : undefined
+                          }
+                        >
+                          {t(
+                            file.isCurrent && file.status !== "VOID"
+                              ? "当前有效"
+                              : "已作废",
+                          )}
+                        </Tag>
+                      </Tooltip>
+                    ) : (
+                      "—"
+                    ),
+                },
+                {
+                  title: t("生成 / 上传日期"),
                   dataIndex: "createdAt",
-                  width: 116,
+                  width: 140,
                   render: dateText,
                 },
                 {

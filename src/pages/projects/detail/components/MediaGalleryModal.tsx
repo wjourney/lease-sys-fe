@@ -4,7 +4,7 @@ import {
   LeftOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { Button, Empty, Modal } from "antd";
+import { Alert, Button, Empty, Modal } from "antd";
 import { useEffect, useState } from "react";
 import type { Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
@@ -66,6 +66,18 @@ export function MediaGalleryModal({
         <Empty description={t("暂无资料")} className="py-8" />
       ) : (
         <div>
+          {item.category === "CONTRACT" &&
+            (!item.isCurrent || item.status === "VOID") && (
+              <Alert
+                className="!mb-3"
+                type="warning"
+                showIcon
+                message={t(
+                  `已作废 · 合同 V${item.versionNo || 1}，请使用当前有效版本`,
+                )}
+                description={item.voidReason ? t(item.voidReason) : undefined}
+              />
+            )}
           <div className="mb-3 flex min-w-0 items-center justify-between gap-3 text-sm">
             <span
               className="min-w-0 truncate font-medium text-[#26334a]"

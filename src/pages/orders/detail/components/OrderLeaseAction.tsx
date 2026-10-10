@@ -24,7 +24,7 @@ export function OrderLeaseAction({
     try {
       const values = await form.validateFields();
       setSaving(true);
-      const { data } = await api.post(
+      await api.post(
         `/orders/${id}/${action}`,
         renew
           ? {
@@ -38,16 +38,11 @@ export function OrderLeaseAction({
             },
       );
       root.invalidate();
-      if (data.contractGenerationPending)
-        message.warning(t("续约已保存，合同暂未更新，请稍后重试。"));
-      else
-        message.success(
-          t(
-            renew
-              ? "续约成功，新增租期账单已生成"
-              : "租约已结束，单位已恢复可租",
-          ),
-        );
+      message.success(
+        t(
+          renew ? "续约成功，新增租期账单已生成" : "租约已结束，单位已恢复可租",
+        ),
+      );
       onClose();
     } catch (error: any) {
       if (!error.errorFields) message.error(errorMessage(error));

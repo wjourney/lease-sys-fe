@@ -1,4 +1,8 @@
-import { LogoutOutlined, ReloadOutlined } from "@ant-design/icons";
+import {
+  DownloadOutlined,
+  LogoutOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import { Button, Space, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
@@ -10,7 +14,7 @@ import { OrderLeaseAction } from "./OrderLeaseAction";
 export const OrderActions = observer(function OrderActions() {
   const { row, root } = useRecordDetail();
   const [action, setAction] = useState<"renew" | "terminate">();
-  if (!root.manageOrders) return null;
+  if (!root.manageOrders && !root.canRead("materials")) return null;
   const ended = orderDisplayStatus(row.status) === "ENDED";
   const unavailable = row.status === "DRAFT";
   const hint = ended
@@ -21,29 +25,54 @@ export const OrderActions = observer(function OrderActions() {
   return (
     <>
       <Space size={8} wrap>
-        <Tooltip title={hint}>
-          <span>
-            <Button
-              icon={<ReloadOutlined aria-hidden />}
-              disabled={ended || unavailable}
-              onClick={() => setAction("renew")}
-            >
-              {t("一键续约")}
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title={hint}>
-          <span>
-            <Button
-              danger
-              icon={<LogoutOutlined aria-hidden />}
-              disabled={ended || unavailable}
-              onClick={() => setAction("terminate")}
-            >
-              {t("提前结束租约")}
-            </Button>
-          </span>
-        </Tooltip>
+        {root.manageOrders && (
+          <>
+            <Tooltip title={hint}>
+              <span>
+                <Button
+                  icon={<ReloadOutlined aria-hidden />}
+                  disabled={ended || unavailable}
+                  onClick={() => setAction("renew")}
+                >
+                  {t("一键续约")}
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title={hint}>
+              <span>
+                <Button
+                  danger
+                  icon={<LogoutOutlined aria-hidden />}
+                  disabled={ended || unavailable}
+                  onClick={() => setAction("terminate")}
+                >
+                  {t("提前结束租约")}
+                </Button>
+              </span>
+            </Tooltip>
+          </>
+        )}
+        {root.canRead("materials") && (
+          <Tooltip
+            title={
+              !row.currentContractMaterialId ? t("合同尚未生成") : undefined
+            }
+          >
+            <span>
+              <Button
+                icon={<DownloadOutlined aria-hidden />}
+                disabled={!row.currentContractMaterialId}
+                href={
+                  row.currentContractMaterialId
+                    ? `/api/v1/orders/${row.id}/contract/download`
+                    : undefined
+                }
+              >
+                {t("下载合同")}
+              </Button>
+            </span>
+          </Tooltip>
+        )}
       </Space>
       {action && (
         <OrderLeaseAction
