@@ -45,13 +45,14 @@ export function getNavigation(root: RootStore) {
       label: t("财务管理"),
       children: [
         ["incomes", "账单管理"],
+        ["deposits", "押金管理"],
         ["commissions", "佣金管理"],
         ["fund-ledger", "资金流水"],
         ["finance-statistics", "财务统计"],
         ["expenses", "支出管理"],
       ]
         .filter(([resource]) =>
-          ["fund-ledger", "finance-statistics"].includes(resource)
+          ["deposits", "fund-ledger", "finance-statistics"].includes(resource)
             ? root.finance
             : root.canRead(resource),
         )

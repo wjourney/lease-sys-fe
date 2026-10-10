@@ -17,7 +17,7 @@ import {
   Typography,
 } from "antd";
 import { observer } from "mobx-react-lite";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { OrderDrawer } from "../../pages/orders/components/OrderDrawer";
@@ -55,7 +55,21 @@ export const ResourceDetail = observer(function ResourceDetail({
   const navigate = useNavigate();
   const location = useLocation();
   const [edit, setEdit] = useState(false);
-  const [tab, setTab] = useState<string>();
+  const [tab, setTab] = useState<string | undefined>(() =>
+    resource === "orders"
+      ? new URLSearchParams(location.search).get("tab") || "basic"
+      : undefined,
+  );
+  useEffect(() => {
+    if (resource !== "orders") return;
+    const requested = new URLSearchParams(location.search).get("tab");
+    setTab(
+      requested &&
+        ["basic", "bills", "deposit", "commissions", "logs"].includes(requested)
+        ? requested
+        : "basic",
+    );
+  }, [resource, id, location.search]);
   const [material, setMaterial] = useState<Row>();
   const [version, setVersion] = useState<string>();
   const { row, loading, error, logs, receipts, versions, load } = useRecordData(

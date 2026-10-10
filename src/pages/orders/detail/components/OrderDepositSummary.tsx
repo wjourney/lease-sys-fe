@@ -1,17 +1,48 @@
-import { Alert, Button, Card, Space, Table } from "antd";
+import { Alert, Button, Card, Space, Table, Tag } from "antd";
 import { useState } from "react";
-import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
+import {
+  DetailContextValue,
+  useRecordDetail,
+} from "../../../../components/resource-detail/DetailContext";
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
 import { ReceiptActions } from "../../../../components/receipts/ReceiptActions";
-import { amount, dateText, Row } from "../../../../shared/api";
+import { dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { depositFigures, remainingMoney } from "../order-financials";
 import { DepositSettlementForm } from "./DepositSettlementForm";
 import { OrderFigures } from "./OrderFigures";
 import { MediaGalleryModal } from "../../../projects/detail/components/MediaGalleryModal";
 
+import { RegisterReceipt } from "../../../../components/receipts/RegisterReceipt";
+import { OperationActor } from "../../../../components/resource-detail/OperationActor";
+import { depositColors, depositStates } from "../../../deposits/deposit-state";
+import { formatMoney } from "../../../finance/finance-data";
+
+export function openDepositRefund(
+  openAction: DetailContextValue["openAction"],
+  refund: Row,
+  currency = "HKD",
+) {
+  openAction(
+    "登记押金退款",
+    [
+      {
+        key: "amount",
+        label: `退款金额（${currency}）`,
+        type: "money",
+        readOnly: true,
+      },
+      ...financialFields,
+    ],
+    `/expenses/${refund.id}/pay`,
+    { amount: remainingMoney(refund), paymentMethod: "BANK" },
+    { sourceKey: crypto.randomUUID() },
+  );
+}
+
 export function OrderDepositSummary() {
   const { row, root, openAction, setTab } = useRecordDetail();
+  const amount = (value: any) => formatMoney(value, row.currency);
   const [settling, setSettling] = useState(false);
   const [vouchers, setVouchers] = useState<Row[]>();
   const d = row.deposit;
@@ -83,28 +114,23 @@ export function OrderDepositSummary() {
       })),
   ].sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? "")));
   function registerRefund(refund: Row) {
-    openAction(
-      "登记押金退款",
-      [
-        {
-          key: "amount",
-          label: "退款金额（HKD）",
-          type: "money",
-          readOnly: true,
-        },
-        ...financialFields,
-      ],
-      `/expenses/${refund.id}/pay`,
-      { amount: remainingMoney(refund), paymentMethod: "BANK" },
-      { sourceKey: crypto.randomUUID() },
-    );
+    openDepositRefund(openAction, refund, row.currency);
   }
+  const depositBills = (row.bills ?? []).filter(
+    (bill: Row) =>
+      bill.feeType === "DEPOSIT" &&
+      bill.status !== "VOID" &&
+      Number(bill.available) > 0,
+  );
   return (
     <>
       <Card
         title={
           <Space wrap size={16}>
             <span>{t("押金结算")}</span>
+            <Tag color={depositColors[d.state]}>
+              {t(depositStates[d.state] || "—")}
+            </Tag>
             {settled && (
               <span className="text-sm font-normal text-[#78869a]">
                 {t("结算日期")} {dateText(row.depositSettledAt)}
@@ -116,7 +142,7 @@ export function OrderDepositSummary() {
           <Space wrap>
             {settled && figures.refundDue !== null && (
               <span className="text-sm text-[#52627a]">
-                {t("剩余应退")}{" "}
+                {t("待退金额")}{" "}
                 <strong className="ml-2 text-xl font-semibold text-[#b66a16]">
                   {amount(figures.refundDue)}
                 </strong>
@@ -126,6 +152,16 @@ export function OrderDepositSummary() {
               <Button type="primary" onClick={() => registerRefund(payable[0])}>
                 {t("登记退款")}
               </Button>
+            )}
+            {!settled && row.status !== "CLOSED" && depositBills.length > 0 && (
+              <RegisterReceipt
+                bills={depositBills}
+                orderId={row.id}
+                payerName={row.tenantName}
+              />
+            )}
+            {root.finance && row.actions?.reviseDeposit && (
+              <Button onClick={() => setSettling(true)}>{t("修正结算")}</Button>
             )}
             {root.finance && row.actions?.settle && (
               <Button type="primary" onClick={() => setSettling(true)}>
@@ -234,7 +270,7 @@ export function OrderDepositSummary() {
                 { title: t("应退"), dataIndex: "amount", render: amount },
                 { title: t("已退"), dataIndex: "paidAmount", render: amount },
                 {
-                  title: t("剩余应退"),
+                  title: t("待退金额"),
                   render: (_, refund) => amount(remainingMoney(refund)),
                 },
                 {
@@ -307,6 +343,11 @@ export function OrderDepositSummary() {
                       value ||
                       "—",
                   ),
+              },
+              {
+                title: t("操作人"),
+                width: 200,
+                render: (_, record) => <OperationActor actor={record} />,
               },
               {
                 title: t("凭证 / 记录"),

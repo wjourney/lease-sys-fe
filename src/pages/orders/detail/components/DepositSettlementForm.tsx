@@ -10,16 +10,29 @@ import {
 } from "antd";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
-import { amount, api, errorMessage, Row } from "../../../../shared/api";
+import { api, errorMessage, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { cents } from "../order-state";
+import { formatMoney } from "../../../finance/finance-data";
 export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
   const { row, id, root, message } = useRecordDetail();
+  const amount = (value: any) => formatMoney(value, row.currency);
+  const revising = Boolean(row.depositSettledAt);
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const items: Row[] = Form.useWatch("items", form) || [];
   const deducted = items.reduce((n, x) => n + cents(x?.amount), 0);
   const received = cents(row.deposit.received);
+  const previousOffsets = new Map<string, number>();
+  for (const item of row.depositDeductions || []) {
+    if (item.incomeId)
+      previousOffsets.set(
+        item.incomeId,
+        (previousOffsets.get(item.incomeId) || 0) + cents(item.amount),
+      );
+  }
+  const available = (bill: Row) =>
+    (cents(bill.remaining) + (previousOffsets.get(bill.id) || 0)) / 100;
   async function submit() {
     if (saving) return;
     try {
@@ -31,6 +44,7 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
       setSaving(true);
       await api.post(`/orders/${id}/deposit-settlement`, {
         ...values,
+        revision: row.revision,
         items: values.items || [],
         deductionAmount: (deducted / 100).toFixed(2),
       });
@@ -47,11 +61,16 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
     <Drawer
       open
       width={760}
-      title={t("办理押金结算")}
-      onClose={onClose}
+      title={t(revising ? "修正押金结算" : "办理押金结算")}
+      onClose={() => !saving && onClose()}
+      maskClosable={!saving}
+      closable={!saving}
+      keyboard={!saving}
       footer={
         <div className="flex justify-end gap-2">
-          <Button onClick={onClose}>{t("取消")}</Button>
+          <Button disabled={saving} onClick={onClose}>
+            {t("取消")}
+          </Button>
           <Button type="primary" loading={saving} onClick={() => void submit()}>
             {t("确认结算")}
           </Button>
@@ -69,7 +88,11 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ items: [], reason: "" }}
+        disabled={saving}
+        initialValues={{
+          items: row.depositDeductions || [],
+          reason: row.depositDeductionReason || "",
+        }}
       >
         <Form.List name="items">
           {(fields, { add, remove }) => (
@@ -111,12 +134,12 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
                           (b: Row) =>
                             b.feeType !== "DEPOSIT" &&
                             b.status !== "VOID" &&
-                            Number(b.remaining) > 0 &&
+                            available(b) > 0 &&
                             Number(b.pending) === 0,
                         )
                         .map((b: Row) => ({
                           value: b.id,
-                          label: `${b.recordNo} · ${amount(b.remaining)}`,
+                          label: `${b.recordNo} · ${amount(available(b))}`,
                         }))}
                     />
                   </Form.Item>
@@ -158,13 +181,7 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
             </>
           )}
         </Form.List>
-        <Form.Item
-          name="reason"
-          label={t("结算说明")}
-          rules={[
-            { required: true, whitespace: true, message: t("请填写结算说明") },
-          ]}
-        >
+        <Form.Item name="reason" label={t("结算说明（选填）")}>
           <Input.TextArea rows={3} />
         </Form.Item>
       </Form>

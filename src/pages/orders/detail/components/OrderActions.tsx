@@ -49,11 +49,11 @@ export const OrderActions = observer(function OrderActions() {
       <Space size={8} wrap>
         {root.manageOrders && (
           <>
-            <Tooltip title={hint}>
+            <Tooltip title={row.actions?.renew ? undefined : hint}>
               <span>
                 <Button
                   icon={<ReloadOutlined aria-hidden />}
-                  disabled={ended || unavailable}
+                  disabled={!(row.actions?.renew ?? (!ended && !unavailable))}
                   onClick={() => setAction("renew")}
                 >
                   {t("一键续约")}

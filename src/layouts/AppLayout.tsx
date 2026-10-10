@@ -33,6 +33,7 @@ const standaloneListPaths = new Set([
   "/orders",
   "/users",
   "/incomes",
+  "/deposits",
   "/expenses",
   "/commissions",
   "/invoices",
@@ -55,6 +56,7 @@ export const AppLayout = observer(function AppLayout() {
     ? ["settings"]
     : [
           "/incomes",
+          "/deposits",
           "/expenses",
           "/commissions",
           "/invoices",

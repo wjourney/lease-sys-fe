@@ -97,3 +97,18 @@ it("operations manages business and settings without finance navigation", () => 
   expect(root.manageOrders).toBe(true);
   expect(root.finance).toBe(false);
 });
+
+it("deposit management is available only to finance roles", () => {
+  for (const role of ["SUPER_ADMIN", "FINANCE"])
+    expect(
+      getNavigation(store(role))
+        .find((i) => i.key === "finance")
+        ?.children?.some((i) => i.key === "/deposits"),
+    ).toBe(true);
+  for (const role of ["OPERATIONS", "SALES", "SALES_COMPANY_ADMIN"])
+    expect(
+      getNavigation(store(role)).some((i) =>
+        i.children?.some((child) => child.key === "/deposits"),
+      ),
+    ).toBe(false);
+});

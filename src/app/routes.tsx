@@ -8,6 +8,7 @@ const BatchCreateUnitsPage = lazy(
 const UnitDetailPage = lazy(() => import("../pages/units/detail"));
 const CompanyFinancePage = lazy(() => import("../pages/company-finance"));
 
+const DepositsPage = lazy(() => import("../pages/deposits"));
 const LedgerPage = lazy(() => import("../pages/finance/LedgerPage"));
 const StatisticsPage = lazy(() => import("../pages/finance/StatisticsPage"));
 const SettingsPage = lazy(() => import("../pages/settings"));
@@ -42,7 +43,7 @@ export const AppRoutes = observer(function AppRoutes() {
   const { pathname } = useLocation();
   if (root.salesRole) {
     if (
-      /^\/(users|settings|fund-accounts|fund-ledger|finance-statistics|incomes|expenses|invoices)(\/|$)/.test(
+      /^\/(users|settings|fund-accounts|fund-ledger|finance-statistics|deposits|incomes|expenses|invoices)(\/|$)/.test(
         pathname,
       )
     )
@@ -83,6 +84,12 @@ export const AppRoutes = observer(function AppRoutes() {
           ) : (
             <Navigate to="/projects" replace />
           )
+        }
+      />
+      <Route
+        path="/deposits"
+        element={
+          root.finance ? <DepositsPage /> : <Navigate to="/projects" replace />
         }
       />
       <Route path="/fund-ledger" element={<LedgerPage />} />
