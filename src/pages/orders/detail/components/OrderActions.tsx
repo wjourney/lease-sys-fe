@@ -7,13 +7,16 @@ import { Button, Space, Tooltip } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
+import { saveDownload } from "../../../../components/batch/export";
+import { api, errorMessage } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { orderDisplayStatus } from "../../../../shared/order-status";
 import { OrderLeaseAction } from "./OrderLeaseAction";
 
 export const OrderActions = observer(function OrderActions() {
-  const { row, root } = useRecordDetail();
+  const { row, root, message } = useRecordDetail();
   const [action, setAction] = useState<"renew" | "terminate">();
+  const [downloading, setDownloading] = useState(false);
   if (!root.manageOrders && !root.canRead("materials")) return null;
   const ended = orderDisplayStatus(row.status) === "ENDED";
   const unavailable = row.status === "DRAFT";
@@ -22,6 +25,25 @@ export const OrderActions = observer(function OrderActions() {
     : unavailable
       ? t("请先完善租约资料")
       : undefined;
+  async function generateAndDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await api.post(`/orders/${row.id}/contract/ensure`);
+      root.invalidate();
+      const { data } = await api.get<Blob>(
+        `/orders/${row.id}/contract/download`,
+        {
+          responseType: "blob",
+        },
+      );
+      saveDownload(data, `${row.orderNo} 租赁合同.pdf`);
+    } catch (error) {
+      message.error(errorMessage(error));
+    } finally {
+      setDownloading(false);
+    }
+  }
   return (
     <>
       <Space size={8} wrap>
@@ -55,13 +77,30 @@ export const OrderActions = observer(function OrderActions() {
         {root.canRead("materials") && (
           <Tooltip
             title={
-              !row.currentContractMaterialId ? t("合同尚未生成") : undefined
+              unavailable
+                ? t("请先完善租约资料")
+                : !row.currentContractMaterialId
+                  ? t(
+                      root.manageOrders
+                        ? "点击生成并下载合同"
+                        : "合同尚未生成，请联系平台管理员",
+                    )
+                  : undefined
             }
           >
             <span>
               <Button
                 icon={<DownloadOutlined aria-hidden />}
-                disabled={!row.currentContractMaterialId}
+                disabled={
+                  unavailable ||
+                  (!row.currentContractMaterialId && !root.manageOrders)
+                }
+                loading={downloading}
+                onClick={
+                  !row.currentContractMaterialId
+                    ? () => void generateAndDownload()
+                    : undefined
+                }
                 href={
                   row.currentContractMaterialId
                     ? `/api/v1/orders/${row.id}/contract/download`
