@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Space, Table, Tag, Tooltip } from "antd";
+import { Alert, Button, Card, Empty, Space, Table, Tag, Tooltip } from "antd";
 import { useState } from "react";
 import {
   DetailContextValue,
@@ -54,7 +54,7 @@ export function OrderDepositSummary({
   onSettle?: () => void;
   onRegisterReceipt?: (form: ReceiptFormOptions) => void;
 } = {}) {
-  const { row, root, openAction, setTab } = useRecordDetail();
+  const { row, root, openAction } = useRecordDetail();
   const amount = (value: any) => formatMoney(value, row.currency);
   const [settling, setSettling] = useState(false);
   const [vouchers, setVouchers] = useState<Row[]>();
@@ -150,11 +150,27 @@ export function OrderDepositSummary({
     <>
       <Card
         title={
-          <Space wrap size={16}>
+          <Space wrap size={16} className="deposit-summary-heading">
             <span>{t("押金结算")}</span>
             <Tag color={depositColors[d.state]}>
               {t(depositStates[d.state] || "—")}
             </Tag>
+            <Tooltip
+              title={refundDisabledReason ? t(refundDisabledReason) : undefined}
+              trigger={["hover", "focus"]}
+            >
+              <span
+                className="inline-flex"
+                tabIndex={refundDisabledReason ? 0 : undefined}
+              >
+                <Button
+                  disabled={Boolean(refundDisabledReason)}
+                  onClick={refundDeposit}
+                >
+                  {t("退还押金")}
+                </Button>
+              </span>
+            </Tooltip>
             {settled && (
               <span className="text-sm font-normal text-[#78869a]">
                 {t("结算日期")} {dateText(row.depositSettledAt)}
@@ -164,19 +180,6 @@ export function OrderDepositSummary({
         }
         extra={
           <Space wrap>
-            <Tooltip
-              title={refundDisabledReason ? t(refundDisabledReason) : undefined}
-            >
-              <span>
-                <Button
-                  type="primary"
-                  disabled={Boolean(refundDisabledReason)}
-                  onClick={refundDeposit}
-                >
-                  {t("退还押金")}
-                </Button>
-              </span>
-            </Tooltip>
             {!settled && row.status !== "CLOSED" && depositBills.length > 0 && (
               <RegisterReceipt
                 bills={depositBills}
@@ -192,14 +195,9 @@ export function OrderDepositSummary({
                 {t("修正结算")}
               </Button>
             )}
-            {!settled && (
-              <Button type="link" onClick={() => setTab("bills")}>
-                {t("查看押金账单")}
-              </Button>
-            )}
           </Space>
         }
-        className="!border-[#e5eaf0] [&_.ant-card-head]:!min-h-14 [&_.ant-card-body]:!p-5"
+        className="deposit-summary !border-[#e5eaf0] [&_.ant-card-head]:!min-h-16 [&_.ant-card-body]:!p-6"
       >
         <OrderFigures
           items={depositSummaryItems(d, settled).map((item) => ({
@@ -213,7 +211,7 @@ export function OrderDepositSummary({
             type="warning"
             showIcon
             message={t(
-              `存在历史待核对收款 ${amount(d.pending)}，请展开记录并前往账单核对。`,
+              `存在历史待核对收款 ${amount(d.pending)}，请前往账单核对。`,
             )}
           />
         )}
@@ -294,83 +292,75 @@ export function OrderDepositSummary({
             />
           </section>
         )}
-        <section className="mt-5">
-          <h3 className="m-0 mb-3 text-base font-semibold text-[#263650]">
+        <section className="deposit-records mt-6">
+          <h3 className="m-0 mb-4 text-base font-semibold text-[#263650]">
             {t("收退款记录")}
           </h3>
-          <Table<Row>
-            size="small"
-            rowKey="id"
-            pagination={false}
-            dataSource={records}
-            tableLayout="fixed"
-            expandable={{
-              // Details are always visible; there is no expand/collapse interaction.
-              expandedRowKeys: records.map((record) => record.id),
-              showExpandColumn: false,
-              expandedRowRender: (record) => (
-                <DepositRecordDetail record={record} onPreview={setVouchers} />
-              ),
-            }}
-            locale={{ emptyText: t("暂无押金收退款记录") }}
-            scroll={{ x: 900 }}
-            columns={[
-              {
-                title: t("日期"),
-                dataIndex: "date",
-                render: dateText,
-                width: 110,
-              },
-              {
-                title: t("类型"),
-                width: 100,
-                dataIndex: "kind",
-                render: (value, record) => (
-                  <>
-                    {t(value)}
-                    {record.receipt && record.status !== "CONFIRMED" && (
-                      <div className="text-xs text-[#78869a]">
+          {records.length ? (
+            <div className="flex flex-col gap-3">
+              {records.map((record) => (
+                <article key={record.id} className="deposit-record">
+                  <div className="deposit-record-summary">
+                    <time className="tabular-nums">
+                      {dateText(record.date)}
+                    </time>
+                    <div>
+                      <Tag color={record.receipt ? "blue" : "green"}>
+                        {t(record.kind)}
+                      </Tag>
+                      {record.receipt && record.status !== "CONFIRMED" && (
+                        <div className="mt-1 text-xs text-[#78869a]">
+                          {t(
+                            (
+                              {
+                                PENDING: "历史收款待核对",
+                                REVERSED: "已冲正",
+                                REJECTED: "已驳回",
+                                WITHDRAWN: "已撤回",
+                              } as Row
+                            )[record.status] || record.status,
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <strong className="deposit-record-amount">
+                      {record.direction}
+                      {amount(record.amount)}
+                    </strong>
+                    <div className="deposit-record-method deposit-record-meta">
+                      <span>{t("方式")}</span>
+                      <span>
                         {t(
                           (
                             {
-                              PENDING: "历史收款待核对",
-                              REVERSED: "已冲正",
-                              REJECTED: "已驳回",
-                              WITHDRAWN: "已撤回",
+                              BANK: "银行转账",
+                              CASH: "现金",
+                              CHEQUE: "支票",
                             } as Row
-                          )[record.status] || record.status,
+                          )[record.paymentMethod] ||
+                            record.paymentMethod ||
+                            "—",
                         )}
-                      </div>
-                    )}
-                  </>
-                ),
-              },
-              {
-                title: t("金额"),
-                width: 160,
-                render: (_, record) =>
-                  `${record.direction}${amount(record.amount)}`,
-              },
-              {
-                title: t("方式"),
-                width: 110,
-                dataIndex: "paymentMethod",
-                render: (value) =>
-                  t(
-                    ({ BANK: "银行转账", CASH: "现金", CHEQUE: "支票" } as Row)[
-                      value
-                    ] ||
-                      value ||
-                      "—",
-                  ),
-              },
-              {
-                title: t("操作人"),
-                width: 280,
-                render: (_, record) => <OperationActor actor={record} />,
-              },
-            ]}
-          />
+                      </span>
+                    </div>
+                    <div className="deposit-record-actor deposit-record-meta">
+                      <span>{t("操作人")}</span>
+                      <OperationActor actor={record} />
+                    </div>
+                  </div>
+                  <DepositRecordDetail
+                    record={record}
+                    onPreview={setVouchers}
+                  />
+                </article>
+              ))}
+            </div>
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t("暂无押金收退款记录")}
+            />
+          )}
         </section>
       </Card>
       {settling && <DepositSettlementForm onClose={() => setSettling(false)} />}

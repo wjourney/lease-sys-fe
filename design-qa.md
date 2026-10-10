@@ -303,3 +303,36 @@ final result: passed
 - 按香港日期，在到期日次日自动结束并释放单位；提前结束立即释放。收款、押金结算与退款继续独立办理，无需交还中间态。系统任务也会释放历史已结束租约的占用。
 - 本地 5173 仍代理服务器接口。界面证据位于 order-renewal/01-actions.jpg、02-renewal.jpg、03-early-end.jpg。弹窗打开后取消，没有对真实订单续约或提前结束。
 - 后端隔离数据库 174 项测试通过，覆盖续约 API、合同更新、历史账单保留、并发、权限、占用、默认/自定义到期与自动/提前结束。前端 45 项测试、类型检查及生产构建通过；既有 E2E 用例已同步标签与日期规则，本次未运行整套 E2E。
+
+
+## 押金结算与押金查看抽屉复核（2026-10-10）
+
+- Source visual truth: `/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-aee7c9e2-8bd2-4c10-9ed5-3de11a624773.png`，1601 × 982 px。用户选定最新稿，要求订单详情和押金管理查看抽屉共用布局。
+- Implementation: `http://127.0.0.1:5173/orders/acebacff-a772-4dce-afd5-fec018150220?tab=deposit`；`http://127.0.0.1:5173/deposits` 的查看抽屉。
+- Evidence: `/tmp/order-deposit-redesign.png`（1600 × 982 CSS px，1×）；`/tmp/deposit-drawer-redesign.png`（1280 × 720 CSS px，1×）；窄屏证据 `/tmp/order-deposit-narrow.png` 和 `/tmp/deposit-drawer-narrow.png`。
+- State: 使用服务器 API 的真实记录，小孩 / R20261009FC0D5B3C，持有中；约定及已收押金均 HK$20,000.00；退款禁用。没有提交任何金融操作。
+- Combined comparison: `/tmp/deposit-design-comparison.png`，左为参考卡片，右为实现卡片，均归一到 1320 px 宽度；源区域原 1569 × 576 px，实现区域 1320 × 416 px。参考仅包含内容区，实际页面包含既有导航；比较聚焦同一押金卡片，未将导航差异记为问题。全图检查导航、工具栏和正文，聚焦组合检查状态/按钮、金额和明细字段。
+
+### Findings and comparison history
+
+1. 首次抽屉检查：960 px 左右的记录区进入两列详情，6 个字段占了三行，与紧凑目标有差异（P2）。已将两列详情的容器断点从 1050 px 调整为 760 px。复查抽屉记录详情三列两行，主摘要按抽屉宽度分为两行，银行账户、编号、手机号完整展示。
+2. 修改后组合核对：标题—持有中—退还押金同排，白底细线明细、两项金额、下方六字段均符合选定稿。保留应用现有 16 px 标题 / 14 px 正文和 12 px 状态标签，金额提升至 28 px；相对位图保持更紧凑的既有后台文字尺度，属于现有设计系统约束。
+3. 760 px 窄屏：订单正文记录宽度等于 scrollWidth（464 px），抽屉记录宽度等于 scrollWidth（660 px），无金额或手机号裁切；按容器自动换行。完成后已恢复默认视口。
+
+### Fidelity review
+
+- Fonts/typography: 沿用现有系统字体、深蓝标题与灰色字段名；金额加粗，编号及手机号允许换行。完整读取长收款编号，未截断。
+- Spacing/layout: 状态后紧跟退款按钮；摘要横排，窄容器自动分行；明细三列两行，无旧表头、大块灰底或展开控制。原扣款明细和结算表单仍接原逻辑。
+- Colors/tokens: 白卡片、#e5eaf0 边框、#edf0f4 分隔线、#263650 主要文字和 #78869a 字段名；disabled 灰底按钮，蓝色持有中标签。
+- Images/assets: 该区域无需位图素材。顶部仍用既有 Ant Design 图标；凭证入口保留现有资料预览。
+- Copy/content: 已删除查看押金账单入口。日期、金额、方式、当前姓名与手机号、编号、付款方、银行账户、参考号、说明、凭证均直接展示。保留特殊历史收款的核对提示，不新增中间态。
+- Interactions: 实际打开押金查看抽屉，再访问同订单押金 tab；两处共用 OrderDepositSummary。退款按钮 disabled，提示“租约尚未结束，暂不能退还押金”可通过焦点显示；支持 hover 与键盘 focus。无明细展开交互，无二级收款详情抽屉。
+- Console: 未发现本次改动产生的运行异常；存在既有 Ant Design 的 destroyOnClose 弃用、useForm 未连接与 React 19 兼容性开发警告。本次未修改这些独立问题。
+- Validation: 18 个测试文件 / 61 项测试通过；TypeScript 检查和生产构建通过。
+
+### Implementation checklist
+
+- 已完成共享组件修改、删除多余入口、记录直接展示、容器换行与实际页面核对。
+- 无剩余 P0–P2 差异。当前真实数据没有退款或凭证文件，相关提交未在生产数据上执行。
+
+final result: passed
