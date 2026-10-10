@@ -44,7 +44,6 @@ export const CommissionConfig: Config = {
     dueOn: "预计结付日期",
     amount: "应付佣金",
     paidAmount: "已付金额",
-    remainingAmount: "剩余佣金",
     status: "状态",
   }),
 };

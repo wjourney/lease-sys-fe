@@ -590,7 +590,8 @@ const BatchEditor = observer(function BatchEditor({
                   aria-label={t("所属项目")}
                   value={project.name}
                   readOnly
-                  className="min-w-0 flex-1 !bg-[#f5f7fa]"
+                  disabled
+                  className="min-w-0 flex-1"
                 />
               </label>
               <label className="flex min-w-0 items-center gap-3">

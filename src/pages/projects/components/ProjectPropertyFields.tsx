@@ -11,7 +11,11 @@ export function ProjectPropertyFields({
   return (
     <ProjectCreateSection title="物业与配套">
       <Form.Item label={t("单位总数")}>
-        <Input readOnly value={t(`由具体单位自动统计：${unitCount}`)} />
+        <Input
+          disabled
+          readOnly
+          value={t(`由具体单位自动统计：${unitCount}`)}
+        />
       </Form.Item>
       <Form.Item name="areaRange" label={t("面积范围（㎡）")}>
         <Input placeholder={t("请输入面积范围")} />

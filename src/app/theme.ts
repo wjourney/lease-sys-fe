@@ -21,6 +21,8 @@ export const theme: ThemeConfig = {
     colorErrorBorder: "#ffd8d2",
     colorErrorText: "#a61d24",
     colorBgLayout: "#f5f6f8",
+    colorBgContainerDisabled: "#eef1f5",
+    colorTextDisabled: "#8590a1",
     colorText: "#233047",
     colorTextSecondary: "#8590a1",
     controlItemBgActive: "#e9eff6",

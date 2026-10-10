@@ -172,7 +172,7 @@ export default observer(function IncomeListPage() {
                       size="middle"
                       dataSource={data.items}
                       pagination={false}
-                      scroll={{ x: 1960 }}
+                      scroll={{ x: 1680 }}
                       columns={[
                         {
                           title: t("账单编号"),
@@ -223,14 +223,23 @@ export default observer(function IncomeListPage() {
                           ),
                         },
                         ...[
-                          ["应收", "total"],
-                          ["已确认收款", "confirmed"],
-                          ["剩余应收", "remaining"],
+                          ["应收金额", "total"],
+                          ["实收金额", "confirmed"],
                         ].map(([title, key]) => ({
                           title: t(title),
                           dataIndex: key,
                           width: 138,
-                          render: money,
+                          render: (value: string, bill: Row) => (
+                            <>
+                              {money(value)}
+                              {key === "confirmed" &&
+                                Number(bill.offset) > 0 && (
+                                  <div className="text-xs text-[#738198]">
+                                    {t("押金已抵扣")} {money(bill.offset)}
+                                  </div>
+                                )}
+                            </>
+                          ),
                         })),
                         {
                           title: t("到期日期"),
@@ -239,7 +248,7 @@ export default observer(function IncomeListPage() {
                           render: dateText,
                         },
                         {
-                          title: t("状态"),
+                          title: t("付款状态"),
                           width: 180,
                           render: (_, r) => <BillStatus row={r} />,
                         },

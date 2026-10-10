@@ -129,9 +129,9 @@ export const BillDrawer = observer(function BillDrawer({
               />
               <div className="bill-detail-summary my-5">
                 {[
-                  ["应收", "total"],
-                  ["已确认收款", "confirmed"],
-                  ["剩余应收", "remaining"],
+                  ["应收金额", "total"],
+                  ["实收金额", "confirmed"],
+                  ...(Number(row.offset) > 0 ? [["押金已抵扣", "offset"]] : []),
                 ].map(([label, key]) => (
                   <div key={key}>
                     <span>{t(label)}</span>

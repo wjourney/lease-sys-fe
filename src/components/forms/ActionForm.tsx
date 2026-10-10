@@ -163,6 +163,7 @@ export function ActionForm({
                 <InputNumber
                   stringMode
                   readOnly={f.readOnly}
+                  disabled={saving || f.readOnly}
                   controls={!f.readOnly}
                   min="0"
                   precision={2}

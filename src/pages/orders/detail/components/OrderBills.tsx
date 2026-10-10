@@ -7,6 +7,7 @@ import { useRecordDetail } from "../../../../components/resource-detail/DetailCo
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
 import { amount, dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { Status } from "../../../../shared/ui";
 import { OrderTable } from "./OrderTable";
 import { OrderFigures } from "./OrderFigures";
 import { rentFigures, remainingMoney } from "../order-financials";
@@ -152,12 +153,11 @@ export function OrderBills() {
             ),
           },
           { title: t("应收金额"), dataIndex: "total", render: amount },
-          { title: t("实收金额"), dataIndex: "confirmed", render: amount },
           {
-            title: t("尚欠金额"),
+            title: t("实收金额"),
             render: (_, bill) => (
               <>
-                {amount(bill.remaining)}
+                {amount(bill.confirmed)}
                 {Number(bill.offset) > 0 && (
                   <div className="mt-1 text-xs text-[#8793a4]">
                     {t("押金已抵扣")} {amount(bill.offset)}
@@ -167,6 +167,12 @@ export function OrderBills() {
             ),
           },
           { title: t("到期日期"), dataIndex: "dueOn", render: dateText },
+          {
+            title: t("付款状态"),
+            render: (_, bill) => (
+              <Status resource="incomes" value={bill.status} />
+            ),
+          },
           {
             title: t("操作"),
             render: (_, bill) => (
@@ -281,7 +287,7 @@ export function OrderBills() {
                         [
                           {
                             key: "amount",
-                            label: "退款金额（一次退清）",
+                            label: "退款金额（HKD）",
                             type: "money",
                             readOnly: true,
                           },

@@ -234,10 +234,10 @@ test("deposit settlement refunds the full remaining amount from the order", asyn
 
   await page.getByRole("button", { name: "登记退款", exact: true }).click();
   await expect(
-    drawer.getByLabel("退款金额（一次退清）", { exact: true }),
+    drawer.getByLabel("退款金额（HKD）", { exact: true }),
   ).toHaveAttribute("readonly", "");
   await expect(
-    drawer.getByLabel("退款金额（一次退清）", { exact: true }),
+    drawer.getByLabel("退款金额（HKD）", { exact: true }),
   ).toHaveValue("400.00");
   await expect(drawer.getByLabel("银行账户", { exact: true })).toBeDisabled();
   await expect(drawer.getByText(account.name, { exact: true })).toBeVisible();

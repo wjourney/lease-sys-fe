@@ -1025,11 +1025,6 @@ export function OrderDrawer({
           </Section>
 
           <Section title="首期收款">
-            <p className="mb-3 text-xs text-[#7e8da6]">
-              {t(
-                "仅支持未付款或一次付清首期租金及押金，实收金额自动按首期账单计算。",
-              )}
-            </p>
             <div className={gridClass}>
               <Form.Item
                 name="paymentDeclaration"
@@ -1079,13 +1074,13 @@ export function OrderDrawer({
                     name="initialRentReceived"
                     label={t("首期租金实收（HKD）")}
                   >
-                    <MoneyInput readOnly disabled={lockedLease} />
+                    <MoneyInput readOnly disabled />
                   </Form.Item>
                   <Form.Item
                     name="initialDepositReceived"
                     label={t("押金实收（HKD）")}
                   >
-                    <MoneyInput readOnly disabled={lockedLease} />
+                    <MoneyInput readOnly disabled />
                   </Form.Item>
                   <Form.Item name="initialFundAccountId" label={t("银行账户")}>
                     <Select

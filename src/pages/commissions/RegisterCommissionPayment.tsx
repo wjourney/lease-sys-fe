@@ -38,7 +38,7 @@ export const RegisterCommissionPayment = observer(
             fields={[
               {
                 key: "amount",
-                label: "付款金额（HKD，一次付清）",
+                label: "付款金额（HKD）",
                 type: "money",
                 readOnly: true,
               },

@@ -3,6 +3,7 @@ import { useRecordDetail } from "../../../../components/resource-detail/DetailCo
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
 import { amount, dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { Status } from "../../../../shared/ui";
 import { OrderTable } from "./OrderTable";
 import { OrderFigures } from "./OrderFigures";
 import { sumMoney, remainingMoney } from "../order-financials";
@@ -35,7 +36,7 @@ export function OrderCommissions() {
       [
         {
           key: "amount",
-          label: "付款金额（一次付清）",
+          label: "付款金额（HKD）",
           type: "money",
           readOnly: true,
         },
@@ -89,7 +90,7 @@ export function OrderCommissions() {
               },
               { label: "已付", value: amount(sumMoney(active, "paidAmount")) },
               {
-                label: "剩余应付",
+                label: "待付佣金",
                 value: totalKnown
                   ? amount(
                       active.reduce(
@@ -127,16 +128,13 @@ export function OrderCommissions() {
           render: (value) => (value == null ? "—" : amount(value)),
         },
         { title: t("已付金额"), dataIndex: "paidAmount", render: amount },
-        {
-          title: t("剩余金额"),
-          render: (_, item) =>
-            item.status === "VOID"
-              ? "—"
-              : item.remainingAmount == null
-                ? "—"
-                : amount(item.remainingAmount),
-        },
         { title: t("结付日期"), dataIndex: "dueOn", render: dateText },
+        {
+          title: t("付款状态"),
+          render: (_, item) => (
+            <Status resource="commissions" value={item.status} />
+          ),
+        },
         {
           title: t("操作"),
           render: (_, item) => (

@@ -23,7 +23,7 @@ export const ExpenseActions = observer(function ExpenseActions() {
               [
                 {
                   key: "amount",
-                  label: "付款金额（一次付清）",
+                  label: "付款金额（HKD）",
                   type: "money",
                   readOnly: true,
                 },

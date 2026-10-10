@@ -92,7 +92,7 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
       {!bills && report}
       {bills && (
         <ActionForm
-          title="批量登记收款（所选账单一次付清）"
+          title="批量登记收款"
           voucher
           initial={{
             paymentMethod: "BANK",
@@ -103,7 +103,7 @@ export function BillBatchActions({ rows }: { rows: Row[] }) {
           fields={[
             ...bills.map((b) => ({
               key: `bill_${b.id}`,
-              label: `${b.recordNo} · ${b.payerName}（本次付清）`,
+              label: `${b.recordNo} · ${b.payerName}`,
               type: "money" as const,
               readOnly: true,
             })),

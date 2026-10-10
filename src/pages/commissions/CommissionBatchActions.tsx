@@ -62,7 +62,7 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
       {!commissions && report}
       {commissions && (
         <ActionForm
-          title="批量登记佣金付款（每笔一次付清）"
+          title="批量登记佣金付款"
           initial={{
             paymentMethod: "BANK",
             ...Object.fromEntries(
@@ -72,7 +72,7 @@ export const CommissionBatchActions = observer(function CommissionBatchActions({
           fields={[
             ...commissions.map((r) => ({
               key: `commission_${r.id}`,
-              label: `${r.commissionNo}（一次付清）`,
+              label: `${r.commissionNo}（HKD）`,
               type: "money" as const,
               readOnly: true,
             })),

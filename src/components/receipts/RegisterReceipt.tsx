@@ -52,7 +52,7 @@ export function RegisterReceipt({
   const fields = [
     ...available.map((b) => ({
       key: `bill_${b.id}`,
-      label: `${({ RENT: "租金", DEPOSIT: "押金", OTHER: "其他费用" } as Row)[b.feeType] || b.feeType} · ${b.recordNo}（本次付清）`,
+      label: `${({ RENT: "租金", DEPOSIT: "押金", OTHER: "其他费用" } as Row)[b.feeType] || b.feeType} · ${b.recordNo}`,
       type: "money" as const,
       readOnly: true,
     })),
@@ -77,9 +77,7 @@ export function RegisterReceipt({
       </Button>
       {key && (
         <ActionForm
-          title={
-            multiple ? "登记收款（所选账单一次付清，共用一份凭证）" : "登记收款"
-          }
+          title={multiple ? "登记收款（共用一份凭证）" : "登记收款"}
           fields={fields}
           initial={{
             payerName,

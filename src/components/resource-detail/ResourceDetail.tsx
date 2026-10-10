@@ -269,12 +269,13 @@ export const ResourceDetail = observer(function ResourceDetail({
               </>
             )}
             {resource === "incomes" && (
-              <div className="mb-5 grid grid-cols-4 rounded-[7px] border border-[#e9edf2] bg-white p-6 max-[760px]:grid-cols-2 max-[760px]:gap-5 [&>div]:border-r [&>div]:border-[#edf0f4] [&>div]:pl-6 [&>div]:max-[760px]:border-0 [&>div]:max-[760px]:pl-0 [&>div:first-child]:pl-0 [&>div:last-child]:border-0 [&_strong]:mt-3 [&_strong]:block [&_strong]:text-[21px] [&_strong]:font-medium [&_.ant-typography]:text-[11px]">
+              <div className="mb-5 flex flex-wrap gap-5 rounded-[7px] border border-[#e9edf2] bg-white p-6 [&>div]:flex-1 [&_strong]:mt-3 [&_strong]:block [&_strong]:text-[21px] [&_strong]:font-medium [&_.ant-typography]:text-[11px]">
                 {[
                   ["应收金额", row.total],
-                  ["已确认收款", row.confirmed],
-                  ["待确认收款", row.pending],
-                  ["可登记余额", row.available],
+                  ["实收金额", row.confirmed],
+                  ...(Number(row.offset) > 0
+                    ? [["押金已抵扣", row.offset]]
+                    : []),
                 ].map(([label, v]) => (
                   <div key={label}>
                     <Text type="secondary">{t(label)}</Text>

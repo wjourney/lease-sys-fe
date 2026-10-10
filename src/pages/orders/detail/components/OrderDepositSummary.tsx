@@ -88,7 +88,7 @@ export function OrderDepositSummary() {
       [
         {
           key: "amount",
-          label: "退款金额（一次退清）",
+          label: "退款金额（HKD）",
           type: "money",
           readOnly: true,
         },
