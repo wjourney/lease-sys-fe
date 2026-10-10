@@ -9,6 +9,7 @@ import {
 import {
   App,
   Button,
+  Drawer,
   Empty,
   Space,
   Spin,
@@ -44,12 +45,19 @@ export const ResourceDetail = observer(function ResourceDetail({
   resource,
   actions,
   getTabs,
+  recordId,
+  presentation = "page",
+  onClose,
 }: {
   resource: string;
   actions?: ReactNode;
   getTabs?: (ctx: DetailContextValue) => NonNullable<TabsProps["items"]>;
+  recordId?: string;
+  presentation?: "page" | "drawer";
+  onClose?: () => void;
 }) {
-  const { id = "" } = useParams();
+  const { id: routeId = "" } = useParams();
+  const id = recordId ?? routeId;
   const root = useRoot();
   const { message, modal } = App.useApp();
   const navigate = useNavigate();
@@ -87,15 +95,30 @@ export const ResourceDetail = observer(function ResourceDetail({
   } = useRecordActions(id);
   const config = configs[resource];
   if (!config) return <Empty />;
+  const wrap = (content: ReactNode) =>
+    presentation === "drawer" ? (
+      <Drawer
+        open
+        width={920}
+        title={t(
+          `${config.title.replace("管理", "")}详情${row ? ` · ${row.commissionNo || row.expenseNo || ""}` : ""}`,
+        )}
+        onClose={onClose}
+      >
+        {content}
+      </Drawer>
+    ) : (
+      content
+    );
   if (error)
-    return (
+    return wrap(
       <RequestError
         message={t(error)}
         type="error"
         action={<Button onClick={load}>{t("重试")}</Button>}
-      />
+      />,
     );
-  if (!row) return <Spin />;
+  if (!row) return wrap(<Spin />);
   const editable =
     canEditFinancialRecord(resource, row) &&
     root.canWrite(resource) &&
@@ -112,7 +135,10 @@ export const ResourceDetail = observer(function ResourceDetail({
     row.invoiceNo ||
     row.title ||
     row.key;
-  const headerHost = document.getElementById("record-detail-header");
+  const headerHost =
+    presentation === "page"
+      ? document.getElementById("record-detail-header")
+      : null;
   const fields = Array.from(
     new Map(
       [
@@ -185,7 +211,7 @@ export const ResourceDetail = observer(function ResourceDetail({
       label: t("操作记录"),
       children: resource === "orders" ? <OrderHistory /> : history,
     });
-  return (
+  return wrap(
     <DetailContext.Provider value={context}>
       <Spin spinning={loading}>
         {resource === "projects" ? (
@@ -270,7 +296,8 @@ export const ResourceDetail = observer(function ResourceDetail({
                                 });
                                 message.success("已删除");
                                 root.invalidate();
-                                navigate("/" + resource);
+                                if (presentation === "drawer") onClose?.();
+                                else navigate("/" + resource);
                               },
                             })
                           }
@@ -376,6 +403,6 @@ export const ResourceDetail = observer(function ResourceDetail({
           />
         )}
       </Spin>
-    </DetailContext.Provider>
+    </DetailContext.Provider>,
   );
 });

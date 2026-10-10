@@ -4,10 +4,16 @@ import { ExpenseActions } from "./components/ExpenseActions";
 import { Card, Table } from "antd";
 import { amount, dateText, Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
-export default function ExpenseDetailPage() {
+export default function ExpenseDetailPage({
+  recordId,
+  onClose,
+}: { recordId?: string; onClose?: () => void } = {}) {
   return (
     <ResourceDetail
       resource="expenses"
+      recordId={recordId}
+      presentation={onClose ? "drawer" : "page"}
+      onClose={onClose}
       actions={<ExpenseActions />}
       getTabs={({ row }) => [
         {

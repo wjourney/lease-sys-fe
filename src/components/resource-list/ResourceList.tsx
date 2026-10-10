@@ -237,10 +237,26 @@ export const ResourceList = observer(function ResourceList({
                         : undefined
                     }
                     onRow={(row) => ({
-                      className: onViewRow ? "" : "cursor-pointer",
+                      className: "cursor-pointer",
+                      tabIndex: onViewRow ? 0 : undefined,
+                      "aria-label": onViewRow
+                        ? t(`查看 ${row[config.columns[0].key]} 的详情`)
+                        : undefined,
                       onClick: (event) => {
-                        if (!onViewRow && shouldOpenRow(event))
-                          navigate(`/${resource}/${row.id}`);
+                        if (shouldOpenRow(event)) {
+                          if (onViewRow) onViewRow(row);
+                          else navigate(`/${resource}/${row.id}`);
+                        }
+                      },
+                      onKeyDown: (event) => {
+                        if (
+                          onViewRow &&
+                          event.target === event.currentTarget &&
+                          (event.key === "Enter" || event.key === " ")
+                        ) {
+                          event.preventDefault();
+                          onViewRow(row);
+                        }
                       },
                     })}
                     columns={columns}

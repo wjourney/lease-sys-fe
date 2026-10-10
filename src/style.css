@@ -724,6 +724,29 @@
   padding-bottom: 13px;
 }
 
+.order-detail-tabs .ant-tabs-tabpane-active:has(> .order-table-fill) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.order-table-fill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.order-table-fill > :not(.list-scroll-area) {
+  flex-shrink: 0;
+}
+
+.order-detail-tabs .order-table-fill > .list-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: hidden;
+}
+
 /* One shared deposit layout for the order tab and the management drawer. */
 .deposit-summary .ant-card-head-wrapper {
   flex-wrap: wrap;

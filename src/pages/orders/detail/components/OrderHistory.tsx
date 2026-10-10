@@ -95,6 +95,7 @@ export function OrderHistory() {
   return (
     <OrderTable
       title="操作记录"
+      fillViewport
       rows={entries.map(({ log, changes }, index) => ({
         ...log,
         id: log.eventId || `${log.operatedAt}:${index}`,
