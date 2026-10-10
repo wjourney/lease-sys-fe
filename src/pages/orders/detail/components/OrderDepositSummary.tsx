@@ -1,22 +1,29 @@
-import { Alert, Button, Card, Space, Table, Tag } from "antd";
+import { Alert, Button, Card, Space, Table, Tag, Tooltip } from "antd";
 import { useState } from "react";
 import {
   DetailContextValue,
   useRecordDetail,
 } from "../../../../components/resource-detail/DetailContext";
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
-import { ReceiptActions } from "../../../../components/receipts/ReceiptActions";
 import { dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
-import { depositFigures, remainingMoney } from "../order-financials";
+import { depositSummaryItems, remainingMoney } from "../order-financials";
 import { DepositSettlementForm } from "./DepositSettlementForm";
 import { OrderFigures } from "./OrderFigures";
 import { MediaGalleryModal } from "../../../projects/detail/components/MediaGalleryModal";
 
-import { RegisterReceipt } from "../../../../components/receipts/RegisterReceipt";
+import {
+  RegisterReceipt,
+  type ReceiptFormOptions,
+} from "../../../../components/receipts/RegisterReceipt";
 import { OperationActor } from "../../../../components/resource-detail/OperationActor";
-import { depositColors, depositStates } from "../../../deposits/deposit-state";
+import {
+  depositColors,
+  depositStates,
+  depositRefundDisabledReason,
+} from "../../../deposits/deposit-state";
 import { formatMoney } from "../../../finance/finance-data";
+import { DepositRecordDetail } from "./DepositRecordDetail";
 
 export function openDepositRefund(
   openAction: DetailContextValue["openAction"],
@@ -40,7 +47,13 @@ export function openDepositRefund(
   );
 }
 
-export function OrderDepositSummary() {
+export function OrderDepositSummary({
+  onSettle,
+  onRegisterReceipt,
+}: {
+  onSettle?: () => void;
+  onRegisterReceipt?: (form: ReceiptFormOptions) => void;
+} = {}) {
   const { row, root, openAction, setTab } = useRecordDetail();
   const amount = (value: any) => formatMoney(value, row.currency);
   const [settling, setSettling] = useState(false);
@@ -60,7 +73,6 @@ export function OrderDepositSummary() {
       </Card>
     );
   const settled = Boolean(row.depositSettledAt);
-  const figures = depositFigures(d, settled);
   const receipts: Row[] = (row.bills ?? [])
     .filter((bill: Row) => bill.feeType === "DEPOSIT" && bill.status !== "VOID")
     .flatMap((bill: Row) => bill.receipts ?? []);
@@ -90,6 +102,7 @@ export function OrderDepositSummary() {
     ...refunds.flatMap((refund) =>
       (refund.paymentRecords ?? []).map((payment: Row, index: number) => ({
         ...payment,
+        paymentIndex: index,
         id: `${refund.id}:${index}`,
         expenseId: refund.id,
         kind: "退款",
@@ -122,6 +135,17 @@ export function OrderDepositSummary() {
       bill.status !== "VOID" &&
       Number(bill.available) > 0,
   );
+  const refundDisabledReason =
+    depositRefundDisabledReason(row, root.finance) ||
+    (settled && !payable.length
+      ? "无可登记的押金退款，请刷新后重试"
+      : undefined);
+  function refundDeposit() {
+    if (refundDisabledReason) return;
+    if (settled) registerRefund(payable[0]);
+    else if (onSettle) onSettle();
+    else setSettling(true);
+  }
   return (
     <>
       <Card
@@ -140,32 +164,32 @@ export function OrderDepositSummary() {
         }
         extra={
           <Space wrap>
-            {settled && figures.refundDue !== null && (
-              <span className="text-sm text-[#52627a]">
-                {t("待退金额")}{" "}
-                <strong className="ml-2 text-xl font-semibold text-[#b66a16]">
-                  {amount(figures.refundDue)}
-                </strong>
+            <Tooltip
+              title={refundDisabledReason ? t(refundDisabledReason) : undefined}
+            >
+              <span>
+                <Button
+                  type="primary"
+                  disabled={Boolean(refundDisabledReason)}
+                  onClick={refundDeposit}
+                >
+                  {t("退还押金")}
+                </Button>
               </span>
-            )}
-            {root.finance && payable.length === 1 && (
-              <Button type="primary" onClick={() => registerRefund(payable[0])}>
-                {t("登记退款")}
-              </Button>
-            )}
+            </Tooltip>
             {!settled && row.status !== "CLOSED" && depositBills.length > 0 && (
               <RegisterReceipt
                 bills={depositBills}
                 orderId={row.id}
                 payerName={row.tenantName}
+                onOpen={onRegisterReceipt}
               />
             )}
             {root.finance && row.actions?.reviseDeposit && (
-              <Button onClick={() => setSettling(true)}>{t("修正结算")}</Button>
-            )}
-            {root.finance && row.actions?.settle && (
-              <Button type="primary" onClick={() => setSettling(true)}>
-                {t("办理押金结算")}
+              <Button
+                onClick={() => (onSettle ? onSettle() : setSettling(true))}
+              >
+                {t("修正结算")}
               </Button>
             )}
             {!settled && (
@@ -178,39 +202,18 @@ export function OrderDepositSummary() {
         className="!border-[#e5eaf0] [&_.ant-card-head]:!min-h-14 [&_.ant-card-body]:!p-5"
       >
         <OrderFigures
-          items={
-            settled
-              ? [
-                  { label: "约定押金", value: amount(d.agreed) },
-                  { label: "实际收款", value: amount(d.received) },
-                  { label: "扣款", value: amount(d.deduction) },
-                  { label: "应退总额", value: amount(figures.refundable) },
-                  { label: "已退款", value: amount(d.refunded) },
-                ]
-              : [
-                  { label: "约定押金", value: amount(d.agreed) },
-                  { label: "实际收款", value: amount(d.received) },
-                  { label: "尚未收取", value: amount(figures.unreceived) },
-                  { label: "当前持有", value: amount(d.held) },
-                ]
-          }
+          items={depositSummaryItems(d, settled).map((item) => ({
+            ...item,
+            value: amount(item.value),
+          }))}
         />
-        {!settled && (
-          <p className="my-4 text-sm text-[#78869a]">
-            {t(
-              row.actions?.settle
-                ? "租约已结束，可核对扣款并办理押金结算。"
-                : "租约结束后，可办理押金结算与退款。",
-            )}
-          </p>
-        )}
         {Number(d.pending) > 0 && (
           <Alert
             className="mt-4"
             type="warning"
             showIcon
             message={t(
-              `存在历史待核对收款 ${amount(d.pending)}，请先在下方记录中处理。`,
+              `存在历史待核对收款 ${amount(d.pending)}，请展开记录并前往账单核对。`,
             )}
           />
         )}
@@ -300,12 +303,27 @@ export function OrderDepositSummary() {
             rowKey="id"
             pagination={false}
             dataSource={records}
+            tableLayout="fixed"
+            expandable={{
+              // Details are always visible; there is no expand/collapse interaction.
+              expandedRowKeys: records.map((record) => record.id),
+              showExpandColumn: false,
+              expandedRowRender: (record) => (
+                <DepositRecordDetail record={record} onPreview={setVouchers} />
+              ),
+            }}
             locale={{ emptyText: t("暂无押金收退款记录") }}
-            scroll={{ x: "max-content" }}
+            scroll={{ x: 900 }}
             columns={[
-              { title: t("日期"), dataIndex: "date", render: dateText },
+              {
+                title: t("日期"),
+                dataIndex: "date",
+                render: dateText,
+                width: 110,
+              },
               {
                 title: t("类型"),
+                width: 100,
                 dataIndex: "kind",
                 render: (value, record) => (
                   <>
@@ -329,11 +347,13 @@ export function OrderDepositSummary() {
               },
               {
                 title: t("金额"),
+                width: 160,
                 render: (_, record) =>
                   `${record.direction}${amount(record.amount)}`,
               },
               {
                 title: t("方式"),
+                width: 110,
                 dataIndex: "paymentMethod",
                 render: (value) =>
                   t(
@@ -346,38 +366,8 @@ export function OrderDepositSummary() {
               },
               {
                 title: t("操作人"),
-                width: 200,
+                width: 280,
                 render: (_, record) => <OperationActor actor={record} />,
-              },
-              {
-                title: t("凭证 / 记录"),
-                render: (_, record) => {
-                  const files: Row[] = root.canRead("materials")
-                    ? (row.materials ?? []).filter((file: Row) =>
-                        record.receipt
-                          ? file.incomeId === record.id
-                          : file.expenseId === record.expenseId,
-                      )
-                    : [];
-                  return (
-                    <Space wrap size={4}>
-                      {files.length > 0 && (
-                        <Button
-                          type="link"
-                          size="small"
-                          onClick={() => setVouchers(files)}
-                        >
-                          {t("查看凭证")}
-                        </Button>
-                      )}
-                      {record.receipt ? (
-                        <ReceiptActions receipt={record.receipt} />
-                      ) : (
-                        record.bankReference || "—"
-                      )}
-                    </Space>
-                  );
-                },
               },
             ]}
           />

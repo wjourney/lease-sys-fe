@@ -1,20 +1,20 @@
-import {
-  Alert,
-  Button,
-  Drawer,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  Space,
-} from "antd";
+import { Alert, Button, Form, Input, InputNumber, Select, Space } from "antd";
 import { useState } from "react";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { api, errorMessage, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { cents } from "../order-state";
 import { formatMoney } from "../../../finance/finance-data";
-export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
+import { FormSurface } from "../../../../components/forms/FormSurface";
+export function DepositSettlementForm({
+  onClose,
+  presentation,
+  onSavingChange,
+}: {
+  onClose: () => void;
+  presentation?: "drawer" | "inline";
+  onSavingChange?: (saving: boolean) => void;
+}) {
   const { row, id, root, message } = useRecordDetail();
   const amount = (value: any) => formatMoney(value, row.currency);
   const revising = Boolean(row.depositSettledAt);
@@ -58,14 +58,13 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
     }
   }
   return (
-    <Drawer
-      open
+    <FormSurface
       width={760}
-      title={t(revising ? "修正押金结算" : "办理押金结算")}
-      onClose={() => !saving && onClose()}
-      maskClosable={!saving}
-      closable={!saving}
-      keyboard={!saving}
+      title={revising ? "修正押金结算" : "办理押金结算"}
+      saving={saving}
+      presentation={presentation}
+      onSavingChange={onSavingChange}
+      onClose={onClose}
       footer={
         <div className="flex justify-end gap-2">
           <Button disabled={saving} onClick={onClose}>
@@ -201,6 +200,6 @@ export function DepositSettlementForm({ onClose }: { onClose: () => void }) {
           {t("应退租客")}：{amount((received - deducted) / 100)}
         </strong>
       </Space>
-    </Drawer>
+    </FormSurface>
   );
 }

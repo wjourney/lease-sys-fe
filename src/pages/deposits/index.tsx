@@ -9,6 +9,7 @@ import {
   Spin,
   Table,
   Tag,
+  Tooltip,
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
@@ -20,7 +21,11 @@ import { useRoot } from "../../stores/root";
 import { useBillRequest } from "../incomes/bill-data";
 import { formatMoney } from "../finance/finance-data";
 import { DepositDrawer } from "./DepositDrawer";
-import { depositColors, depositStates } from "./deposit-state";
+import {
+  depositColors,
+  depositStates,
+  depositRefundDisabledReason,
+} from "./deposit-state";
 
 export default observer(function DepositsPage() {
   const root = useRoot();
@@ -209,36 +214,42 @@ export default observer(function DepositsPage() {
                           >
                             {t("查看")}
                           </Button>
-                          {r.status === "COMPLETED" &&
-                          !r.depositSettledAt &&
-                          Number(r.deposit.pending) === 0 ? (
-                            <Button
-                              size="small"
-                              type="primary"
-                              onClick={() =>
-                                setViewing({ id: r.id, mode: "settle" })
-                              }
-                            >
-                              {t("办理结算")}
-                            </Button>
-                          ) : Number(r.deposit.refundDue) > 0 ? (
-                            <Button
-                              size="small"
-                              type="primary"
-                              onClick={() =>
-                                setViewing({ id: r.id, mode: "refund" })
-                              }
-                            >
-                              {t("登记退款")}
-                            </Button>
-                          ) : r.deposit.state === "UNCOLLECTED" ? (
-                            <Button
-                              size="small"
-                              onClick={() => setViewing({ id: r.id })}
-                            >
-                              {t("登记收款")}
-                            </Button>
-                          ) : null}
+                          <Tooltip
+                            title={t(
+                              depositRefundDisabledReason(r, root.finance) ||
+                                "",
+                            )}
+                          >
+                            <span>
+                              <Button
+                                size="small"
+                                type="primary"
+                                disabled={Boolean(
+                                  depositRefundDisabledReason(r, root.finance),
+                                )}
+                                onClick={() =>
+                                  setViewing({
+                                    id: r.id,
+                                    mode: r.depositSettledAt
+                                      ? "refund"
+                                      : "settle",
+                                  })
+                                }
+                              >
+                                {t("退还押金")}
+                              </Button>
+                            </span>
+                          </Tooltip>
+                          {r.deposit.state === "UNCOLLECTED" &&
+                            !r.depositSettledAt &&
+                            r.status !== "COMPLETED" && (
+                              <Button
+                                size="small"
+                                onClick={() => setViewing({ id: r.id })}
+                              >
+                                {t("登记收款")}
+                              </Button>
+                            )}
                         </Space>
                       ),
                     },

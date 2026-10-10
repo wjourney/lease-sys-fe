@@ -5,7 +5,6 @@ import {
   App,
   Button,
   DatePicker,
-  Drawer,
   Form,
   Input,
   InputNumber,
@@ -19,6 +18,18 @@ import { errorMessage, options, Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { Field } from "../../shared/resource-config";
 import { useRoot } from "../../stores/root";
+import { FormSurface } from "./FormSurface";
+export type ActionFormProps = {
+  title: string;
+  fields: Field[];
+  initial?: Row;
+  onSubmit: (v: Row, file?: File) => Promise<any>;
+  onClose: () => void;
+  voucher?: boolean;
+  children?: React.ReactNode;
+  presentation?: "drawer" | "inline";
+  onSavingChange?: (saving: boolean) => void;
+};
 export function ActionForm({
   title,
   fields,
@@ -27,15 +38,9 @@ export function ActionForm({
   onClose,
   voucher = false,
   children,
-}: {
-  title: string;
-  fields: Field[];
-  initial?: Row;
-  onSubmit: (v: Row, file?: File) => Promise<any>;
-  onClose: () => void;
-  voucher?: boolean;
-  children?: React.ReactNode;
-}) {
+  presentation,
+  onSavingChange,
+}: ActionFormProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
@@ -73,6 +78,7 @@ export function ActionForm({
         .catch((e) => setError(errorMessage(e)));
   }, []);
   async function submit() {
+    if (saving) return;
     try {
       const values = await form.validateFields();
       for (const f of fields)
@@ -88,13 +94,13 @@ export function ActionForm({
     }
   }
   return (
-    <Drawer
-      open
-      title={t(title)}
+    <FormSurface
+      title={title}
       width={520}
-      onClose={() => !saving && onClose()}
-      closable={!saving}
-      maskClosable={!saving}
+      saving={saving}
+      presentation={presentation}
+      onSavingChange={onSavingChange}
+      onClose={onClose}
       footer={
         <div className="flex justify-end gap-2.5 p-[5px]">
           <Button disabled={saving} onClick={onClose}>
@@ -220,6 +226,6 @@ export function ActionForm({
           </Form.Item>
         )}
       </Form>
-    </Drawer>
+    </FormSurface>
   );
 }

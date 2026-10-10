@@ -38,6 +38,7 @@ export const DepositDrawer = observer(function DepositDrawer({
   );
   const actions = useRecordActions(id);
   const [settling, setSettling] = useState(mode === "settle");
+  const [saving, setSaving] = useState(false);
   const [, setMaterial] = useState<Row>();
   const [, setVersion] = useState<string>();
   const opened = useRef(false);
@@ -81,7 +82,10 @@ export const DepositDrawer = observer(function DepositDrawer({
           ? `押金 · ${row.tenantName} · ${row.unitNo || row.orderNo}`
           : "押金详情",
       )}
-      onClose={onClose}
+      onClose={() => !saving && onClose()}
+      closable={!saving}
+      maskClosable={!saving}
+      keyboard={!saving}
     >
       {error ? (
         <RequestError
@@ -96,20 +100,29 @@ export const DepositDrawer = observer(function DepositDrawer({
               <p className="mb-4 mt-0 text-sm text-[#78869a]">
                 {t(`${row!.orderNo} · ${row!.projectName || ""}`)}
               </p>
-              <OrderDepositSummary />
-              {settling &&
-                (row!.actions?.settle || row!.actions?.reviseDeposit) && (
-                  <DepositSettlementForm onClose={() => setSettling(false)} />
-                )}
+              {actions.action ? (
+                <ActionForm
+                  {...actions.action}
+                  presentation="inline"
+                  onSavingChange={setSaving}
+                  onClose={() => actions.setAction(undefined)}
+                />
+              ) : settling &&
+                (row!.actions?.settle || row!.actions?.reviseDeposit) ? (
+                <DepositSettlementForm
+                  presentation="inline"
+                  onSavingChange={setSaving}
+                  onClose={() => setSettling(false)}
+                />
+              ) : (
+                <OrderDepositSummary
+                  onSettle={() => setSettling(true)}
+                  onRegisterReceipt={actions.setAction}
+                />
+              )}
             </DetailContext.Provider>
           ) : null}
         </Spin>
-      )}
-      {actions.action && (
-        <ActionForm
-          {...actions.action}
-          onClose={() => actions.setAction(undefined)}
-        />
       )}
     </Drawer>
   );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   depositFigures,
+  depositSummaryItems,
   remainingMoney,
   rentFigures,
 } from "./order-financials";
@@ -79,5 +80,47 @@ describe("order detail money summaries", () => {
   it("uses cents and clamps remaining payouts at zero", () => {
     expect(remainingMoney({ amount: "0.30", paidAmount: "0.10" })).toBe(0.2);
     expect(remainingMoney({ amount: "1", paidAmount: "2" })).toBe(0);
+  });
+  it("only offers a refund amount after settlement and shows the amount still due", () => {
+    const deposit = {
+      agreed: "20000",
+      received: "20000",
+      deduction: "2000",
+      refunded: "10000",
+      refundDue: "8000",
+    };
+    expect(depositSummaryItems(deposit, false)).toEqual([
+      { label: "约定押金", value: "20000" },
+      { label: "已收押金", value: "20000" },
+    ]);
+    expect(depositSummaryItems(deposit, true)).toEqual([
+      { label: "已收押金", value: "20000" },
+      { label: "扣款金额", value: "2000" },
+      { label: "应退金额", value: "8000" },
+    ]);
+  });
+  it("shows actual refunds for fully refunded and fully deducted deposits", () => {
+    expect(
+      depositSummaryItems(
+        {
+          received: "20000",
+          deduction: "2000",
+          refunded: "18000",
+          refundDue: "0",
+        },
+        true,
+      ).at(-1),
+    ).toEqual({ label: "已退金额", value: "18000" });
+    expect(
+      depositSummaryItems(
+        {
+          received: "20000",
+          deduction: "20000",
+          refunded: "0",
+          refundDue: "0",
+        },
+        true,
+      ).at(-1),
+    ).toEqual({ label: "已退金额", value: "0" });
   });
 });

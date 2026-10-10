@@ -1,11 +1,16 @@
 import { App, Button, Tooltip, type ButtonProps } from "antd";
 import { useState } from "react";
-import { ActionForm } from "../forms/ActionForm";
+import { ActionForm, type ActionFormProps } from "../forms/ActionForm";
 import { financialFields } from "../resource-detail/financial-fields";
 import { Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { registerReceiptWithVoucher } from "../../shared/receipt-voucher";
 import { useRoot } from "../../stores/root";
+
+export type ReceiptFormOptions = Omit<
+  ActionFormProps,
+  "onClose" | "presentation" | "onSavingChange"
+>;
 
 /** Same form for one bill or one payment allocated across several order bills. */
 export function RegisterReceipt({
@@ -13,13 +18,15 @@ export function RegisterReceipt({
   orderId,
   payerName,
   buttonType = "primary",
+  onOpen,
 }: {
   bills: Row[];
   orderId?: string;
   payerName: string;
   buttonType?: ButtonProps["type"];
+  onOpen?: (form: ReceiptFormOptions) => void;
 }) {
-  const [key, setKey] = useState<string>();
+  const [receiptForm, setReceiptForm] = useState<ReceiptFormOptions>();
   const root = useRoot();
   const { message } = App.useApp();
   const available = bills.filter(
@@ -66,61 +73,65 @@ export function RegisterReceipt({
       required: false,
     },
   ];
+  function open() {
+    const sourceKey = crypto.randomUUID();
+    const config: ReceiptFormOptions = {
+      title: multiple ? "登记收款（共用一份凭证）" : "登记收款",
+      fields,
+      initial: {
+        payerName,
+        paymentMethod: "BANK",
+        ...Object.fromEntries(
+          available.map((b) => [`bill_${b.id}`, b.available]),
+        ),
+      },
+      voucher: true,
+      onSubmit: async (values, file) => {
+        const allocations = available.map((b) => ({
+          billId: b.id,
+          amount: String(values[`bill_${b.id}`] || "0"),
+        }));
+        if (!allocations.length) throw new Error("请至少填写一笔收款金额");
+        for (const a of allocations)
+          if (
+            Number(a.amount) !==
+            Number(available.find((b) => b.id === a.billId)!.available)
+          )
+            throw new Error("账单须一次付清，请刷新后重新登记收款");
+        const payment = Object.fromEntries(
+          Object.entries(values).filter(([k]) => !k.startsWith("bill_")),
+        );
+        const result = orderId
+          ? await registerReceiptWithVoucher(
+              `/orders/${orderId}/receipts`,
+              { ...payment, allocations },
+              { sourceKey },
+              file,
+            )
+          : await registerReceiptWithVoucher(
+              `/incomes/${available[0].id}/receipts`,
+              { ...payment, amount: allocations[0].amount },
+              { sourceKey },
+              file,
+            );
+        root.invalidate();
+        if (result.voucherFailed)
+          message.warning(t("收款已登记，凭证上传失败，请在收款记录补传"));
+        else message.success(t("收款已入账"));
+      },
+    };
+    if (onOpen) onOpen(config);
+    else setReceiptForm(config);
+  }
   return (
     <>
-      <Button
-        size="small"
-        type={buttonType}
-        onClick={() => setKey(crypto.randomUUID())}
-      >
+      <Button size="small" type={buttonType} onClick={open}>
         {t("登记收款")}
       </Button>
-      {key && (
+      {receiptForm && (
         <ActionForm
-          title={multiple ? "登记收款（共用一份凭证）" : "登记收款"}
-          fields={fields}
-          initial={{
-            payerName,
-            paymentMethod: "BANK",
-            ...Object.fromEntries(
-              available.map((b) => [`bill_${b.id}`, b.available]),
-            ),
-          }}
-          voucher
-          onClose={() => setKey(undefined)}
-          onSubmit={async (values, file) => {
-            const allocations = available.map((b) => ({
-              billId: b.id,
-              amount: String(values[`bill_${b.id}`] || "0"),
-            }));
-            if (!allocations.length) throw new Error("请至少填写一笔收款金额");
-            for (const a of allocations)
-              if (
-                Number(a.amount) !==
-                Number(available.find((b) => b.id === a.billId)!.available)
-              )
-                throw new Error("账单须一次付清，请刷新后重新登记收款");
-            const payment = Object.fromEntries(
-              Object.entries(values).filter(([k]) => !k.startsWith("bill_")),
-            );
-            const result = orderId
-              ? await registerReceiptWithVoucher(
-                  `/orders/${orderId}/receipts`,
-                  { ...payment, allocations },
-                  { sourceKey: key },
-                  file,
-                )
-              : await registerReceiptWithVoucher(
-                  `/incomes/${available[0].id}/receipts`,
-                  { ...payment, amount: allocations[0].amount },
-                  { sourceKey: key },
-                  file,
-                );
-            root.invalidate();
-            if (result.voucherFailed)
-              message.warning(t("收款已登记，凭证上传失败，请在收款记录补传"));
-            else message.success(t("收款已入账"));
-          }}
+          {...receiptForm}
+          onClose={() => setReceiptForm(undefined)}
         />
       )}
     </>
