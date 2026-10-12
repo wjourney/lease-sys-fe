@@ -350,6 +350,7 @@ export default observer(function CompanyFinancePage({
                           },
                           {
                             title: t("操作"),
+                            className: "table-action-cell",
                             fixed: "right",
                             width: 80,
                             render: (_, r) => (
@@ -421,9 +422,10 @@ export default observer(function CompanyFinancePage({
                           })),
                           {
                             title: t("操作"),
+                            className: "table-action-cell",
                             render: (_, r) => (
                               <Button
-                                type="link"
+                                size="small"
                                 onClick={() => drill(root.user!.id, r.month)}
                               >
                                 {t("查看明细")}
@@ -457,8 +459,12 @@ export default observer(function CompanyFinancePage({
                             })),
                             {
                               title: t("操作"),
+                              className: "table-action-cell",
                               render: (_, r) => (
-                                <Button type="link" onClick={() => drill(r.id)}>
+                                <Button
+                                  size="small"
+                                  onClick={() => drill(r.id)}
+                                >
                                   {t("查看明细")}
                                 </Button>
                               ),

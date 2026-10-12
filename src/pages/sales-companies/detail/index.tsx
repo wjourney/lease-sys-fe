@@ -294,6 +294,7 @@ const SalesCompanyDetailPage = observer(function SalesCompanyDetailPage() {
     {
       title: t("操作"),
       key: "actions",
+      className: "table-action-cell",
       render: (_: unknown, member: Row) => (
         <div className="flex gap-2" data-row-action>
           <Button size="small" onClick={() => viewMember(member)}>

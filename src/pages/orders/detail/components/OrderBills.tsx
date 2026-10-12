@@ -75,6 +75,7 @@ export function OrderBills() {
         },
         {
           title: t("操作"),
+          className: "table-action-cell",
           render: (_, receipt) => <ReceiptActions receipt={receipt} />,
         },
       ]}
@@ -175,6 +176,7 @@ export function OrderBills() {
           },
           {
             title: t("操作"),
+            className: "table-action-cell",
             render: (_, bill) => (
               <Space size={4} wrap>
                 {!root.salesRole &&
@@ -211,7 +213,6 @@ export function OrderBills() {
                   ))}
                 {(bill.receipts?.length ?? 0) > 0 && (
                   <Button
-                    type="link"
                     size="small"
                     onClick={() =>
                       setExpanded((keys) =>
@@ -231,8 +232,8 @@ export function OrderBills() {
                   Number(bill.pending) === 0 &&
                   Number(bill.offset) === 0 && (
                     <Button
-                      type="link"
                       size="small"
+                      danger
                       onClick={() =>
                         openAction(
                           "作废其他费用",
@@ -275,6 +276,7 @@ export function OrderBills() {
             },
             {
               title: t("操作"),
+              className: "table-action-cell",
               render: (_, refund) =>
                 root.finance &&
                 remainingMoney(refund) > 0 &&

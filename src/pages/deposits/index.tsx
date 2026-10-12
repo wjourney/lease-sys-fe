@@ -219,6 +219,7 @@ export default observer(function DepositsPage() {
                     moneyColumn("已退金额", "refunded"),
                     {
                       title: t("操作"),
+                      className: "table-action-cell",
                       width: 160,
                       fixed: "right",
                       render: (_, r) => (

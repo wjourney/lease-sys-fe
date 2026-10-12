@@ -114,20 +114,16 @@ export const ExpenseFiles = observer(function ExpenseFiles() {
               },
               {
                 title: t("操作"),
+                className: "table-action-cell",
                 width: 130,
                 render: (_, file) => (
                   <Space size={4}>
-                    <Button
-                      size="small"
-                      type="link"
-                      onClick={() => setPreview(file)}
-                    >
+                    <Button size="small" onClick={() => setPreview(file)}>
                       {t("预览")}
                     </Button>
                     {file.storageKey && (
                       <Button
                         size="small"
-                        type="link"
                         href={`/api/v1/materials/${file.id}/download?download=1`}
                       >
                         {t("下载")}

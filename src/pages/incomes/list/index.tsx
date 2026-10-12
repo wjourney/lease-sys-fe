@@ -269,6 +269,7 @@ export default observer(function IncomeListPage() {
                         },
                         {
                           title: t("操作"),
+                          className: "table-action-cell",
                           fixed: "right",
                           width: 290,
                           render: (_, r) => (

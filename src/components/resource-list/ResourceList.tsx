@@ -87,6 +87,7 @@ export const ResourceList = observer(function ResourceList({
   columns.push({
     title: t("操作"),
     key: "actions",
+    className: "table-action-cell",
     fixed: "right",
     width:
       resource === "sales-companies" ||
@@ -95,11 +96,13 @@ export const ResourceList = observer(function ResourceList({
       resource === "commissions" ||
       resource === "expenses"
         ? resource === "expenses"
-          ? 230
-          : 210
+          ? 170
+          : resource === "sales-companies"
+            ? 170
+            : 145
         : resource === "materials"
-          ? 145
-          : 120,
+          ? 135
+          : 100,
     render: (_: any, row: Row) => (
       <Space size={10} data-row-action>
         <Button

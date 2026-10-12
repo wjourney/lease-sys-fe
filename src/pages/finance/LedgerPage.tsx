@@ -260,14 +260,11 @@ export default observer(function LedgerPage() {
                         },
                         {
                           title: t("操作"),
+                          className: "table-action-cell",
                           width: 70,
                           fixed: "right",
                           render: (_, r) => (
-                            <Button
-                              size="small"
-                              className="finance-view-button"
-                              onClick={() => view(r)}
-                            >
+                            <Button size="small" onClick={() => view(r)}>
                               {t("查看")}
                             </Button>
                           ),

@@ -868,12 +868,12 @@ const BatchEditor = observer(function BatchEditor({
                 },
                 {
                   title: t("操作"),
+                  className: "table-action-cell",
                   width: 135,
                   fixed: "right",
                   render: (_, row, i) => (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" data-row-action>
                       <Button
-                        type="link"
                         size="small"
                         icon={<EditOutlined />}
                         aria-label={t(`编辑第 ${i + 1} 行`)}
@@ -883,7 +883,6 @@ const BatchEditor = observer(function BatchEditor({
                         {t("编辑")}
                       </Button>
                       <Button
-                        type="link"
                         size="small"
                         danger
                         aria-label={t(`移除第 ${i + 1} 行`)}

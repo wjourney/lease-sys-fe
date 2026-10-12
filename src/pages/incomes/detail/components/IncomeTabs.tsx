@@ -33,6 +33,7 @@ export function getIncomeTabs(
               },
               {
                 title: t("操作"),
+                className: "table-action-cell",
                 render: (_, r) => <ReceiptActions receipt={r} />,
               },
             ]}

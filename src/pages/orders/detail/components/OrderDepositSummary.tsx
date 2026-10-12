@@ -422,6 +422,7 @@ export function OrderDepositSummary({
                 },
                 {
                   title: t("操作"),
+                  className: "table-action-cell",
                   render: (_, refund) =>
                     root.finance && remainingMoney(refund) > 0 ? (
                       <Button

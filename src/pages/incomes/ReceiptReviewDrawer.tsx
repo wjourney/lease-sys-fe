@@ -38,9 +38,7 @@ export const ReceiptReviewDrawer = observer(function ReceiptReviewDrawer({
   return (
     <Drawer open title={t("待核对收款")} width={1100} onClose={onClose}>
       <p className="mb-4 text-sm text-[#738198]">
-        {t(
-          "所有订单的港元待核对收款。查看收款详情与凭证后，再确认实际到账。",
-        )}
+        {t("所有订单的港元待核对收款。查看收款详情与凭证后，再确认实际到账。")}
       </p>
       {error ? (
         <RequestError
@@ -81,6 +79,7 @@ export const ReceiptReviewDrawer = observer(function ReceiptReviewDrawer({
               { title: t("银行账户"), dataIndex: "accountName" },
               {
                 title: t("凭证 / 操作"),
+                className: "table-action-cell",
                 width: 260,
                 render: (_, r) => <ReceiptActions receipt={r} />,
               },

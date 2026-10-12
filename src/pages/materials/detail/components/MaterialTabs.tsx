@@ -43,6 +43,7 @@ export function getMaterialTabs(
               },
               {
                 title: t("操作"),
+                className: "table-action-cell",
                 render: (_, r) =>
                   r.storageKey ? (
                     <Button

@@ -128,11 +128,11 @@ export function OrderFiles() {
                 },
                 {
                   title: t("操作"),
+                  className: "table-action-cell",
                   width: 132,
                   render: (_, file) => (
                     <Space size={4}>
                       <Button
-                        type="link"
                         size="small"
                         onClick={() =>
                           setPreview({
@@ -144,7 +144,6 @@ export function OrderFiles() {
                         {t("预览")}
                       </Button>
                       <Button
-                        type="link"
                         size="small"
                         href={`${file.downloadUrl || `/api/v1/materials/${file.id}/download`}${(file.downloadUrl || "").includes("?") ? "&" : "?"}download=1`}
                       >

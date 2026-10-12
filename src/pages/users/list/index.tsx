@@ -101,6 +101,7 @@ const UserListPage = observer(function UserListPage() {
     {
       title: t("操作"),
       key: "actions",
+      className: "table-action-cell",
       width: 210,
       render: (_: unknown, row: Row) => {
         const alreadyDisabled = row.status === "DISABLED";

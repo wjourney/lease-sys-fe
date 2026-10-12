@@ -137,15 +137,15 @@ export function OrderCommissions() {
         },
         {
           title: t("操作"),
+          className: "table-action-cell",
           render: (_, item) => (
             <Space wrap size={4}>
               {root.finance && item.status !== "VOID" && payable(item) && (
-                <Button type="link" size="small" onClick={() => pay(item)}>
+                <Button size="small" onClick={() => pay(item)}>
                   {t("登记付款")}
                 </Button>
               )}
               <Button
-                type="link"
                 size="small"
                 onClick={() => navigate(`/commissions/${item.id}`)}
               >
@@ -156,8 +156,8 @@ export function OrderCommissions() {
                 Number(item.paidAmount) === 0 &&
                 Number(item.availableAmount) === Number(item.amount) && (
                   <Button
-                    type="link"
                     size="small"
+                    danger
                     onClick={() =>
                       openAction(
                         "作废佣金",
