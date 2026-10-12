@@ -1,11 +1,11 @@
 import { Alert, Button, Card, Empty, Space, Table, Tag, Tooltip } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DetailContextValue,
   useRecordDetail,
 } from "../../../../components/resource-detail/DetailContext";
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
-import { dateText, Row } from "../../../../shared/api";
+import { api, dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
 import { depositSummaryItems, remainingMoney } from "../order-financials";
 import { DepositSettlementForm } from "./DepositSettlementForm";
@@ -24,6 +24,50 @@ import {
 } from "../../../deposits/deposit-state";
 import { formatMoney } from "../../../finance/finance-data";
 import { DepositRecordDetail } from "./DepositRecordDetail";
+import {
+  FinanceFields,
+  FinanceSummaryStrip,
+  RelatedOrderPanel,
+} from "../../../../components/finance-detail/FinanceDetailLayout";
+
+function DepositOverviewFields({
+  receipt,
+  tenantName,
+}: {
+  receipt?: Row;
+  tenantName?: string;
+}) {
+  const [detail, setDetail] = useState<Row>();
+  useEffect(() => {
+    if (!receipt?.id) return;
+    const controller = new AbortController();
+    api
+      .get<Row>(`/incomes/${receipt.id}`, { signal: controller.signal })
+      .then(({ data }) => setDetail(data))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [receipt?.id]);
+  const payment = detail || receipt;
+  return (
+    <FinanceFields
+      items={[
+        { label: "付款方", value: payment?.payerName || tenantName || "—" },
+        { label: "收款日期", value: dateText(payment?.receivedOn) },
+        { label: "银行账户", value: payment?.accountName || "—" },
+        {
+          label: "付款方式",
+          value: t(
+            ({ BANK: "银行转账", CASH: "现金", CHEQUE: "支票" } as Row)[
+              payment?.paymentMethod
+            ] ||
+              payment?.paymentMethod ||
+              "—",
+          ),
+        },
+      ]}
+    />
+  );
+}
 
 export function openDepositRefund(
   openAction: DetailContextValue["openAction"],
@@ -50,9 +94,11 @@ export function openDepositRefund(
 export function OrderDepositSummary({
   onSettle,
   onRegisterReceipt,
+  presentation = "card",
 }: {
   onSettle?: () => void;
   onRegisterReceipt?: (form: ReceiptFormOptions) => void;
+  presentation?: "card" | "drawer";
 } = {}) {
   const { row, root, openAction } = useRecordDetail();
   const amount = (value: any) => formatMoney(value, row.currency);
@@ -146,6 +192,106 @@ export function OrderDepositSummary({
     else if (onSettle) onSettle();
     else setSettling(true);
   }
+  const recordCards = records.length ? (
+    <div className="flex flex-col gap-3">
+      {records.map((record) => (
+        <article key={record.id} className="deposit-record">
+          <div className="deposit-record-summary">
+            <time className="tabular-nums">{dateText(record.date)}</time>
+            <Tag color={record.receipt ? "blue" : "green"}>
+              {t(record.kind)}
+            </Tag>
+            <strong className="deposit-record-amount">
+              {record.direction}
+              {amount(record.amount)}
+            </strong>
+            <div className="deposit-record-method deposit-record-meta">
+              <span>{t("方式")}</span>
+              <span>
+                {t(
+                  ({ BANK: "银行转账", CASH: "现金", CHEQUE: "支票" } as Row)[
+                    record.paymentMethod
+                  ] ||
+                    record.paymentMethod ||
+                    "—",
+                )}
+              </span>
+            </div>
+            <div className="deposit-record-actor deposit-record-meta">
+              <span>{t("操作人")}</span>
+              <OperationActor actor={record} />
+            </div>
+          </div>
+          <DepositRecordDetail record={record} onPreview={setVouchers} />
+        </article>
+      ))}
+    </div>
+  ) : (
+    <Empty
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+      description={t("暂无押金收退款记录")}
+    />
+  );
+  if (presentation === "drawer")
+    return (
+      <>
+        <FinanceSummaryStrip
+          status={
+            <Tag color={depositColors[d.state]}>
+              {t(depositStates[d.state] || "—")}
+            </Tag>
+          }
+          figures={depositSummaryItems(d, settled)
+            .slice(0, 2)
+            .map((item) => ({ label: item.label, value: amount(item.value) }))}
+          actions={
+            <Tooltip
+              title={refundDisabledReason ? t(refundDisabledReason) : undefined}
+              trigger={["hover", "focus"]}
+            >
+              <span tabIndex={refundDisabledReason ? 0 : undefined}>
+                <Button
+                  disabled={Boolean(refundDisabledReason)}
+                  onClick={refundDeposit}
+                >
+                  {t("退还押金")}
+                </Button>
+              </span>
+            </Tooltip>
+          }
+        />
+        <DepositOverviewFields
+          receipt={receipts[0]}
+          tenantName={row.tenantName}
+        />
+        <RelatedOrderPanel orderId={row.id} summary={row} />
+        <section className="finance-detail-records">
+          <h3>{t("收退款记录")}</h3>
+          {recordCards}
+        </section>
+        {settled && deductions.length > 0 && (
+          <section className="finance-detail-records">
+            <h3>{t("扣款明细")}</h3>
+            <Table<Row>
+              rowKey={(_, index) => String(index)}
+              pagination={false}
+              dataSource={deductions}
+              columns={[
+                { title: t("项目"), dataIndex: "label" },
+                { title: t("金额"), dataIndex: "amount", render: amount },
+                { title: t("说明"), dataIndex: "note" },
+              ]}
+            />
+          </section>
+        )}
+        <MediaGalleryModal
+          category={vouchers ? "PROJECT_FILE" : undefined}
+          title="收退款凭证"
+          items={vouchers ?? []}
+          onClose={() => setVouchers(undefined)}
+        />
+      </>
+    );
   return (
     <>
       <Card

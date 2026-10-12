@@ -18,12 +18,14 @@ export function RegisterReceipt({
   orderId,
   payerName,
   buttonType = "primary",
+  size = "small",
   onOpen,
 }: {
   bills: Row[];
   orderId?: string;
   payerName: string;
   buttonType?: ButtonProps["type"];
+  size?: ButtonProps["size"];
   onOpen?: (form: ReceiptFormOptions) => void;
 }) {
   const [receiptForm, setReceiptForm] = useState<ReceiptFormOptions>();
@@ -48,7 +50,7 @@ export function RegisterReceipt({
     return (
       <Tooltip title={t(reason)}>
         <span>
-          <Button size="small" disabled>
+          <Button size={size} disabled>
             {t("登记收款")}
           </Button>
         </span>
@@ -125,7 +127,7 @@ export function RegisterReceipt({
   }
   return (
     <>
-      <Button size="small" type={buttonType} onClick={open}>
+      <Button size={size} type={buttonType} onClick={open}>
         {t("登记收款")}
       </Button>
       {receiptForm && (

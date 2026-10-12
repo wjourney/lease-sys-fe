@@ -1,4 +1,4 @@
-import { App, Button, Drawer, Spin } from "antd";
+import { App, Button, Drawer, Spin, Tabs } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import {
 } from "../../components/resource-detail/DetailContext";
 import { useRecordActions } from "../../components/resource-detail/useRecordActions";
 import { useRecordData } from "../../components/resource-detail/useRecordData";
+import { RecordHistory } from "../../components/resource-detail/RecordHistory";
 import {
   OrderDepositSummary,
   openDepositRefund,
@@ -76,7 +77,8 @@ export const DepositDrawer = observer(function DepositDrawer({
   return (
     <Drawer
       open
-      width={1080}
+      className="finance-detail-drawer"
+      width="min(1040px, 61vw)"
       title={t(
         row
           ? `押金 · ${row.tenantName} · ${row.unitNo || row.orderNo}`
@@ -97,9 +99,6 @@ export const DepositDrawer = observer(function DepositDrawer({
         <Spin spinning={loading}>
           {context ? (
             <DetailContext.Provider value={context}>
-              <p className="mb-4 mt-0 text-sm text-[#78869a]">
-                {t(`${row!.orderNo} · ${row!.projectName || ""}`)}
-              </p>
               {actions.action ? (
                 <ActionForm
                   {...actions.action}
@@ -115,9 +114,28 @@ export const DepositDrawer = observer(function DepositDrawer({
                   onClose={() => setSettling(false)}
                 />
               ) : (
-                <OrderDepositSummary
-                  onSettle={() => setSettling(true)}
-                  onRegisterReceipt={actions.setAction}
+                <Tabs
+                  className="finance-detail-tabs"
+                  items={[
+                    {
+                      key: "basic",
+                      label: t("押金资料"),
+                      children: (
+                        <OrderDepositSummary
+                          presentation="drawer"
+                          onSettle={() => setSettling(true)}
+                          onRegisterReceipt={actions.setAction}
+                        />
+                      ),
+                    },
+                    {
+                      key: "logs",
+                      label: t("操作记录"),
+                      children: (
+                        <RecordHistory logs={logs} fields={[]} inModal />
+                      ),
+                    },
+                  ]}
                 />
               )}
             </DetailContext.Provider>

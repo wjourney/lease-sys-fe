@@ -1,5 +1,5 @@
 import { UploadOutlined } from "@ant-design/icons";
-import { Button, Card, Modal, Space, Table } from "antd";
+import { Button, Empty, Modal, Space, Table } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { RequestError } from "../../../../components/feedback/RequestError";
@@ -56,84 +56,90 @@ export const ExpenseFiles = observer(function ExpenseFiles() {
   if (!allowed) return null;
   return (
     <>
-      <Card
-        title={t("付款凭证与附件")}
-        extra={
-          root.canWrite("materials") && !root.salesRole ? (
+      <section className="finance-expense-files">
+        <div className="finance-expense-files-head">
+          <h3>{t("付款凭证与附件")}</h3>
+          {root.canWrite("materials") && !root.salesRole ? (
             <Button
               icon={<UploadOutlined aria-hidden />}
               onClick={() => setUploading(true)}
             >
-              {t("上传资料")}
+              {t("上传凭证 / 资料")}
             </Button>
-          ) : undefined
-        }
-      >
+          ) : null}
+        </div>
         {store.error && (
           <RequestError
             message={store.error}
             action={<Button onClick={refresh}>{t("重试")}</Button>}
           />
         )}
-        <Table<Row>
-          rowKey="id"
-          loading={store.loading}
-          dataSource={store.items}
-          locale={{ emptyText: t("暂无付款凭证或附件") }}
-          pagination={
-            store.total > 8
-              ? {
-                  current: page,
-                  pageSize: 8,
-                  total: store.total,
-                  onChange: changePage,
-                  showSizeChanger: false,
-                }
-              : false
-          }
-          columns={[
-            {
-              title: t("文件名称"),
-              dataIndex: "title",
-              render: (v, row) => (
-                <span className="break-all">
-                  {v || row.originalName || "—"}
-                </span>
-              ),
-            },
-            {
-              title: t("上传日期"),
-              dataIndex: "createdAt",
-              width: 130,
-              render: dateText,
-            },
-            {
-              title: t("操作"),
-              width: 130,
-              render: (_, file) => (
-                <Space size={4}>
-                  <Button
-                    size="small"
-                    type="link"
-                    onClick={() => setPreview(file)}
-                  >
-                    {t("预览")}
-                  </Button>
-                  {file.storageKey && (
+        {!store.loading && !store.items.length && !store.error ? (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={t("暂无凭证或附件")}
+          />
+        ) : (
+          <Table<Row>
+            rowKey="id"
+            loading={store.loading}
+            dataSource={store.items}
+            locale={{ emptyText: t("暂无付款凭证或附件") }}
+            pagination={
+              store.total > 8
+                ? {
+                    current: page,
+                    pageSize: 8,
+                    total: store.total,
+                    onChange: changePage,
+                    showSizeChanger: false,
+                  }
+                : false
+            }
+            columns={[
+              {
+                title: t("文件名称"),
+                dataIndex: "title",
+                render: (v, row) => (
+                  <span className="break-all">
+                    {v || row.originalName || "—"}
+                  </span>
+                ),
+              },
+              {
+                title: t("上传日期"),
+                dataIndex: "createdAt",
+                width: 130,
+                render: dateText,
+              },
+              {
+                title: t("操作"),
+                width: 130,
+                render: (_, file) => (
+                  <Space size={4}>
                     <Button
                       size="small"
                       type="link"
-                      href={`/api/v1/materials/${file.id}/download?download=1`}
+                      onClick={() => setPreview(file)}
                     >
-                      {t("下载")}
+                      {t("预览")}
                     </Button>
-                  )}
-                </Space>
-              ),
-            },
-          ]}
-        />
-      </Card>
+                    {file.storageKey && (
+                      <Button
+                        size="small"
+                        type="link"
+                        href={`/api/v1/materials/${file.id}/download?download=1`}
+                      >
+                        {t("下载")}
+                      </Button>
+                    )}
+                  </Space>
+                ),
+              },
+            ]}
+          />
+        )}
+      </section>
       {uploading && (
         <MaterialEditor
           owner={{ expenseId: id }}

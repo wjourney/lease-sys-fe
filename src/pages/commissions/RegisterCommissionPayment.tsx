@@ -1,4 +1,4 @@
-import { App, Button, Tooltip } from "antd";
+import { App, Button, Tooltip, type ButtonProps } from "antd";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { ActionForm } from "../../components/forms/ActionForm";
@@ -8,13 +8,24 @@ import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
 
 export const RegisterCommissionPayment = observer(
-  function RegisterCommissionPayment({ row }: { row: Row }) {
+  function RegisterCommissionPayment({
+    row,
+    size = "small",
+  }: {
+    row: Row;
+    size?: ButtonProps["size"];
+  }) {
     const root = useRoot();
     const { message } = App.useApp();
     const [sourceKey, setSourceKey] = useState<string>();
     const available = row.availableAmount ?? row.remainingAmount;
     const hasPlan = Number(row.remainingAmount) > Number(available);
-    if (!root.finance || row.status === "VOID" || !(Number(available) > 0))
+    if (
+      !root.finance ||
+      row.status === "VOID" ||
+      row.amount == null ||
+      !(Number(row.remainingAmount) > 0)
+    )
       return null;
     return (
       <>
@@ -24,7 +35,7 @@ export const RegisterCommissionPayment = observer(
           }
         >
           <Button
-            size="small"
+            size={size}
             type="primary"
             disabled={hasPlan}
             onClick={() => setSourceKey(crypto.randomUUID())}
@@ -38,7 +49,7 @@ export const RegisterCommissionPayment = observer(
             fields={[
               {
                 key: "amount",
-                label: "付款金额（HKD）",
+                label: `付款金额（${row.currency || "HKD"}）`,
                 type: "money",
                 readOnly: true,
               },

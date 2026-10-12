@@ -46,6 +46,7 @@ export const ResourceDetail = observer(function ResourceDetail({
   actions,
   getTabs,
   getDetailTabs,
+  renderTabHeader,
   recordId,
   presentation = "page",
   onClose,
@@ -55,8 +56,17 @@ export const ResourceDetail = observer(function ResourceDetail({
   getTabs?: (ctx: DetailContextValue) => NonNullable<TabsProps["items"]>;
   getDetailTabs?: (
     ctx: DetailContextValue,
-    sections: { basic: ReactNode; materials: ReactNode; history: ReactNode },
+    sections: {
+      basic: ReactNode;
+      materials: ReactNode;
+      history: ReactNode;
+      historyPlain: ReactNode;
+    },
   ) => NonNullable<TabsProps["items"]>;
+  renderTabHeader?: (
+    ctx: DetailContextValue,
+    editing: { editable: boolean; onEdit: () => void; onDelete: () => void },
+  ) => ReactNode;
   recordId?: string;
   presentation?: "page" | "drawer";
   onClose?: () => void;
@@ -104,7 +114,8 @@ export const ResourceDetail = observer(function ResourceDetail({
     presentation === "drawer" ? (
       <Drawer
         open
-        width={920}
+        className={renderTabHeader ? "finance-detail-drawer" : undefined}
+        width={renderTabHeader ? "min(1040px, 61vw)" : 920}
         title={t(
           `${config.title.replace("管理", "")}详情${row ? ` · ${row.commissionNo || row.expenseNo || ""}` : ""}`,
         )}
@@ -248,68 +259,70 @@ export const ResourceDetail = observer(function ResourceDetail({
                     </div>,
                     headerHost,
                   )}
-                <div className="mb-[25px] flex items-center justify-between gap-5 max-[1100px]:flex-col max-[1100px]:items-start [&_.ant-typography-secondary]:text-xs [&>.ant-space]:max-[1100px]:self-end [&>.ant-space]:max-[760px]:!flex-wrap [&>.ant-space]:max-[760px]:self-start">
-                  <div>
+                {!renderTabHeader && (
+                  <div className="mb-[25px] flex items-center justify-between gap-5 max-[1100px]:flex-col max-[1100px]:items-start [&_.ant-typography-secondary]:text-xs [&>.ant-space]:max-[1100px]:self-end [&>.ant-space]:max-[760px]:!flex-wrap [&>.ant-space]:max-[760px]:self-start">
+                    <div>
+                      <Space wrap>
+                        <Status
+                          value={row.status || row.occupancyStatus || "ACTIVE"}
+                          resource={resource}
+                        />
+                        <Text type="secondary">
+                          {row.projectName || row.address || config.description}
+                        </Text>
+                      </Space>
+                    </div>
                     <Space wrap>
-                      <Status
-                        value={row.status || row.occupancyStatus || "ACTIVE"}
-                        resource={resource}
-                      />
-                      <Text type="secondary">
-                        {row.projectName || row.address || config.description}
-                      </Text>
-                    </Space>
-                  </div>
-                  <Space wrap>
-                    {editable && (
-                      <Button
-                        icon={<EditOutlined aria-hidden={true} />}
-                        onClick={() => setEdit(true)}
-                      >
-                        {t("编辑")}
-                      </Button>
-                    )}
-                    {actions}
-
-                    {root.canWrite(resource) &&
-                      canEditFinancialRecord(resource, row) &&
-                      ![
-                        "orders",
-                        "incomes",
-                        "invoices",
-                        "settings",
-                        "commissions",
-                      ].includes(resource) && (
+                      {editable && (
                         <Button
-                          danger
-                          icon={<DeleteOutlined aria-hidden={true} />}
-                          onClick={() =>
-                            setAction({
-                              title: t("删除记录"),
-                              fields: [
-                                {
-                                  key: "reason",
-                                  label: t("删除原因"),
-                                  type: "textarea",
-                                },
-                              ],
-                              onSubmit: async (v: Row) => {
-                                await api.delete(`/${resource}/${id}`, {
-                                  data: v,
-                                });
-                                message.success("已删除");
-                                root.invalidate();
-                                if (presentation === "drawer") onClose?.();
-                                else navigate("/" + resource);
-                              },
-                            })
-                          }
+                          icon={<EditOutlined aria-hidden={true} />}
+                          onClick={() => setEdit(true)}
                         >
-                          {t("删除")}
+                          {t("编辑")}
                         </Button>
                       )}
-                  </Space>
-                </div>
+                      {actions}
+
+                      {root.canWrite(resource) &&
+                        canEditFinancialRecord(resource, row) &&
+                        ![
+                          "orders",
+                          "incomes",
+                          "invoices",
+                          "settings",
+                          "commissions",
+                        ].includes(resource) && (
+                          <Button
+                            danger
+                            icon={<DeleteOutlined aria-hidden={true} />}
+                            onClick={() =>
+                              setAction({
+                                title: t("删除记录"),
+                                fields: [
+                                  {
+                                    key: "reason",
+                                    label: t("删除原因"),
+                                    type: "textarea",
+                                  },
+                                ],
+                                onSubmit: async (v: Row) => {
+                                  await api.delete(`/${resource}/${id}`, {
+                                    data: v,
+                                  });
+                                  message.success("已删除");
+                                  root.invalidate();
+                                  if (presentation === "drawer") onClose?.();
+                                  else navigate("/" + resource);
+                                },
+                              })
+                            }
+                          >
+                            {t("删除")}
+                          </Button>
+                        )}
+                    </Space>
+                  </div>
+                )}
               </>
             )}
             {resource === "incomes" && (
@@ -332,7 +345,9 @@ export const ResourceDetail = observer(function ResourceDetail({
               className={
                 resource === "orders"
                   ? "order-detail-tabs mx-auto w-full max-w-[1320px]"
-                  : undefined
+                  : renderTabHeader
+                    ? "resource-detail-custom-tabs"
+                    : undefined
               }
               renderTabBar={
                 resource === "orders"
@@ -346,7 +361,37 @@ export const ResourceDetail = observer(function ResourceDetail({
                         />
                       </>
                     )
-                  : undefined
+                  : renderTabHeader
+                    ? (props, DefaultTabBar) => (
+                        <>
+                          <DefaultTabBar {...props} />
+                          {renderTabHeader(context, {
+                            editable,
+                            onEdit: () => setEdit(true),
+                            onDelete: () =>
+                              setAction({
+                                title: t("删除支出"),
+                                fields: [
+                                  {
+                                    key: "reason",
+                                    label: t("删除原因"),
+                                    type: "textarea",
+                                  },
+                                ],
+                                onSubmit: async (values: Row) => {
+                                  await api.delete(`/${resource}/${id}`, {
+                                    data: values,
+                                  });
+                                  message.success(t("已删除"));
+                                  root.invalidate();
+                                  if (presentation === "drawer") onClose?.();
+                                  else navigate("/" + resource);
+                                },
+                              }),
+                          })}
+                        </>
+                      )
+                    : undefined
               }
               activeKey={tab}
               onChange={setTab}
@@ -362,6 +407,9 @@ export const ResourceDetail = observer(function ResourceDetail({
                   basic: detail,
                   materials,
                   history,
+                  historyPlain: (
+                    <RecordHistory logs={logs} fields={fields} inModal />
+                  ),
                 }) ?? tabs
               }
             />

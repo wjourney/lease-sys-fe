@@ -1,28 +1,23 @@
-import { OperationActor } from "../../components/resource-detail/OperationActor";
-import { DownloadBillInvoices } from "./DownloadBillInvoices";
-import { RequestError } from "../../components/feedback/RequestError";
-import {
-  Button,
-  Descriptions,
-  Drawer,
-  Empty,
-  Space,
-  Spin,
-  Table,
-  Tabs,
-  Timeline,
-} from "antd";
+import { Button, Drawer, Empty, Spin, Tabs, Timeline } from "antd";
 import { observer } from "mobx-react-lite";
-import { Link } from "react-router-dom";
+import {
+  FinanceFields,
+  FinanceRecords,
+  FinanceSummaryStrip,
+  RelatedOrderPanel,
+} from "../../components/finance-detail/FinanceDetailLayout";
+import { OperationActor } from "../../components/resource-detail/OperationActor";
+import { RequestError } from "../../components/feedback/RequestError";
 import { ReceiptActions } from "../../components/receipts/ReceiptActions";
 import { RegisterReceipt } from "../../components/receipts/RegisterReceipt";
-import { dateText, Row } from "../../shared/api";
+import { dateText, type Row } from "../../shared/api";
 import { dateTimeText } from "../../shared/date-time";
 import { t } from "../../shared/i18n";
 import { Status } from "../../shared/ui";
 import { useRoot } from "../../stores/root";
 import { formatMoney } from "../finance/finance-data";
 import { billTypes, useBillRequest } from "./bill-data";
+import { DownloadBillInvoices } from "./DownloadBillInvoices";
 
 export function BillStatus({ row }: { row: Row }) {
   return <Status resource="incomes" value={row.status} />;
@@ -42,32 +37,15 @@ export const BillDrawer = observer(function BillDrawer({
     error,
     reload,
   } = useBillRequest<Row>(`/incomes/${id}`, {}, root.epoch);
-  const money = (v: string) => formatMoney(v, row?.currency || "HKD");
+  const money = (value: string | number) =>
+    formatMoney(value, row?.currency || "HKD");
   return (
     <Drawer
       open
-      width={940}
-      title={t("账单详情")}
+      className="finance-detail-drawer"
+      width="min(1040px, 61vw)"
+      title={t(`账单详情${row?.recordNo ? ` · ${row.recordNo}` : ""}`)}
       onClose={onClose}
-      footer={
-        row && !error ? (
-          <Space>
-            {!loading && (
-              <RegisterReceipt
-                bills={[row]}
-                orderId={row.orderId}
-                payerName={row.payerName}
-              />
-            )}
-            <DownloadBillInvoices bill={row} disabled={loading} />
-            {row.orderId && (
-              <Link to={`/orders/${row.orderId}`} onClick={onClose}>
-                <Button>{t("查看订单")}</Button>
-              </Link>
-            )}
-          </Space>
-        ) : null
-      }
     >
       {error ? (
         <RequestError
@@ -79,100 +57,86 @@ export const BillDrawer = observer(function BillDrawer({
       ) : (
         <Spin spinning={loading}>
           {row && (
-            <>
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <strong>{row.recordNo}</strong>
-                <BillStatus row={row} />
-              </div>
-              <Descriptions
-                size="small"
-                column={2}
-                items={[
-                  {
-                    key: "order",
-                    label: t("关联订单"),
-                    children: row.orderId ? (
-                      <Link to={`/orders/${row.orderId}`}>{row.orderNo}</Link>
-                    ) : (
-                      "—"
-                    ),
-                  },
-                  {
-                    key: "unit",
-                    label: t("项目 / 单位"),
-                    children: `${row.projectName || "—"} · ${row.unitNo || "—"}`,
-                  },
-                  { key: "payer", label: t("租客"), children: row.payerName },
-                  {
-                    key: "type",
-                    label: t("账单类型"),
-                    children: t(billTypes[row.feeType] || row.feeType),
-                  },
-                  {
-                    key: "period",
-                    label: t("账期"),
-                    children: row.periodStart
-                      ? `${dateText(row.periodStart)} ~ ${dateText(row.periodEnd)}`
-                      : "—",
-                  },
-                  {
-                    key: "due",
-                    label: t("到期日期"),
-                    children: dateText(row.dueOn),
-                  },
-                  {
-                    key: "remark",
-                    label: t("费用说明"),
-                    children: row.remark || "—",
-                    span: 2,
-                  },
-                ]}
-              />
-              <div className="bill-detail-summary my-5">
-                {[
-                  ["应收金额", "total"],
-                  ["实收金额", "confirmed"],
-                  ...(Number(row.offset) > 0 ? [["押金已抵扣", "offset"]] : []),
-                ].map(([label, key]) => (
-                  <div key={key}>
-                    <span>{t(label)}</span>
-                    <strong>{money(row[key])}</strong>
-                  </div>
-                ))}
-              </div>
-              <Tabs
-                items={[
-                  {
-                    key: "receipts",
-                    label: t(`收款记录（${row.receipts?.length || 0}）`),
-                    children: (
-                      <Table<Row>
-                        size="small"
-                        rowKey="id"
-                        pagination={false}
-                        dataSource={row.receipts || []}
-                        scroll={{ x: 850 }}
+            <Tabs
+              className="finance-detail-tabs"
+              items={[
+                {
+                  key: "basic",
+                  label: t("账单资料"),
+                  children: (
+                    <>
+                      <FinanceSummaryStrip
+                        status={
+                          <Status resource="incomes" value={row.status} />
+                        }
+                        figures={[
+                          { label: "应收金额", value: money(row.total) },
+                          { label: "实收金额", value: money(row.confirmed) },
+                        ]}
+                        actions={
+                          <>
+                            <DownloadBillInvoices
+                              bill={row}
+                              disabled={loading}
+                              size="middle"
+                            />
+                            <RegisterReceipt
+                              bills={[row]}
+                              orderId={row.orderId}
+                              payerName={row.payerName}
+                              size="middle"
+                            />
+                          </>
+                        }
+                      />
+                      <FinanceFields
+                        items={[
+                          {
+                            label: "账单类型",
+                            value: t(
+                              billTypes[row.feeType] || row.feeType || "—",
+                            ),
+                          },
+                          { label: "到期日期", value: dateText(row.dueOn) },
+                          {
+                            label: "账期",
+                            value: row.periodStart
+                              ? `${dateText(row.periodStart)} ${t("至")} ${dateText(row.periodEnd)}`
+                              : "—",
+                          },
+                          { label: "付款方", value: row.payerName || "—" },
+                          { label: "备注", value: row.remark || "—" },
+                        ]}
+                      />
+                      <RelatedOrderPanel
+                        orderId={row.orderId}
+                        summary={{
+                          orderNo: row.orderNo,
+                          tenantName: row.payerName,
+                          projectName: row.projectName,
+                          unitNo: row.unitNo,
+                        }}
+                      />
+                      <FinanceRecords
+                        title="收款记录"
+                        rows={row.receipts || []}
+                        emptyText="暂无收款记录"
                         columns={[
                           {
-                            title: t("收款编号"),
-                            dataIndex: "recordNo",
-                            width: 190,
+                            title: t("收款日期"),
+                            dataIndex: "receivedOn",
+                            render: dateText,
                           },
                           {
                             title: t("金额"),
                             dataIndex: "amount",
                             render: money,
                           },
-                          {
-                            title: t("到账日期"),
-                            dataIndex: "receivedOn",
-                            render: dateText,
-                          },
                           { title: t("银行账户"), dataIndex: "accountName" },
                           {
-                            title: t("付款方式"),
+                            title: t("方式"),
                             dataIndex: "paymentMethod",
-                            render: (v) =>
+                            render: (value) =>
                               t(
                                 (
                                   {
@@ -180,63 +144,62 @@ export const BillDrawer = observer(function BillDrawer({
                                     CASH: "现金",
                                     CHEQUE: "支票",
                                   } as Row
-                                )[v] ||
-                                  v ||
+                                )[value] ||
+                                  value ||
                                   "—",
                               ),
                           },
                           {
-                            title: t("状态"),
-                            dataIndex: "status",
-                            render: (v) => (
-                              <Status value={v} resource="receipts" />
+                            title: t("操作人"),
+                            render: (_, receipt) => (
+                              <OperationActor actor={receipt} />
                             ),
                           },
                           {
-                            title: t("凭证 / 操作"),
+                            title: t("凭证"),
                             render: (_, receipt) => (
                               <ReceiptActions receipt={receipt} />
                             ),
                           },
                         ]}
                       />
-                    ),
-                  },
-                  {
-                    key: "operations",
-                    label: t("操作记录"),
-                    children: row.operations?.length ? (
-                      <Timeline
-                        items={row.operations.map((log: Row) => ({
-                          key: log.eventId,
-                          children: (
+                    </>
+                  ),
+                },
+                {
+                  key: "logs",
+                  label: t("操作记录"),
+                  children: row.operations?.length ? (
+                    <Timeline
+                      items={row.operations.map((log: Row) => ({
+                        key: log.eventId,
+                        children: (
+                          <>
+                            <strong>
+                              <OperationActor actor={log} />
+                            </strong>{" "}
+                            · {dateTimeText(log.operatedAt)}
                             <div>
-                              <strong>
-                                <OperationActor actor={log} />
-                              </strong>{" "}
-                              · {dateTimeText(log.operatedAt)}
-                              <div>
-                                {log.subject || row.recordNo} ·{" "}
-                                {t(
-                                  log.action === "CREATE"
-                                    ? "创建"
-                                    : log.action === "DELETE"
-                                      ? "删除"
-                                      : "更新",
-                                )}
-                              </div>
-                              <div>{log.reason || "—"}</div>
+                              {log.subject || row.recordNo} ·{" "}
+                              {t(
+                                log.action === "CREATE"
+                                  ? "创建"
+                                  : log.action === "DELETE"
+                                    ? "删除"
+                                    : "更新",
+                              )}
                             </div>
-                          ),
-                        }))}
-                      />
-                    ) : (
-                      <Empty description={t("暂无操作记录")} />
-                    ),
-                  },
-                ]}
-              />
-            </>
+                            <div>{log.reason || "—"}</div>
+                          </>
+                        ),
+                      }))}
+                    />
+                  ) : (
+                    <Empty description={t("暂无操作记录")} />
+                  ),
+                },
+              ]}
+            />
           )}
         </Spin>
       )}

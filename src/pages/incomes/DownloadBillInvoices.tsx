@@ -1,4 +1,4 @@
-import { App, Button, Tooltip } from "antd";
+import { App, Button, Tooltip, type ButtonProps } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
@@ -10,9 +10,11 @@ import { useRoot } from "../../stores/root";
 export const DownloadBillInvoices = observer(function DownloadBillInvoices({
   bill,
   disabled = false,
+  size = "small",
 }: {
   bill: Row;
   disabled?: boolean;
+  size?: ButtonProps["size"];
 }) {
   const root = useRoot();
   const { message } = App.useApp();
@@ -23,7 +25,7 @@ export const DownloadBillInvoices = observer(function DownloadBillInvoices({
     <Tooltip title={!hasInvoice ? t("暂无发票，请先登记收款") : undefined}>
       <span>
         <Button
-          size="small"
+          size={size}
           aria-label={t("下载发票")}
           aria-busy={downloading}
           icon={<DownloadOutlined />}
