@@ -147,7 +147,17 @@ export function errorMessage(error: unknown): string {
   const e = error as {
     code?: string;
     message?: string;
-    response?: { status?: number; data?: { message?: unknown; code?: string } };
+    response?: {
+      status?: number;
+      data?: {
+        message?: unknown;
+        code?: string;
+        fieldErrors?: Array<{
+          path?: Array<string | number>;
+          message?: string;
+        }>;
+      };
+    };
   } | null;
   if (!e) return "操作未完成，请稍后再试";
   if (orderErrorHints[e.message || ""]) return orderErrorHints[e.message || ""];
@@ -192,6 +202,39 @@ export function errorMessage(error: unknown): string {
   if (status === 404) return "操作暂时无法完成，请稍后再试";
   if (status === 409) return "内容已被修改，请刷新后重试";
   if (status === 413) return "文件过大，请选择较小的文件";
+  if (status === 400 && e.response?.data?.code === "BUSINESS") {
+    if (
+      typeof serverMessage === "string" &&
+      serverMessage.length <= 120 &&
+      /^[\u3400-\u9fff][\u3400-\u9fff，。；：、（）\s\dA-Za-z-]*$/.test(serverMessage)
+    )
+      return serverMessage;
+  }
+  if (status === 400 && e.response?.data?.code === "VALIDATION") {
+    const labels: Record<string, string> = {
+      projectId: "项目",
+      unitId: "单位",
+      tenantType: "租客类型",
+      tenantName: "租客姓名",
+      tenantEmail: "电子邮箱",
+      startsOn: "起租日期",
+      endsOn: "到期日期",
+      monthlyRent: "实际成交月租",
+      depositAmount: "押金",
+      depositPlan: "押付方式",
+      rentDueDay: "每月交租日",
+      salesCompanyId: "销售公司",
+      salesUserId: "销售员工",
+      commission: "订单佣金",
+      initialPayment: "首期付款情况",
+    };
+    const issues = e.response.data.fieldErrors;
+    const firstPath = issues?.[0]?.path;
+    const field = firstPath?.find((part) => typeof part === "string");
+    const label = field && labels[field];
+    if (label) return `${label}填写内容不符合要求，请检查后重试`;
+    return "提交内容与服务端校验规则不一致，请刷新页面后重试";
+  }
   if (status === 400 || status === 422) return "提交的信息有误，请检查后重试";
   return "操作未完成，请稍后再试";
 }

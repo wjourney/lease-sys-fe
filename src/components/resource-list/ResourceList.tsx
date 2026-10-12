@@ -92,8 +92,11 @@ export const ResourceList = observer(function ResourceList({
       resource === "sales-companies" ||
       resource === "fund-accounts" ||
       resource === "orders" ||
-      resource === "commissions"
-        ? 210
+      resource === "commissions" ||
+      resource === "expenses"
+        ? resource === "expenses"
+          ? 230
+          : 210
         : resource === "materials"
           ? 145
           : 120,
@@ -117,13 +120,31 @@ export const ResourceList = observer(function ResourceList({
             {t("下载")}
           </Button>
         ) : (
-          canEditFinancialRecord(resource, row) &&
           root.canWrite(resource) &&
-          config.fields.length > 0 && (
+          config.fields.length > 0 &&
+          (resource === "expenses" ? (
+            <Tooltip
+              title={
+                !canEditFinancialRecord(resource, row)
+                  ? t("已付款或自动生成的支出不能编辑、删除")
+                  : undefined
+              }
+            >
+              <span>
+                <Button
+                  size="small"
+                  disabled={!canEditFinancialRecord(resource, row)}
+                  onClick={() => setEditor(row)}
+                >
+                  {t("编辑")}
+                </Button>
+              </span>
+            </Tooltip>
+          ) : canEditFinancialRecord(resource, row) ? (
             <Button size="small" onClick={() => setEditor(row)}>
               {t("编辑")}
             </Button>
-          )
+          ) : null)
         )}
         {renderRowActions?.(row)}
       </Space>

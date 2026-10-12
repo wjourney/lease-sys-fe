@@ -62,6 +62,36 @@ describe("errorMessage", () => {
     ).toBe("提交的信息有误，请检查后重试");
   });
 
+  it("shows safe backend reasons and identifies invalid order fields", () => {
+    expect(
+      errorMessage({
+        response: {
+          status: 400,
+          data: { code: "BUSINESS", message: "租期未达到单位最短租期" },
+        },
+      }),
+    ).toBe("租期未达到单位最短租期");
+    expect(
+      errorMessage({
+        response: {
+          status: 400,
+          data: {
+            code: "VALIDATION",
+            fieldErrors: [{ path: ["initialPayment", "fundAccountId"] }],
+          },
+        },
+      }),
+    ).toBe("首期付款情况填写内容不符合要求，请检查后重试");
+    expect(
+      errorMessage({
+        response: {
+          status: 400,
+          data: { code: "BUSINESS", message: "Prisma error P2002" },
+        },
+      }),
+    ).toBe("提交的信息有误，请检查后重试");
+  });
+
   it("explains order settlement errors and preserves translated toast text", () => {
     const hint = errorMessage({
       response: {
