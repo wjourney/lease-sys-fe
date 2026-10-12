@@ -15,10 +15,10 @@ import {
 } from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { RegisterReceipt } from "../../../components/receipts/RegisterReceipt";
 import { dateText, Row } from "../../../shared/api";
 import { t } from "../../../shared/i18n";
+import { shouldOpenRow } from "../../../shared/row-navigation";
 import { useRoot } from "../../../stores/root";
 import { formatMoney } from "../../finance/finance-data";
 import { BillDrawer, BillStatus } from "../BillDrawer";
@@ -160,6 +160,23 @@ export default observer(function IncomeListPage() {
                   <div className="list-scroll-area">
                     <Table<Row>
                       rowKey="id"
+                      rowClassName="cursor-pointer"
+                      onRow={(bill) => ({
+                        tabIndex: 0,
+                        "aria-label": t(`查看 ${bill.recordNo} 的账单详情`),
+                        onClick: (event) => {
+                          if (shouldOpenRow(event)) setViewing(bill.id);
+                        },
+                        onKeyDown: (event) => {
+                          if (
+                            event.target === event.currentTarget &&
+                            (event.key === "Enter" || event.key === " ")
+                          ) {
+                            event.preventDefault();
+                            setViewing(bill.id);
+                          }
+                        },
+                      })}
                       rowSelection={
                         !root.salesRole
                           ? {
@@ -193,9 +210,7 @@ export default observer(function IncomeListPage() {
                           width: 245,
                           render: (_, r) => (
                             <>
-                              <Link to={`/orders/${r.orderId}`}>
-                                {r.orderNo}
-                              </Link>
+                              <span>{r.orderNo}</span>
                               <div className="text-[#738198]">
                                 {r.projectName} · {r.unitNo}
                               </div>

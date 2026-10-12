@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { RequestError } from "../../components/feedback/RequestError";
 import { dateText, Page, Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
+import { shouldOpenRow } from "../../shared/row-navigation";
 import { useRoot } from "../../stores/root";
 import { useBillRequest } from "../incomes/bill-data";
 import { formatMoney } from "../finance/finance-data";
@@ -156,7 +157,9 @@ export default observer(function DepositsPage() {
                   onRow={(record) => ({
                     tabIndex: 0,
                     "aria-label": t(`查看 ${record.tenantName} 的押金详情`),
-                    onClick: () => viewDeposit(record.id),
+                    onClick: (event) => {
+                      if (shouldOpenRow(event)) viewDeposit(record.id);
+                    },
                     onKeyDown: (event) => {
                       if (
                         event.target === event.currentTarget &&
