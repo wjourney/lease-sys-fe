@@ -15,6 +15,7 @@ import { AccountPasswordModal } from "../components/AccountPasswordModal";
 import { DisableUserModal } from "./components/DisableUserModal";
 import { UserDrawer } from "../list/components/UserDrawer";
 import { useUserDetail } from "./useUserDetail";
+import { canManageUser } from "../user-permissions";
 
 function maskedPhone(phone?: string) {
   if (!phone) return "—";
@@ -34,10 +35,8 @@ const UserDetailPage = observer(function UserDetailPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const self = row?.id === root.user?.id;
-  const canWrite = root.canWrite("users");
-  const canManageStatus = ["SUPER_ADMIN", "OPERATIONS"].includes(
-    root.user?.role,
-  );
+  const canWrite = root.canWrite("users") && canManageUser(root.user?.role, row);
+  const canManageStatus = canManageUser(root.user?.role, row);
   const headerHost = document.getElementById("record-detail-header");
 
   async function resetPassword() {

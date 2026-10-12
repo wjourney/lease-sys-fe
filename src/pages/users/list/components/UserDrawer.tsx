@@ -342,9 +342,7 @@ export function UserDrawer({
                             { value: "SALES", label: t("销售员工") },
                           ]
                         : [
-                            ...(["SUPER_ADMIN", "OPERATIONS"].includes(
-                              root.user?.role,
-                            )
+                            ...(root.user?.role === "SUPER_ADMIN"
                               ? [
                                   {
                                     value: "SUPER_ADMIN",
@@ -353,7 +351,9 @@ export function UserDrawer({
                                 ]
                               : []),
                             { value: "OPERATIONS", label: t("内部运营") },
-                            { value: "FINANCE", label: t("内部财务") },
+                            ...(root.user?.role === "SUPER_ADMIN"
+                              ? [{ value: "FINANCE", label: t("内部财务") }]
+                              : []),
                             {
                               value: "SALES_COMPANY_ADMIN",
                               label: t("销售管理员"),

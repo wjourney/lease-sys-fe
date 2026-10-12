@@ -16,6 +16,7 @@ import { AccountPasswordModal } from "../components/AccountPasswordModal";
 import { DisableUserModal } from "../detail/components/DisableUserModal";
 import { UserDrawer } from "./components/UserDrawer";
 import { DeleteUserModal } from "./components/DeleteUserModal";
+import { canManageUser } from "../user-permissions";
 
 const PAGE_SIZE = 10;
 
@@ -106,12 +107,13 @@ const UserListPage = observer(function UserListPage() {
       render: (_: unknown, row: Row) => {
         const alreadyDisabled = row.status === "DISABLED";
         const self = row.id === root.user?.id;
+        const manageable = canManageUser(root.user?.role, row);
         return (
           <div className="flex items-center gap-2" data-row-action>
             <Button size="small" onClick={() => navigate(`/users/${row.id}`)}>
               {t("查看")}
             </Button>
-            {["SUPER_ADMIN", "OPERATIONS"].includes(root.user?.role) && (
+            {manageable && (
               <Tooltip title={self ? t("不能停用当前登录账号") : undefined}>
                 <span>
                   <Button
@@ -136,7 +138,7 @@ const UserListPage = observer(function UserListPage() {
                 </span>
               </Tooltip>
             )}
-            {root.canWrite("users") && (
+            {root.canWrite("users") && manageable && (
               <Tooltip title={self ? t("不能删除当前登录账号") : undefined}>
                 <span>
                   <Button

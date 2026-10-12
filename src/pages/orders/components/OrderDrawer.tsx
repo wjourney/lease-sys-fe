@@ -56,6 +56,7 @@ type OrderValues = {
   commissionDueOn: Dayjs;
   commissionAmount: string;
   commissionRemark?: string;
+  remark?: string;
 };
 
 const sectionClass = "rounded-lg bg-[#f5f6f8] px-4 py-3.5";
@@ -199,7 +200,10 @@ export function OrderDrawer({
     endsOn ?? (row?.endsOn ? dayjs(row.endsOn) : undefined),
   );
   const commission = row?.orderCommission as Row | undefined;
-  const lockedLease = !!row && row.actions?.editLease === false;
+  const lockedLease = !!row && row.status !== "DRAFT";
+  const commissionLocked = lockedLease && (row?.commissions ?? []).some(
+    (item: Row) => item.status !== "VOID" && item.editable === false,
+  );
   const paymentIntervalMonths =
     row && row.status !== "DRAFT" ? Number(row.paymentIntervalMonths ?? 1) : 1;
   const initialRent = initialRentAmount(
@@ -359,21 +363,6 @@ export function OrderDrawer({
       label: row.salesName || row.salesUserId,
     });
 
-  async function uploadFile(orderId: string, file: File, category: string) {
-    const data = new FormData();
-    data.append(
-      "payload",
-      JSON.stringify({
-        orderId,
-        category,
-        title: file.name,
-        visibility: "SHARED",
-      }),
-    );
-    data.append("file", file);
-    await api.post("/materials/upload", data);
-  }
-
   function acceptFile(file: File) {
     const extension = file.name.split(".").at(-1)?.toLowerCase();
     const allowed = ["pdf", "png", "jpg", "jpeg", "webp"];
@@ -422,14 +411,8 @@ export function OrderDrawer({
         "initialPaymentMethod",
         "initialBankReference",
       ]);
-      const leaseDatesChanged = form.isFieldsTouched(["startsOn", "endsOn"]);
       const saveCommission =
-        !row ||
-        !commission ||
-        commissionChanged ||
-        (leaseDatesChanged &&
-          !lockedLease &&
-          ["ONE_TIME", "RECURRING_MONTHLY"].includes(commission?.mode));
+        !commissionLocked && (!row || !commission || commissionChanged);
       const commissionPayload = saveCommission
         ? {
             mode: commissionMode,
@@ -440,16 +423,16 @@ export function OrderDrawer({
         : undefined;
       const payload = lockedLease
         ? {
+            tenantType: values.tenantType,
+            tenantName: values.tenantName.trim(),
+            registrationNoType: values.tenantType === "COMPANY" ? values.registrationNoType : null,
+            tenantRegistrationNo: values.tenantType === "COMPANY" ? values.tenantRegistrationNo?.trim() : "",
             tenantPhone: values.tenantPhone?.trim() ?? "",
             tenantEmail: values.tenantEmail?.trim() ?? "",
             tenantContactName: values.tenantContactName?.trim(),
+            monthlyRent: values.monthlyRent,
+            remark: values.remark?.trim(),
             commission: commissionPayload,
-            ...(!row?.salesUserId
-              ? {
-                  salesUserId: values.salesUserId,
-                  salesCompanyId: values.salesCompanyId,
-                }
-              : {}),
           }
         : {
             ...(!row || row.status === "DRAFT"
@@ -529,6 +512,7 @@ export function OrderDrawer({
                 }
               : {}),
             commission: commissionPayload,
+            remark: values.remark?.trim(),
           };
       const order = row
         ? (
@@ -542,11 +526,12 @@ export function OrderDrawer({
       root.invalidate();
       try {
         if (values.paymentDeclaration !== "UNPAID" && voucherFile) {
-          const receipt = (order.bills ?? [])
+          const detail = (await api.get<Row>(`/orders/${order.id}`)).data;
+          const receipt = (detail.bills ?? [])
             .flatMap((b: Row) => b.receipts ?? [])
             .find(
               (r: Row) =>
-                r.sourceKey?.startsWith("initial:") && r.status === "PENDING",
+                r.sourceKey?.startsWith("initial:") && r.status === "CONFIRMED",
             );
           if (receipt) {
             const data = new FormData();
@@ -561,7 +546,7 @@ export function OrderDrawer({
             );
             data.append("file", voucherFile);
             await api.post("/materials/upload", data);
-          } else await uploadFile(order.id, voucherFile, "VOUCHER");
+          } else throw new Error("未找到首期收款记录，请在订单详情补传凭证");
         }
         message.success(t(row ? "订单修改成功" : "订单创建成功"));
       } catch {
@@ -705,6 +690,7 @@ export function OrderDrawer({
               ? dayjs(commission.dueOn)
               : undefined,
             commissionRemark: commission?.remark,
+            remark: row?.remark,
           }}
           className="flex flex-col gap-2.5 [&_.ant-form-item]:!mb-2.5"
         >
@@ -764,7 +750,6 @@ export function OrderDrawer({
             <div className={gridClass}>
               <Form.Item name="tenantType" label={t("租客类型")}>
                 <Select
-                  disabled={lockedLease}
                   options={[
                     { value: "COMPANY", label: t("公司") },
                     { value: "PERSON", label: t("个人") },
@@ -788,7 +773,7 @@ export function OrderDrawer({
                   },
                 ]}
               >
-                <Input disabled={lockedLease} />
+                <Input />
               </Form.Item>
               {tenantType === "COMPANY" && (
                 <Form.Item
@@ -798,7 +783,6 @@ export function OrderDrawer({
                   preserve={false}
                 >
                   <Select
-                    disabled={lockedLease}
                     options={[
                       { value: "BR", label: t("商业登记号码") },
                       { value: "CR", label: t("公司注册号码") },
@@ -818,7 +802,7 @@ export function OrderDrawer({
 
                     preserve={false}
                   >
-                    <Input disabled={lockedLease} />
+                    <Input />
                   </Form.Item>
                   <Form.Item
                     name="tenantContactName"
@@ -895,8 +879,20 @@ export function OrderDrawer({
                 ]}
               >
                 <MoneyInput
-                  disabled={lockedLease}
+                  disabled={lockedLease && row?.actions?.editRent === false}
                   onChange={(value) => {
+                    if (lockedLease) {
+                      const originalPlan = initialDepositPlan(row);
+                      const expected = suggestedDeposit(value, originalPlan);
+                      form.setFieldValue(
+                        "depositPlan",
+                        expected !== undefined &&
+                          Number(expected) === Number(form.getFieldValue("depositAmount"))
+                          ? originalPlan
+                          : "OTHER",
+                      );
+                      return;
+                    }
                     const amount = suggestedDeposit(
                       value,
                       form.getFieldValue("depositPlan"),
@@ -936,6 +932,11 @@ export function OrderDrawer({
                   : "租金按月支付，保存后自动生成整个租期的账单。不足月按天折算：月租 × 实际租用天数 ÷ 完整账期天数（包含起止日）。",
               )}
             </p>
+            {lockedLease && (
+              <p className="mb-2 text-xs text-[#63738d]">
+                {t("调整月租只会重新生成未付款租金账单，已付款账单和押金保持原样。")}
+              </p>
+            )}
           </Section>
 
           <Section title="销售归属">
@@ -949,10 +950,7 @@ export function OrderDrawer({
                   optionFilterProp="label"
                   options={companies}
                   onChange={() => form.setFieldValue("salesUserId", undefined)}
-                  disabled={
-                    (!!row?.salesUserId && row.status !== "DRAFT") ||
-                    !!root.user?.salesCompanyId
-                  }
+                  disabled={lockedLease || !!root.user?.salesCompanyId}
                 />
               </Form.Item>
               <Form.Item name="salesUserId" label={t("销售员工")}>
@@ -960,7 +958,7 @@ export function OrderDrawer({
                   showSearch
                   optionFilterProp="label"
                   options={availableSalesUsers}
-                  disabled={!!row?.salesUserId && row.status !== "DRAFT"}
+                  disabled={lockedLease}
                   onChange={(id: string) => {
                     const user = salesUsers.find((item) => item.id === id);
                     if (user?.salesCompanyId)
@@ -990,7 +988,7 @@ export function OrderDrawer({
                   },
                 ]}
               >
-                <MoneyInput />
+                <MoneyInput disabled={commissionLocked} />
               </Form.Item>
               <Form.Item
                 name="commissionDueOn"
@@ -1000,10 +998,10 @@ export function OrderDrawer({
                     : "结付日期",
                 )}
               >
-                <DatePicker className="w-full" />
+                <DatePicker className="w-full" disabled={commissionLocked} />
               </Form.Item>
               <Form.Item name="commissionRemark" label={t("佣金备注")}>
-                <Input />
+                <Input disabled={commissionLocked} />
               </Form.Item>
             </div>
             <p className="text-xs text-[#63738d]">
@@ -1022,6 +1020,16 @@ export function OrderDrawer({
                   </span>
                 )}
             </p>
+          </Section>
+          {commissionLocked && (
+            <p className="text-xs text-[#8491a3]">
+              {t("佣金已有付款计划或付款记录，不能修改约定。")}
+            </p>
+          )}
+          <Section title="订单备注">
+            <Form.Item name="remark" label={t("备注")}>
+              <Input.TextArea rows={2} maxLength={2000} />
+            </Form.Item>
           </Section>
 
           <Section title="首期收款">
@@ -1138,7 +1146,7 @@ export function OrderDrawer({
           <p className="text-xs text-[#63738d]">
             {t(
               lockedLease
-                ? "订单已有收款或租期已生效，单位、租约、销售归属及首期收款仅供查看；可修改联系方式、订单备注及未付款的佣金。"
+                ? "项目、单位、租期、销售归属及首期收款不可修改；月租仅影响未付款账单。佣金产生付款计划后不可修改。"
                 : "项目、单位和月租必填；提交后生成租期账单。佣金资料可后补。登记首期付款直接入账，无需财务核对。",
             )}
           </p>
