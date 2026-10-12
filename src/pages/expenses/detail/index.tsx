@@ -78,7 +78,7 @@ export default function ExpenseDetailPage({
                   ]}
                 />
               </Card>
-              <ExpenseFiles />
+              <ExpenseFiles key={id} />
             </div>
           ),
         },

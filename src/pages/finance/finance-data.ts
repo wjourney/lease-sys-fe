@@ -27,40 +27,45 @@ export function useFinanceData<T>(
   epoch: number,
   allowed: boolean,
 ) {
-  const [data, setData] = useState<T>();
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
-  const key = JSON.stringify(filters);
+  const key = JSON.stringify({ kind, filters, epoch, retry });
+  const [result, setResult] = useState<{
+    key: string;
+    data?: T;
+    error: string;
+    loading: boolean;
+  }>();
   useEffect(() => {
     if (!allowed) {
-      setData(undefined);
-      setLoading(false);
+      setResult(undefined);
       return;
     }
     const controller = new AbortController();
-    setLoading(true);
-    setError("");
+    setResult({ key, loading: true, error: "" });
     api
       .get<T>(`/finance/${kind}`, {
-        params: JSON.parse(key),
+        params: JSON.parse(key).filters,
         signal: controller.signal,
       })
       .then((r) => {
-        if (!controller.signal.aborted) setData(r.data);
+        if (!controller.signal.aborted)
+          setResult({ key, data: r.data, error: "", loading: false });
       })
       .catch((e) => {
         if (!controller.signal.aborted) {
-          setData(undefined);
-          setError(errorMessage(e));
+          setResult({ key, error: errorMessage(e), loading: false });
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [kind, key, epoch, allowed, retry]);
-  return { data, error, loading, reload: () => setRetry((v) => v + 1) };
+  }, [kind, key, allowed]);
+  // A render with new filters must never label the previous response as current.
+  const current = allowed && result?.key === key ? result : undefined;
+  return {
+    data: current?.data,
+    error: current?.error || "",
+    loading: allowed && (!current || current.loading),
+    reload: () => setRetry((v) => v + 1),
+  };
 }
 export type MoneySummary = {
   incoming: string;
@@ -97,7 +102,6 @@ export type LedgerData = {
   total: number;
   summary: MoneySummary;
   accounts: Choice[];
-  projects: Choice[];
 };
 export type StatisticsData = {
   summary: MoneySummary & {
@@ -108,6 +112,5 @@ export type StatisticsData = {
   };
   trend: (MoneySummary & { month: string; orderCount: number })[];
   expenses: { feeType: string; amount: string }[];
-  projects: Choice[];
 };
 export { formatMoney } from "../../shared/money-format";
