@@ -1,4 +1,4 @@
-import { Button, Drawer, Empty, Spin, Tabs, Timeline } from "antd";
+import { Button, Drawer, Spin, Tabs } from "antd";
 import { observer } from "mobx-react-lite";
 import {
   FinanceFields,
@@ -6,12 +6,12 @@ import {
   FinanceSummaryStrip,
   RelatedOrderPanel,
 } from "../../components/finance-detail/FinanceDetailLayout";
+import { FinanceOperationHistory } from "../../components/finance-detail/FinanceOperationHistory";
 import { OperationActor } from "../../components/resource-detail/OperationActor";
 import { RequestError } from "../../components/feedback/RequestError";
 import { ReceiptActions } from "../../components/receipts/ReceiptActions";
 import { RegisterReceipt } from "../../components/receipts/RegisterReceipt";
 import { dateText, type Row } from "../../shared/api";
-import { dateTimeText } from "../../shared/date-time";
 import { t } from "../../shared/i18n";
 import { Status } from "../../shared/ui";
 import { useRoot } from "../../stores/root";
@@ -169,33 +169,11 @@ export const BillDrawer = observer(function BillDrawer({
                 {
                   key: "logs",
                   label: t("操作记录"),
-                  children: row.operations?.length ? (
-                    <Timeline
-                      items={row.operations.map((log: Row) => ({
-                        key: log.eventId,
-                        children: (
-                          <>
-                            <strong>
-                              <OperationActor actor={log} />
-                            </strong>{" "}
-                            · {dateTimeText(log.operatedAt)}
-                            <div>
-                              {log.subject || row.recordNo} ·{" "}
-                              {t(
-                                log.action === "CREATE"
-                                  ? "创建"
-                                  : log.action === "DELETE"
-                                    ? "删除"
-                                    : "更新",
-                              )}
-                            </div>
-                            <div>{log.reason || "—"}</div>
-                          </>
-                        ),
-                      }))}
+                  children: (
+                    <FinanceOperationHistory
+                      logs={row.operations || []}
+                      recordNo={row.recordNo}
                     />
-                  ) : (
-                    <Empty description={t("暂无操作记录")} />
                   ),
                 },
               ]}

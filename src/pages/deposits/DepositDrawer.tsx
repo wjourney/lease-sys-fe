@@ -10,7 +10,7 @@ import {
 } from "../../components/resource-detail/DetailContext";
 import { useRecordActions } from "../../components/resource-detail/useRecordActions";
 import { useRecordData } from "../../components/resource-detail/useRecordData";
-import { RecordHistory } from "../../components/resource-detail/RecordHistory";
+import { FinanceOperationHistory } from "../../components/finance-detail/FinanceOperationHistory";
 import {
   OrderDepositSummary,
   openDepositRefund,
@@ -131,9 +131,7 @@ export const DepositDrawer = observer(function DepositDrawer({
                     {
                       key: "logs",
                       label: t("操作记录"),
-                      children: (
-                        <RecordHistory logs={logs} fields={[]} inModal />
-                      ),
+                      children: <FinanceOperationHistory logs={logs} />,
                     },
                   ]}
                 />

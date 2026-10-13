@@ -38,6 +38,7 @@ import { DetailContext, DetailContextValue } from "./DetailContext";
 import { ownerFields } from "./owner-fields";
 import { RecordBasicInfo } from "./RecordBasicInfo";
 import { RecordHistory } from "./RecordHistory";
+import { FinanceOperationHistory } from "../finance-detail/FinanceOperationHistory";
 import { useRecordActions } from "./useRecordActions";
 import { useRecordData } from "./useRecordData";
 const { Text } = Typography;
@@ -365,30 +366,31 @@ export const ResourceDetail = observer(function ResourceDetail({
                     ? (props, DefaultTabBar) => (
                         <>
                           <DefaultTabBar {...props} />
-                          {renderTabHeader(context, {
-                            editable,
-                            onEdit: () => setEdit(true),
-                            onDelete: () =>
-                              setAction({
-                                title: t("删除支出"),
-                                fields: [
-                                  {
-                                    key: "reason",
-                                    label: t("删除原因"),
-                                    type: "textarea",
+                          {tab !== "logs" &&
+                            renderTabHeader(context, {
+                              editable,
+                              onEdit: () => setEdit(true),
+                              onDelete: () =>
+                                setAction({
+                                  title: t("删除支出"),
+                                  fields: [
+                                    {
+                                      key: "reason",
+                                      label: t("删除原因"),
+                                      type: "textarea",
+                                    },
+                                  ],
+                                  onSubmit: async (values: Row) => {
+                                    await api.delete(`/${resource}/${id}`, {
+                                      data: values,
+                                    });
+                                    message.success(t("已删除"));
+                                    root.invalidate();
+                                    if (presentation === "drawer") onClose?.();
+                                    else navigate("/" + resource);
                                   },
-                                ],
-                                onSubmit: async (values: Row) => {
-                                  await api.delete(`/${resource}/${id}`, {
-                                    data: values,
-                                  });
-                                  message.success(t("已删除"));
-                                  root.invalidate();
-                                  if (presentation === "drawer") onClose?.();
-                                  else navigate("/" + resource);
-                                },
-                              }),
-                          })}
+                                }),
+                            })}
                         </>
                       )
                     : undefined
@@ -407,7 +409,11 @@ export const ResourceDetail = observer(function ResourceDetail({
                   basic: detail,
                   materials,
                   history,
-                  historyPlain: (
+                  historyPlain: ["commissions", "expenses"].includes(
+                    resource,
+                  ) ? (
+                    <FinanceOperationHistory logs={logs} fields={fields} />
+                  ) : (
                     <RecordHistory logs={logs} fields={fields} inModal />
                   ),
                 }) ?? tabs

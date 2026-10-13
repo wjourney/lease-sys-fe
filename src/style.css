@@ -676,6 +676,79 @@
 .finance-detail-tabs > .ant-tabs-content-holder {
   padding-top: 0;
 }
+.finance-operation-history {
+  padding: 28px 2px 20px;
+}
+.finance-operation-timeline {
+  margin: 0;
+}
+.finance-operation-timeline .ant-timeline-item {
+  padding-bottom: 20px;
+}
+.finance-operation-timeline .ant-timeline-item:last-child {
+  padding-bottom: 0;
+}
+.finance-operation-timeline .ant-timeline-item-head {
+  width: 11px;
+  height: 11px;
+  border-width: 3px;
+  color: #193455;
+  border-color: #193455;
+  background: #fff;
+}
+.finance-operation-timeline .ant-timeline-item-tail {
+  border-inline-start-color: #dce4ed;
+}
+.finance-operation-timeline .ant-timeline-item-content {
+  margin-inline-start: 24px;
+  min-height: 0;
+}
+.finance-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 12px;
+  row-gap: 2px;
+  line-height: 1.35;
+}
+.finance-history-meta strong {
+  color: #263b57;
+  font-size: 15px;
+  font-weight: 650;
+}
+.finance-history-time {
+  color: #8190a4;
+  font-size: 14px;
+}
+.finance-history-action {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 9px;
+  color: #344761;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.finance-history-tag.ant-tag {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: #eff4fa;
+  color: #456486;
+  font-size: 12px;
+  line-height: 21px;
+}
+.finance-history-changes {
+  max-height: 220px;
+  overflow: auto;
+  margin-top: 5px;
+  color: #8492a5;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
 .finance-detail-summary {
   display: flex;
   align-items: center;
