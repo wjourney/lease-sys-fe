@@ -131,7 +131,14 @@ export const DepositDrawer = observer(function DepositDrawer({
                     {
                       key: "logs",
                       label: t("操作记录"),
-                      children: <FinanceOperationHistory logs={logs} />,
+                      children: (
+                        <FinanceOperationHistory
+                          logs={logs}
+                          resource="deposits"
+                          currency={context.row.currency}
+                          recordNo={context.row.orderNo}
+                        />
+                      ),
                     },
                   ]}
                 />

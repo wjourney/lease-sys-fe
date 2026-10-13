@@ -741,12 +741,10 @@
   line-height: 21px;
 }
 .finance-history-changes {
-  max-height: 220px;
-  overflow: auto;
-  margin-top: 5px;
-  color: #8492a5;
-  font-size: 13px;
-  line-height: 1.5;
+  margin-top: 6px;
+  color: #596b81;
+  font-size: 14px;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .finance-detail-summary {

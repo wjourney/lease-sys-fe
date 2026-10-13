@@ -172,6 +172,8 @@ export const BillDrawer = observer(function BillDrawer({
                   children: (
                     <FinanceOperationHistory
                       logs={row.operations || []}
+                      resource="incomes"
+                      currency={row.currency}
                       recordNo={row.recordNo}
                     />
                   ),

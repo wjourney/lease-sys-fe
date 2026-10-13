@@ -2,8 +2,12 @@ import { Empty, Tag, Timeline } from "antd";
 import type { Row } from "../../shared/api";
 import { dateTimeText } from "../../shared/date-time";
 import { t } from "../../shared/i18n";
-import { changedEntries } from "../resource-detail/RecordHistory";
 import { OperationActor } from "../resource-detail/OperationActor";
+import {
+  financeOperationChanges,
+  financeOperationSummary,
+  type FinanceHistoryResource,
+} from "./finance-operation-text";
 
 const actionLabels: Record<string, string> = {
   CREATE: "创建",
@@ -11,21 +15,15 @@ const actionLabels: Record<string, string> = {
   DELETE: "删除",
 };
 
-function valueText(value: unknown) {
-  return t(
-    typeof value === "object" && value !== null
-      ? JSON.stringify(value)
-      : String(value ?? "—"),
-  );
-}
-
 export function FinanceOperationHistory({
   logs,
-  fields = [],
+  resource,
+  currency,
   recordNo,
 }: {
   logs: Row[];
-  fields?: { key: string; label: string }[];
+  resource: FinanceHistoryResource;
+  currency?: string;
   recordNo?: string;
 }) {
   const entries = [...logs].sort((left, right) =>
@@ -38,14 +36,9 @@ export function FinanceOperationHistory({
         <Timeline
           className="finance-operation-timeline"
           items={entries.map((log, index) => {
-            const action = t(actionLabels[log.action] || log.action || "操作");
-            const subject = log.subject || recordNo;
-            const summary = log.reason || subject || t("记录更新");
-            const suffix =
-              log.reason && subject && !String(log.reason).includes(subject)
-                ? ` · ${subject}`
-                : "";
-            const changes = changedEntries(log.changes ?? {}, fields);
+            const action = t(actionLabels[log.action] || "操作");
+            const summary = financeOperationSummary(log, resource, recordNo);
+            const changes = financeOperationChanges(log, resource, currency);
             return {
               key: log.eventId || log.id || index,
               children: (
@@ -62,18 +55,12 @@ export function FinanceOperationHistory({
                     <Tag bordered={false} className="finance-history-tag">
                       {action}
                     </Tag>
-                    <span>
-                      {t(summary)}
-                      {suffix}
-                    </span>
+                    <span>{t(summary)}</span>
                   </div>
                   {changes.length > 0 && (
                     <div className="finance-history-changes">
                       {changes.map((change) => (
-                        <div key={change.key}>
-                          {t(change.label)}：{valueText(change.before)} →{" "}
-                          {valueText(change.after)}
-                        </div>
+                        <div key={change}>{t(change)}</div>
                       ))}
                     </div>
                   )}

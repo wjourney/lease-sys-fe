@@ -159,11 +159,14 @@ export const ResourceDetail = observer(function ResourceDetail({
   const fields = Array.from(
     new Map(
       [
+        ...config.columns.map((f) => ({ key: f.key, label: f.label })),
         ...config.fields.map((f) => ({
           key: f.key,
           label: t(f.label),
+          type: f.type,
+          options: f.options,
+          source: f.source,
         })),
-        ...config.columns,
       ].map((f) => [f.key, f]),
     ).values(),
   ).filter(
@@ -409,13 +412,17 @@ export const ResourceDetail = observer(function ResourceDetail({
                   basic: detail,
                   materials,
                   history,
-                  historyPlain: ["commissions", "expenses"].includes(
-                    resource,
-                  ) ? (
-                    <FinanceOperationHistory logs={logs} fields={fields} />
-                  ) : (
-                    <RecordHistory logs={logs} fields={fields} inModal />
-                  ),
+                  historyPlain:
+                    resource === "commissions" || resource === "expenses" ? (
+                      <FinanceOperationHistory
+                        logs={logs}
+                        resource={resource}
+                        currency={row.currency}
+                        recordNo={row.commissionNo || row.expenseNo}
+                      />
+                    ) : (
+                      <RecordHistory logs={logs} fields={fields} inModal />
+                    ),
                 }) ?? tabs
               }
             />
