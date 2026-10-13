@@ -653,6 +653,196 @@
 }
 
 /* The four finance drawers share the same visual rhythm. */
+.receipt-detail-drawer .ant-drawer-header {
+  padding: 20px 32px;
+}
+.receipt-detail-drawer .ant-drawer-title {
+  width: 100%;
+}
+.receipt-detail-drawer .ant-drawer-body {
+  padding: 0 32px 32px;
+}
+.receipt-detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.receipt-detail-heading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.receipt-detail-heading-copy strong {
+  color: #15243f;
+  font-size: 20px;
+  line-height: 1.4;
+}
+.receipt-detail-heading-copy span {
+  color: #8190a4;
+  font-size: 13px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.receipt-detail-content {
+  color: #24334b;
+}
+.receipt-detail-summary {
+  padding: 36px 0 25px;
+  border-bottom: 1px solid #e8edf3;
+}
+.receipt-detail-summary-label {
+  margin-bottom: 8px;
+  color: #78869a;
+  font-size: 14px;
+}
+.receipt-detail-summary-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.receipt-detail-summary-main strong {
+  color: #14233e;
+  font-size: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.receipt-detail-summary-main .ant-tag {
+  margin: 0;
+  padding: 5px 13px;
+  font-size: 14px;
+}
+.receipt-detail-date {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 28px;
+  font-size: 14px;
+}
+.receipt-detail-date .anticon {
+  color: #8796aa;
+}
+.receipt-detail-pending-actions {
+  margin-top: 20px;
+}
+.receipt-detail-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #e8edf3;
+}
+.receipt-detail-section h3 {
+  margin: 0 0 18px;
+  color: #15243f;
+  font-size: 16px;
+  font-weight: 650;
+}
+.receipt-detail-related,
+.receipt-detail-fields {
+  margin: 0;
+}
+.receipt-detail-related > div,
+.receipt-detail-fields > div {
+  display: grid;
+  grid-template-columns: 105px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 14px;
+}
+.receipt-detail-related dt,
+.receipt-detail-fields dt {
+  color: #7d8ba0;
+}
+.receipt-detail-related dd,
+.receipt-detail-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.receipt-detail-related a {
+  color: #1677ff;
+  white-space: nowrap;
+}
+.receipt-detail-fields > div {
+  grid-template-columns: 105px minmax(0, 1fr);
+  padding: 12px 0;
+}
+.receipt-detail-vouchers {
+  border-bottom: 0;
+}
+.receipt-detail-voucher-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.receipt-detail-voucher-heading a {
+  white-space: nowrap;
+}
+.receipt-detail-voucher-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.receipt-detail-voucher-empty,
+.receipt-detail-voucher-list {
+  flex: 1;
+  min-width: 0;
+  min-height: 94px;
+  border: 1px dashed #d5dde8;
+  border-radius: 6px;
+  background: #fafbfd;
+}
+.receipt-detail-voucher-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #8a98ac;
+}
+.receipt-detail-voucher-empty .anticon {
+  font-size: 22px;
+}
+.receipt-detail-voucher-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+}
+.receipt-detail-voucher-list a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .receipt-detail-drawer .ant-drawer-header {
+    padding: 18px 20px;
+  }
+  .receipt-detail-drawer .ant-drawer-body {
+    padding: 0 20px 24px;
+  }
+  .receipt-detail-summary-main strong {
+    font-size: 28px;
+  }
+  .receipt-detail-related > div {
+    grid-template-columns: 95px minmax(0, 1fr);
+  }
+  .receipt-detail-related a {
+    grid-column: 2;
+  }
+  .receipt-detail-fields > div {
+    grid-template-columns: 95px minmax(0, 1fr);
+  }
+  .receipt-detail-voucher-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
 .finance-detail-drawer .ant-drawer-header {
   padding: 14px 26px;
 }

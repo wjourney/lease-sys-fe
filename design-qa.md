@@ -393,3 +393,40 @@ final result: passed
 浏览器实测“查看订单”进入对应订单详情。检查了 555px 窄屏押金金额与记录卡片，没有金额重叠。前端 64 项测试、类型检查与生产构建通过；后端 223 项集成测试与构建通过。
 
 final result: passed
+
+
+# 收款详情设计核对
+
+- Source visual truth: `/Users/wenwen/.codex/generated_images/01a0ec57-f308-7bd2-b722-e5822d889eda/exec-83d47918-e004-4d9a-be68-553af301b303.png`
+- Implementation screenshot: `/Users/wenwen/.codex/visualizations/2026/09/29/01a0ec57-f308-7bd2-b722-e5822d889eda/receipt-detail-implementation.png`
+- Viewport and state: 1661 × 947 CSS px, desktop, funds ledger with a confirmed receipt drawer open; both images are 1661 × 947 px at 1× density.
+
+**Findings**
+
+- No actionable P0, P1, or P2 differences remain. The drawer width, position, title, amount hierarchy, section dividers, field alignment, and empty voucher state match the selected visual at the same viewport.
+- The existing electronic receipt link is retained beside the voucher heading. This is an intentional extra action, rather than an additional data row.
+
+**Fidelity review**
+
+- Typography: the application font, weight hierarchy, amount size, labels, and body text follow the target. The amount was enlarged to match the source.
+- Spacing and layout: the drawer begins at the same horizontal position; the summary divider, related section, payment section, and voucher section have comparable vertical rhythm.
+- Colors: navy text, muted labels, blue links, green confirmed status, borders, and the pale voucher background remain consistent with the target and existing app tokens.
+- Images and icons: the target has no photographic assets. Ant Design calendar, document, upload, and close icons serve the same UI roles.
+- Copy: title, amount, dates, related records, payment labels, voucher empty state, and actions are present. Values come from the live API.
+
+**Comparison history**
+
+- First capture found a P2 hierarchy and spacing mismatch: the amount was too small and the summary ended too high. The summary padding, amount size, and date spacing were adjusted. The final implementation screenshot above was captured again at 1661 × 947 and compared with the source in the same view.
+
+**Interaction and technical checks**
+
+- The receipt row opens this drawer; the bill and order links have the expected destinations; the voucher upload button opens the existing material form with the receipt voucher category. The form was closed without submitting data.
+- Console inspection found existing Ant Design compatibility/deprecation warnings, with no new drawer-specific error.
+- The drawer was also checked at a 390 × 844 CSS px narrow viewport; content remains readable and scrollable without horizontal clipping.
+- Typecheck, all 72 unit tests, and the production build passed after the final visual adjustment.
+
+**Follow-up polish**
+
+- None required for this scope.
+
+final result: passed
