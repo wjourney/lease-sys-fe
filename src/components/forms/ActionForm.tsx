@@ -1,4 +1,3 @@
-import { RequestError } from "../feedback/RequestError";
 import { UploadOutlined } from "@ant-design/icons";
 import {
   Alert,
@@ -120,12 +119,7 @@ export function ActionForm({
       >
         {children}
         {error && (
-          <RequestError
-            message={t(error)}
-            type="error"
-            showIcon
-            className="mb-5"
-          />
+          <Alert message={t(error)} type="error" showIcon className="mb-5" />
         )}
         {hasFundAccountField && accountsLoaded && accounts.length === 0 && (
           <Alert
