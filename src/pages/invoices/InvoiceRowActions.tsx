@@ -8,11 +8,15 @@ import { api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
 
-function ReissueInvoiceModal({
+type ReasonAction = "void" | "reissue";
+
+function InvoiceReasonModal({
   row,
+  kind,
   onClose,
 }: {
   row: Row;
+  kind: ReasonAction;
   onClose: () => void;
 }) {
   const root = useRoot();
@@ -20,14 +24,16 @@ function ReissueInvoiceModal({
   const [form] = Form.useForm<{ reason: string }>();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const reissue = kind === "reissue";
+  const reasonLabel = reissue ? "重开原因" : "作废原因";
 
   async function submit({ reason }: { reason: string }) {
     setSaving(true);
     setError("");
     try {
-      await api.post(`/invoices/${row.id}/reissue`, { reason: reason.trim() });
+      await api.post(`/invoices/${row.id}/${kind}`, { reason: reason.trim() });
       root.invalidate();
-      message.success(t("发票已作废并生成新草稿"));
+      message.success(t(reissue ? "发票已作废并生成新草稿" : "发票已作废"));
       onClose();
     } catch (e) {
       setError(errorMessage(e));
@@ -39,9 +45,9 @@ function ReissueInvoiceModal({
   return (
     <Modal
       open
-      title={t("作废重开发票")}
-      okText={t("确认重开")}
-      okButtonProps={{ loading: saving }}
+      title={t(reissue ? "作废重开发票" : "作废发票")}
+      okText={t(reissue ? "确认重开" : "确认作废")}
+      okButtonProps={{ loading: saving, danger: !reissue }}
       cancelText={t("取消")}
       closable={!saving}
       maskClosable={!saving}
@@ -50,7 +56,11 @@ function ReissueInvoiceModal({
       onCancel={() => !saving && onClose()}
     >
       <p className="mb-5 text-sm text-[#73819a]">
-        {t(`发票 ${row.invoiceNo} 将作废并生成新草稿，请填写重开原因。`)}
+        {t(
+          reissue
+            ? `发票 ${row.invoiceNo} 将作废并生成新草稿，请填写重开原因。`
+            : `发票 ${row.invoiceNo} 将作废，请填写作废原因。`,
+        )}
       </p>
       {error && (
         <Alert type="error" showIcon message={error} className="mb-4" />
@@ -58,13 +68,13 @@ function ReissueInvoiceModal({
       <Form form={form} layout="vertical" disabled={saving} onFinish={submit}>
         <Form.Item
           name="reason"
-          label={t("重开原因")}
+          label={t(reasonLabel)}
           rules={[
             {
               validator: (_, value) =>
                 typeof value === "string" && value.trim()
                   ? Promise.resolve()
-                  : Promise.reject(new Error(t("请填写重开原因"))),
+                  : Promise.reject(new Error(t(`请填写${reasonLabel}`))),
             },
           ]}
         >
@@ -94,8 +104,11 @@ export const InvoiceRowActions = observer(function InvoiceRowActions({
   const navigate = useNavigate();
   const location = useLocation();
   const { message, modal } = App.useApp();
-  const [action, setAction] = useState<{ kind: string; requestId: string }>();
-  const open = (kind: string) =>
+  const [action, setAction] = useState<{
+    kind: "send" | "email-resolution" | ReasonAction;
+    requestId: string;
+  }>();
+  const open = (kind: "send" | "email-resolution" | ReasonAction) =>
     setAction({ kind, requestId: crypto.randomUUID() });
   const items = [
     { key: "preview", label: t("预览发票"), onClick: onPreview },
@@ -197,37 +210,33 @@ export const InvoiceRowActions = observer(function InvoiceRowActions({
           )}
         </Button>
       </Dropdown>
-      {action?.kind === "reissue" ? (
-        <ReissueInvoiceModal row={row} onClose={() => setAction(undefined)} />
+      {action?.kind === "reissue" || action?.kind === "void" ? (
+        <InvoiceReasonModal
+          row={row}
+          kind={action.kind}
+          onClose={() => setAction(undefined)}
+        />
       ) : action ? (
         <ActionForm
-          title={
-            action.kind === "send"
-              ? "发送发票"
-              : action.kind === "email-resolution"
-                ? "核验发送结果"
-                : "作废发票"
-          }
+          title={action.kind === "send" ? "发送发票" : "核验发送结果"}
           fields={
             action.kind === "send"
               ? [
                   { key: "emailTo", label: "接收邮箱" },
                   { key: "emailSubject", label: "邮件主题" },
                 ]
-              : action.kind === "void"
-                ? [{ key: "reason", label: "操作原因", type: "textarea" }]
-                : [
-                    {
-                      key: "resolution",
-                      label: "核验结果",
-                      type: "select",
-                      options: [
-                        { value: "SENT", label: "确认已发送成功" },
-                        { value: "RETRY", label: "确认未发送，重新发送" },
-                      ],
-                    },
-                    { key: "reason", label: "核验说明", type: "textarea" },
-                  ]
+              : [
+                  {
+                    key: "resolution",
+                    label: "核验结果",
+                    type: "select",
+                    options: [
+                      { value: "SENT", label: "确认已发送成功" },
+                      { value: "RETRY", label: "确认未发送，重新发送" },
+                    ],
+                  },
+                  { key: "reason", label: "核验说明", type: "textarea" },
+                ]
           }
           initial={{
             emailTo: row.snapshot?.payerEmail || row.emailTo,

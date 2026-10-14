@@ -305,6 +305,31 @@ test("reissuing from invoice detail asks for a reason in a modal over the detail
   });
 });
 
+test("voiding an invoice asks for a reason in a modal over the detail drawer", async ({
+  page,
+}) => {
+  const { writes } = await mock(page);
+  await page.goto("/invoices/issued");
+  const drawer = page.locator(".finance-detail-drawer");
+  await expect(drawer).toContainText("发票详情 · INV002");
+  await drawer.getByRole("button", { name: "发票操作 INV002" }).click();
+  await page.getByRole("menuitem", { name: "作废", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "作废发票" });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator(".ant-drawer-content")).toHaveCount(1);
+  await dialog.getByRole("button", { name: "确认作废" }).click();
+  await expect(dialog.getByText("请填写作废原因")).toBeVisible();
+  await dialog
+    .getByRole("textbox", { name: "作废原因" })
+    .fill("  开票信息有误  ");
+  await dialog.getByRole("button", { name: "确认作废" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(writes).toContainEqual({
+    path: "/invoices/issued/void",
+    body: { reason: "开票信息有误" },
+  });
+});
+
 test("bill invoice preview loads authorized associations and lets users switch invoices", async ({
   page,
 }) => {
