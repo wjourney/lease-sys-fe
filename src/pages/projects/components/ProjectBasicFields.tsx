@@ -86,6 +86,14 @@ export function ProjectOptionalFields({
         <Input placeholder={t("请输入附近港铁站")} />
       </Form.Item>
       <ProjectLocationField onChange={onLocationChange} />
+      <Form.Item name="remark" label={t("备注")} className="col-span-full">
+        <Input.TextArea
+          autoSize={{ minRows: 2, maxRows: 6 }}
+          maxLength={3000}
+          showCount
+          placeholder={t("填写项目备注（选填）")}
+        />
+      </Form.Item>
       <Form.Item name="usage" label={t("用途")}>
         <Select
           options={["住宅", "商业", "办公", "综合"].map((value) => ({

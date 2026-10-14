@@ -160,10 +160,10 @@ it("adds invoices for financial readers and names read-only accounts as queries"
       ?.children?.map((item) => item.key),
   ).toEqual([
     "/incomes",
+    "/invoices",
     "/deposits",
     "/commissions",
     "/expenses",
-    "/invoices",
     "/fund-ledger",
     "/finance-statistics",
   ]);

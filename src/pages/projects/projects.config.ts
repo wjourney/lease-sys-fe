@@ -20,6 +20,7 @@ export const ProjectConfig: Config = {
       label: "允许销售查看具体租金",
       type: "switch",
     },
+    { key: "remark", label: "备注", type: "textarea", span: 2 },
     status,
   ],
   columns: cols({

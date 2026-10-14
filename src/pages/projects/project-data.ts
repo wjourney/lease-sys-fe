@@ -61,6 +61,7 @@ export function projectFormValues(row: Row): Row {
       ? dayjs(extra.landLeaseEndDate)
       : undefined,
     description: row.description,
+    remark: row.remark,
     salesCanViewExactRent: row.salesCanViewExactRent,
     status: row.status,
   };
@@ -122,6 +123,7 @@ export function projectPayload(values: Row, currentExtra: Row = {}): Row {
       ),
     })),
     description: values.description || "",
+    remark: values.remark || "",
     salesCanViewExactRent: !!values.salesCanViewExactRent,
     extra,
     ...(values.status ? { status: values.status } : {}),

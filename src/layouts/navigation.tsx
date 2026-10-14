@@ -52,10 +52,10 @@ export function getNavigation(root: RootStore) {
       label: t("财务管理"),
       children: [
         "incomes",
+        "invoices",
         "deposits",
         "commissions",
         "expenses",
-        "invoices",
         "fund-ledger",
         "finance-statistics",
       ]

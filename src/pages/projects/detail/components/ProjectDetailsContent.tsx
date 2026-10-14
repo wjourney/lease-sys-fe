@@ -151,6 +151,7 @@ export function ProjectDetailsContent({
     ["停车场", extra.parking],
     ["港铁站", extra.mtrStation],
     ["项目介绍", row.description],
+    ["备注", row.remark],
   ];
 
   return (
@@ -229,7 +230,7 @@ export function ProjectDetailsContent({
               {detailRows.map(([label, value]) => (
                 <div
                   key={label}
-                  className={`grid grid-cols-[minmax(82px,auto)_minmax(0,1fr)] gap-3 border-b border-[#e4eaf1] py-2.5 pr-4 max-[1200px]:pr-0 ${label === "项目介绍" ? "col-span-2 max-[1200px]:col-span-1" : ""}`}
+                  className={`grid grid-cols-[minmax(82px,auto)_minmax(0,1fr)] gap-3 border-b border-[#e4eaf1] py-2.5 pr-0 ${["项目介绍", "备注"].includes(label) ? "col-span-2 max-[1200px]:col-span-1" : "pr-4 max-[1200px]:pr-0"}`}
                 >
                   <dt className="text-[#7585a0]">{t(label)}</dt>
                   <dd className="m-0 break-words whitespace-pre-line font-medium text-[#263953]">

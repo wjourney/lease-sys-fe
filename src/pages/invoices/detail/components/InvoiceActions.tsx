@@ -2,9 +2,11 @@ import { Button } from "antd";
 import { observer } from "mobx-react-lite";
 import { useRecordDetail } from "../../../../components/resource-detail/DetailContext";
 import { t } from "../../../../shared/i18n";
+import { useState } from "react";
+import { InvoicePdfPreview } from "../../InvoicePdfPreview";
 export const InvoiceActions = observer(function InvoiceActions() {
-  const { resource, root, row, openAction, id, previewInvoice, run } =
-    useRecordDetail();
+  const { resource, root, row, openAction, id, run } = useRecordDetail();
+  const [previewing, setPreviewing] = useState(false);
   return (
     <>
       {resource === "invoices" &&
@@ -45,16 +47,11 @@ export const InvoiceActions = observer(function InvoiceActions() {
         )}
       {resource === "invoices" && (
         <>
-          {t(
-            row.renderStatus === "READY" ? (
-              <Button onClick={previewInvoice}>{t("预览发票")}</Button>
-            ) : (
-              root.finance && (
-                <Button onClick={() => run(`/invoices/${id}/render`)}>
-                  {t("生成 PDF")}
-                </Button>
-              )
-            ),
+          <Button onClick={() => setPreviewing(true)}>{t("预览发票")}</Button>
+          {root.finance && row.status === "DRAFT" && (
+            <Button onClick={() => run(`/invoices/${id}/issue`)}>
+              {t("出具发票")}
+            </Button>
           )}
           {root.finance && row.status === "ACTIVE" && (
             <>
@@ -123,6 +120,9 @@ export const InvoiceActions = observer(function InvoiceActions() {
             </>
           )}
         </>
+      )}
+      {previewing && (
+        <InvoicePdfPreview invoice={row} onClose={() => setPreviewing(false)} />
       )}
     </>
   );

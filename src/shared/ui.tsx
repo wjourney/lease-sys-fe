@@ -46,6 +46,8 @@ export function Status({
         ? "gold"
         : "blue";
   let label = statusLabels[value] ?? value;
+  if (resource === "invoices" && value === "DRAFT") label = "草稿";
+  if (resource === "invoices" && value === "ACTIVE") label = "已出具";
   if (resource === "incomes" && value === "PAID") label = "已付款";
   if (resource === "incomes" && ["OPEN", "PARTIAL"].includes(value))
     label = "待付款";

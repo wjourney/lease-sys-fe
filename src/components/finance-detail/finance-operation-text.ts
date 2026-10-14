@@ -3,7 +3,7 @@ import { feeLabels, statusLabels } from "../../shared/resource-config";
 import { formatMoney } from "../../shared/money-format";
 
 export type FinanceHistoryResource =
-  "incomes" | "deposits" | "commissions" | "expenses";
+  "incomes" | "deposits" | "commissions" | "expenses" | "invoices";
 
 type ValueKind =
   "date" | "money" | "status" | "fee" | "mode" | "method" | "text";
@@ -13,6 +13,7 @@ const resourceNames: Record<FinanceHistoryResource, string> = {
   deposits: "押金",
   commissions: "佣金",
   expenses: "支出",
+  invoices: "发票",
 };
 
 function subjectName(
@@ -24,6 +25,7 @@ function subjectName(
   if (/^RC\d/i.test(number)) return "收款";
   if (/^CM\d/i.test(number)) return "佣金";
   if (/^B\d/i.test(number)) return "账单";
+  if (/^INV/i.test(number)) return "发票";
   if (/^E\d/i.test(number)) return "支出";
   if (/^R\d/i.test(number)) return "订单";
   if (number.startsWith("合同")) return "合同";
@@ -35,6 +37,7 @@ function amountLabel(subject: string) {
   if (subject === "账单") return "应收金额";
   if (subject === "佣金") return "佣金金额";
   if (subject === "押金") return "押金金额";
+  if (subject === "发票") return "发票金额";
   return "应付金额";
 }
 
@@ -47,6 +50,7 @@ const fieldInfo: Record<string, { label: string; kind: ValueKind }> = {
   depositDeductionAmount: { label: "押金扣款", kind: "money" },
   depositOffsetAmount: { label: "押金抵扣", kind: "money" },
   dueOn: { label: "到期日", kind: "date" },
+  issuedOn: { label: "出具日期", kind: "date" },
   paidOn: { label: "付款日", kind: "date" },
   receivedOn: { label: "收款日", kind: "date" },
   periodStart: { label: "账期开始日", kind: "date" },

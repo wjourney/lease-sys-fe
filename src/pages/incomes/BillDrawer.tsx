@@ -18,6 +18,9 @@ import { useRoot } from "../../stores/root";
 import { formatMoney } from "../finance/finance-data";
 import { billTypes, useBillRequest } from "./bill-data";
 import { DownloadBillInvoices } from "./DownloadBillInvoices";
+import { BillInvoicePreview } from "../invoices/InvoicePdfPreview";
+import { canDownloadBillInvoices } from "./bill-invoice-availability";
+import { useState } from "react";
 
 export function BillStatus({ row }: { row: Row }) {
   return <Status resource="incomes" value={row.status} />;
@@ -31,6 +34,7 @@ export const BillDrawer = observer(function BillDrawer({
   onClose: () => void;
 }) {
   const root = useRoot();
+  const [previewing, setPreviewing] = useState(false);
   const {
     data: row,
     loading,
@@ -80,6 +84,13 @@ export const BillDrawer = observer(function BillDrawer({
                               disabled={loading}
                               size="middle"
                             />
+                            {root.finance &&
+                              root.canAccessPage("invoices") &&
+                              canDownloadBillInvoices(row) && (
+                                <Button onClick={() => setPreviewing(true)}>
+                                  {t("发票预览")}
+                                </Button>
+                              )}
                             <RegisterReceipt
                               bills={[row]}
                               orderId={row.orderId}
@@ -182,6 +193,9 @@ export const BillDrawer = observer(function BillDrawer({
             />
           )}
         </Spin>
+      )}
+      {previewing && root.finance && row && canDownloadBillInvoices(row) && (
+        <BillInvoicePreview bill={row} onClose={() => setPreviewing(false)} />
       )}
     </Drawer>
   );

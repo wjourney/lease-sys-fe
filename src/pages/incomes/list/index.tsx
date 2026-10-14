@@ -1,4 +1,6 @@
 import { DownloadBillInvoices } from "../DownloadBillInvoices";
+import { canDownloadBillInvoices } from "../bill-invoice-availability";
+import { BillInvoicePreview } from "../../invoices/InvoicePdfPreview";
 import { OrderFilter } from "../../../components/filters/OrderFilter";
 import { BillBatchActions } from "../BillBatchActions";
 import { RequestError } from "../../../components/feedback/RequestError";
@@ -40,6 +42,7 @@ export default observer(function IncomeListPage() {
   const [selected, setSelected] = useState<React.Key[]>([]);
   useEffect(() => setSelected([]), [filters, root.epoch]);
   const [viewing, setViewing] = useState<string>();
+  const [invoiceBill, setInvoiceBill] = useState<Row>();
   const { data, loading, error, reload } = useBillRequest<BillPage>(
     "/incomes/bills",
     filters,
@@ -291,6 +294,16 @@ export default observer(function IncomeListPage() {
                                 bill={r}
                                 disabled={loading}
                               />
+                              {root.finance &&
+                                root.canAccessPage("invoices") &&
+                                canDownloadBillInvoices(r) && (
+                                  <Button
+                                    size="small"
+                                    onClick={() => setInvoiceBill(r)}
+                                  >
+                                    {t("发票预览")}
+                                  </Button>
+                                )}
                             </Space>
                           ),
                         },
@@ -320,6 +333,12 @@ export default observer(function IncomeListPage() {
           key={viewing}
           id={viewing}
           onClose={() => setViewing(undefined)}
+        />
+      )}
+      {invoiceBill && root.finance && canDownloadBillInvoices(invoiceBill) && (
+        <BillInvoicePreview
+          bill={invoiceBill}
+          onClose={() => setInvoiceBill(undefined)}
         />
       )}
     </section>

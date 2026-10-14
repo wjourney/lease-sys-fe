@@ -1,5 +1,4 @@
-import { ResourceDetail } from "../../../components/resource-detail/ResourceDetail";
-import { InvoiceActions } from "./components/InvoiceActions";
+import InvoiceListPage from "../list";
 export default function InvoiceDetailPage() {
-  return <ResourceDetail resource="invoices" actions={<InvoiceActions />} />;
+  return <InvoiceListPage />;
 }

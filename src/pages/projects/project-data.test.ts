@@ -43,6 +43,7 @@ describe("project edit data", () => {
       address: "海湾街 26 号",
       completionDate: "2023-01-01T00:00:00.000Z",
       longitude: "114.20000000",
+      remark: "项目备注\n第二行",
       extra: {
         developmentDate: "2020-01-01",
         customNote: "保留",
@@ -57,6 +58,7 @@ describe("project edit data", () => {
     expect(values.longitude).toBe(114.2);
     expect(values.completionYear).toBe(2023);
     expect(values.floorCount).toBe(28);
+    expect(values.remark).toBe("项目备注\n第二行");
     const payload = projectPayload(
       {
         ...values,
@@ -78,6 +80,8 @@ describe("project edit data", () => {
       mtrStation: "太古站",
     });
     expect(payload).not.toHaveProperty("code");
+    expect(payload.remark).toBe("项目备注\n第二行");
+    expect(projectPayload({ ...values, remark: "" }).remark).toBe("");
   });
 
   it("loads existing project files into the matching upload fields", () => {

@@ -430,3 +430,35 @@ final result: passed
 - None required for this scope.
 
 final result: passed
+
+## 发票详情抽屉（2026-10-14）
+
+- Source visual truth: `docs/design/invoice-detail-reference.png`，1487 × 1058 px。
+- Implementation screenshot: `docs/design/invoice-detail-implemented.png`，1440 × 1000 px；Playwright browser viewport 1440 × 1000 CSS px，device scale factor 1。另有 `docs/design/invoice-detail-mobile.png`，390 × 844 px。
+- State: 已出具发票详情抽屉，发票资料页，关联账单及订单可见；参考图和实现分别使用设计示例与测试数据。两图在同一次图像查看中并排核对，按相对尺寸比较，未对截图作拉伸处理。
+
+**Findings**
+
+- No actionable P0, P1, or P2 differences. 右侧抽屉、页签、状态及金额层级、双列资料、关联账单与关联订单的顺序和宽度与设计一致。
+- 参考图将所有资料放在一层外边框内；实现沿用现有账单与押金抽屉的无外框结构，关联区使用现有浅蓝底。这是为了保持财务详情的统一样式。
+
+**Fidelity review**
+
+- Fonts and typography: 复用系统现有字体、16 px 抽屉标题、14 px 字段和 22 px 金额，层级清晰，无截断。
+- Spacing and layout: 抽屉宽度为 `min(1040px, 61vw)`；页签、金额摘要、资料、账单与订单按参考图纵向排列。全视图可读，无横向溢出。
+- Colors and tokens: 沿用海军蓝文字和按钮、绿色已出具状态、灰蓝字段标签与浅蓝关联区。
+- Images and icons: 参考图没有照片或独立图像资产；关闭、预览、下拉及箭头使用现有 Ant Design 图标。
+- Copy and content: 发票编号、付款人、日期、邮件状态、账期、备注、关联账单及订单字段齐全；数值取自接口，未使用设计图示例值。
+- Focused regions: 在同一次全视图比对中重点检查了顶部操作区、双列字段和两个关联区；文字及边界足够清晰，无需额外局部截图。
+
+**Interactions and checks**
+
+- 点击发票编号或“查看详情”打开抽屉；直达 `/invoices/:id` 也能显示列表背景及抽屉。关联账单打开账单详情，操作记录页签和 PDF 预览均通过浏览器测试。
+- 发票相关 8 项浏览器测试、79 项单元测试和生产构建通过。PDF 切换选择使用原生控件，连续 3 次测试通过。
+- 390 × 844 CSS px 的窄屏截图显示字段转为单列、操作按钮可见，抽屉内容无横向溢出。
+
+**Comparison history**
+
+- 首次参考图与 `/tmp/lease-invoice-detail-drawer.png` 比对时，截图是草稿而参考图是已出具；之后补充 `/tmp/lease-invoice-detail-issued.png`，按相同状态复查。未发现需要修改的 P0/P1/P2 视觉问题。
+
+final result: passed

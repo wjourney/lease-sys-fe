@@ -496,7 +496,7 @@ test("no-invoice bills disable downloads; commission list keeps only batch payme
     .getByRole("button", { name: "下载发票", exact: true });
   await expect(button).toBeDisabled();
   await button.locator("..").hover();
-  await expect(page.getByRole("tooltip")).toHaveText("暂无发票，请先登记收款");
+  await expect(page.getByRole("tooltip")).toHaveText("请先登记收款");
   await page.goto("/commissions");
   await expect(page.getByRole("button", { name: "导出所选" })).toHaveCount(0);
   await expect(
@@ -512,7 +512,13 @@ test("invoice download failure shows a toast and allows retry", async ({
     route.fulfill({
       json: {
         items: [
-          { id: billId, recordNo: "B001", invoiceCount: 1, status: "PAID" },
+          {
+            id: billId,
+            recordNo: "B001",
+            invoiceCount: 1,
+            status: "PAID",
+            confirmed: "100",
+          },
         ],
         total: 1,
       },

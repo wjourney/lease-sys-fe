@@ -135,11 +135,12 @@ test("project edits load full data and return to the filtered list after saving"
   await expect(page).toHaveURL(/\/projects\/project\/edit$/);
   await expect(page.locator("#name")).toHaveValue("海湾项目");
   await page.locator("#name").fill("海湾花园");
+  await page.locator("#remark").fill("项目备注\n第二行");
   await page.getByRole("button", { name: "保存修改" }).click();
   await expect(page).toHaveURL(/\/projects\?page=2$/);
   expect(
     writes.find((write) => write.path === "/projects/project")?.body,
-  ).toMatchObject({ name: "海湾花园", revision: 3 });
+  ).toMatchObject({ name: "海湾花园", remark: "项目备注\n第二行", revision: 3 });
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 

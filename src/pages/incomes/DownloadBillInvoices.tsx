@@ -6,6 +6,7 @@ import { saveDownload } from "../../components/batch/export";
 import { api, errorMessage, type Row } from "../../shared/api";
 import { t } from "../../shared/i18n";
 import { useRoot } from "../../stores/root";
+import { canDownloadBillInvoices } from "./bill-invoice-availability";
 
 export const DownloadBillInvoices = observer(function DownloadBillInvoices({
   bill,
@@ -20,16 +21,22 @@ export const DownloadBillInvoices = observer(function DownloadBillInvoices({
   const { message } = App.useApp();
   const [downloading, setDownloading] = useState(false);
   if (!root.finance) return null;
-  const hasInvoice = Number(bill.invoiceCount) > 0 && bill.status !== "VOID";
+  const canDownload = canDownloadBillInvoices(bill);
+  const unavailableReason =
+    bill.status === "VOID"
+      ? "账单已作废"
+      : !(Number(bill.confirmed) > 0)
+        ? "请先登记收款"
+        : "暂无已出具发票，请先在发票管理中开具";
   return (
-    <Tooltip title={!hasInvoice ? t("暂无发票，请先登记收款") : undefined}>
+    <Tooltip title={!canDownload ? t(unavailableReason) : undefined}>
       <span>
         <Button
           size={size}
           aria-label={t("下载发票")}
           aria-busy={downloading}
           icon={<DownloadOutlined />}
-          disabled={disabled || !hasInvoice}
+          disabled={disabled || !canDownload}
           loading={downloading}
           onClick={async () => {
             setDownloading(true);
