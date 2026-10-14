@@ -175,7 +175,7 @@ export const InvoiceRowActions = observer(function InvoiceRowActions({
           },
         ]
       : []),
-    ...(root.finance && ["SENDING", "UNKNOWN"].includes(row.emailStatus)
+    ...(root.finance && row.emailStatus === "UNKNOWN"
       ? [
           {
             key: "resolve",
@@ -253,7 +253,13 @@ export const InvoiceRowActions = observer(function InvoiceRowActions({
                 : {}),
             });
             root.invalidate();
-            message.success(t("操作成功"));
+            message.success(
+              t(
+                action.kind === "send"
+                  ? "发送请求已提交，请稍后查看邮件状态"
+                  : "核验结果已保存",
+              ),
+            );
           }}
         />
       ) : null}

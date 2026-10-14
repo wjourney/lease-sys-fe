@@ -55,11 +55,19 @@ export default observer(function InvoiceListPage() {
   const [busy, setBusy] = useState(false);
   const params = Object.fromEntries(search);
   params.pageSize = "20";
-  const { data, loading, error, reload } = useBillRequest<{
+  const { data, loading, error, reload, refresh } = useBillRequest<{
     items: Row[];
     total: number;
     page: number;
   }>("/invoices", params, root.epoch);
+  const waitingForEmail = data?.items.some((row) =>
+    ["PENDING", "SENDING"].includes(row.emailStatus),
+  );
+  useEffect(() => {
+    if (!waitingForEmail) return;
+    const timer = setInterval(refresh, 5000);
+    return () => clearInterval(timer);
+  }, [waitingForEmail, search.toString()]);
   const change = (values: Row) =>
     setSearch((prev) => {
       const next = new URLSearchParams(prev);

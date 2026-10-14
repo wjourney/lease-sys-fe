@@ -1,6 +1,6 @@
 import { ArrowRightOutlined, EyeOutlined } from "@ant-design/icons";
-import { Button, Drawer, Spin, Tabs, Tag } from "antd";
-import { useState } from "react";
+import { Alert, Button, Drawer, Spin, Tabs, Tag } from "antd";
+import { useEffect, useState } from "react";
 import {
   FinanceFields,
   FinanceSummaryStrip,
@@ -111,7 +111,14 @@ export function InvoiceDetailDrawer({
     loading,
     error,
     reload,
+    refresh,
   } = useBillRequest<Row>(`/invoices/${id}`, {}, root.epoch);
+  const waitingForEmail = ["PENDING", "SENDING"].includes(row?.emailStatus);
+  useEffect(() => {
+    if (!waitingForEmail) return;
+    const timer = setInterval(refresh, 5000);
+    return () => clearInterval(timer);
+  }, [id, waitingForEmail]);
   const period = row?.periodStart
     ? `${dateText(row.periodStart)} ${t("至")} ${dateText(row.periodEnd)}`
     : "—";
@@ -207,6 +214,20 @@ export function InvoiceDetailDrawer({
                           { label: "备注", value: row.snapshot?.remark || "—" },
                         ]}
                       />
+                      {["FAILED", "UNKNOWN"].includes(row.emailStatus) && (
+                        <Alert
+                          className="mt-4"
+                          type={
+                            row.emailStatus === "FAILED" ? "error" : "warning"
+                          }
+                          showIcon
+                          message={t(emailLabels[row.emailStatus])}
+                          description={
+                            row.emailLastError ||
+                            t("请联系管理员核查邮件发送记录")
+                          }
+                        />
+                      )}
                       {row.billId && <RelatedBillPanel invoice={row} />}
                       <RelatedOrderPanel
                         orderId={row.orderId}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, errorMessage, Row } from "../../shared/api";
 
 export type BillFilters = {
@@ -42,10 +42,12 @@ export function useBillRequest<T>(path: string, params: Row, epoch: number) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
+  const silentRefresh = useRef(false);
   const key = JSON.stringify(params);
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    if (!silentRefresh.current) setLoading(true);
+    silentRefresh.current = false;
     setError("");
     api
       .get<T>(path, { params: JSON.parse(key), signal: controller.signal })
@@ -63,5 +65,14 @@ export function useBillRequest<T>(path: string, params: Row, epoch: number) {
       });
     return () => controller.abort();
   }, [path, key, epoch, retry]);
-  return { data, error, loading, reload: () => setRetry((v) => v + 1) };
+  return {
+    data,
+    error,
+    loading,
+    reload: () => setRetry((v) => v + 1),
+    refresh: () => {
+      silentRefresh.current = true;
+      setRetry((v) => v + 1);
+    },
+  };
 }
