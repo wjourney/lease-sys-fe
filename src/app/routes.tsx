@@ -1,7 +1,10 @@
 import { lazy } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { useRoot } from "../stores/root";
+import { Button, Result } from "antd";
+import { t } from "../shared/i18n";
+import { canAccessRoute } from "./page-access";
 const BatchCreateUnitsPage = lazy(
   () => import("../pages/units/BatchCreateUnitsPage"),
 );
@@ -48,7 +51,7 @@ export const AppRoutes = observer(function AppRoutes() {
       )
     )
       return <Navigate to="/projects" replace />;
-    if (/^\/commissions(\/|$)/.test(pathname))
+    if (/^\/commissions(\/|$)/.test(pathname) && root.canRead("commissions"))
       return (
         <Navigate
           to={
@@ -59,11 +62,28 @@ export const AppRoutes = observer(function AppRoutes() {
           replace
         />
       );
-    if (pathname === "/sales-companies" && root.user?.salesCompanyId)
+    if (
+      pathname.replace(/\/$/, "") === "/sales-companies" &&
+      root.user?.salesCompanyId &&
+      root.canRead("sales-companies")
+    )
       return (
         <Navigate to={`/sales-companies/${root.user.salesCompanyId}`} replace />
       );
   }
+  if (!canAccessRoute(root, pathname))
+    return (
+      <Result
+        status="403"
+        title={t("暂无此页面的访问权限")}
+        subTitle={t("请通过菜单访问当前账号可用的页面。")}
+        extra={
+          <Link to="/projects">
+            <Button type="primary">{t("返回项目")}</Button>
+          </Link>
+        }
+      />
+    );
   return (
     <Routes>
       <Route

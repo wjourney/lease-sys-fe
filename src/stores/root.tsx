@@ -79,6 +79,22 @@ export class RootStore {
     if (this.companyAdmin && r !== "sales-companies") return false;
     return this.user?.capabilities.write.includes(r) ?? false;
   }
+  canAccessPage(r: string) {
+    if (["company-finance", "company-commissions"].includes(r))
+      return this.salesRole && this.canRead("commissions");
+    if (
+      this.salesRole &&
+      ["users", "incomes", "expenses", "invoices", "commissions"].includes(r)
+    )
+      return false;
+    if (["deposits", "fund-ledger", "finance-statistics"].includes(r))
+      return this.finance;
+    if (r === "settings") return this.canWrite(r);
+    return this.canRead(r);
+  }
+  get viewOrderCommissions() {
+    return this.canRead("commissions") || this.manageOrders;
+  }
   get finance() {
     if (this.salesRole || this.user?.role === "OPERATIONS") return false;
     return !!this.user?.capabilities.finance;

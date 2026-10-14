@@ -27,7 +27,7 @@ test("older backend shows a service update hint and retry recovers without submi
   });
   await page.goto("/settings");
   await expect(
-    page.getByText("网站配置服务尚未更新，请联系管理员更新服务后重试", {
+    page.getByText("网站设置服务尚未更新，请联系管理员更新服务后重试", {
       exact: true,
     }),
   ).toBeVisible();
@@ -118,7 +118,7 @@ test("website branding saves, persists and appears on login; logo can be removed
     /^blob:/,
   );
   await page.getByRole("button", { name: "保存配置" }).click();
-  await expect(page.getByText("网站配置已保存", { exact: true })).toBeVisible();
+  await expect(page.getByText("网站设置已保存", { exact: true })).toBeVisible();
   await expect(page).toHaveTitle("海湾物业管理");
   await expect(page.locator(".brand")).toContainText("海湾物业");
   await expect(page.locator("footer")).toContainText("海湾物业 · 服务每一天");
@@ -136,7 +136,7 @@ test("website branding saves, persists and appears on login; logo can be removed
   });
   await page.getByRole("button", { name: /移\s*除/ }).click();
   await page.getByRole("button", { name: "保存配置" }).click();
-  await expect(page.getByText("网站配置已保存", { exact: true })).toBeVisible();
+  await expect(page.getByText("网站设置已保存", { exact: true })).toBeVisible();
   await expect(page.locator(".brand img")).toHaveCount(0);
   expect(writes).toBe(2);
   signedIn = false;
@@ -162,6 +162,6 @@ test("non-admin cannot access website settings", async ({ page }) => {
     });
   });
   await page.goto("/settings");
-  await expect(page.getByText("当前账号无权修改网站配置")).toBeVisible();
+  await expect(page.getByText("暂无此页面的访问权限")).toBeVisible();
   await expect(page.getByRole("button", { name: "保存配置" })).toHaveCount(0);
 });

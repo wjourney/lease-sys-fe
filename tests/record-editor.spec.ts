@@ -226,7 +226,7 @@ test("sales cannot access create or edit pages even with stale write capabilitie
   ]) {
     await page.goto(path);
     await expect(
-      page.getByText("当前账号没有此操作权限", { exact: true }),
+      page.getByText("暂无此页面的访问权限", { exact: true }),
     ).toBeVisible();
     await expect(page.locator("form")).toHaveCount(0);
   }
@@ -251,7 +251,11 @@ test("create project submits through the independent page", async ({
   await page.getByRole("button", { name: "地图选点" }).click();
   await page.locator(".leaflet-container").click();
   await page.getByRole("button", { name: "确定位置" }).click();
+  await page.getByRole("button", { name: /新增类型$/ }).click();
   for (const index of [0, 1]) {
+    await page
+      .locator(`#typeConfigs_${index}_name`)
+      .fill(`海湾类型 ${index + 1}`);
     for (const [field, value] of Object.entries({
       building: "A座",
       floor: "12",

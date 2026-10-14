@@ -223,7 +223,7 @@ test("network failure survives reload and retries the exact batch once", async (
 for (const role of ["SALES", "SALES_COMPANY_ADMIN", "FINANCE"])
   test(`${role} cannot open batch creation`, async ({ page }) => {
     const writes = await setup(page, role);
-    await expect(page.getByText("当前账号没有此操作权限")).toBeVisible();
+    await expect(page.getByText("暂无此页面的访问权限")).toBeVisible();
     await expect(
       page.getByRole("button", { name: /^创建 \d+ 套$/ }),
     ).toHaveCount(0);

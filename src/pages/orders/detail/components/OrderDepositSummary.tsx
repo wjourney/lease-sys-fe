@@ -7,6 +7,7 @@ import {
 import { financialFields } from "../../../../components/resource-detail/financial-fields";
 import { api, dateText, Row } from "../../../../shared/api";
 import { t } from "../../../../shared/i18n";
+import { orderDepositLabel } from "../../../../shared/page-labels";
 import { depositSummaryItems, remainingMoney } from "../order-financials";
 import { DepositSettlementForm } from "./DepositSettlementForm";
 import { OrderFigures } from "./OrderFigures";
@@ -107,7 +108,7 @@ export function OrderDepositSummary({
   const d = row.deposit;
   if (!d || row.status === "DRAFT")
     return (
-      <Card title={t("押金结算")}>
+      <Card title={t(orderDepositLabel(root))}>
         <Alert
           type="info"
           message={t(
@@ -297,7 +298,7 @@ export function OrderDepositSummary({
       <Card
         title={
           <Space wrap size={16} className="deposit-summary-heading">
-            <span>{t("押金结算")}</span>
+            <span>{t(orderDepositLabel(root))}</span>
             <Tag color={depositColors[d.state]}>
               {t(depositStates[d.state] || "—")}
             </Tag>

@@ -113,7 +113,7 @@ const UserListPage = observer(function UserListPage() {
             <Button size="small" onClick={() => navigate(`/users/${row.id}`)}>
               {t("查看")}
             </Button>
-            {manageable && (
+            {root.canWrite("users") && manageable && (
               <Tooltip title={self ? t("不能停用当前登录账号") : undefined}>
                 <span>
                   <Button

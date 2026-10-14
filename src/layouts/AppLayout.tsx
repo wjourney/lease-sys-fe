@@ -25,6 +25,7 @@ import { loadTraditional, t } from "../shared/i18n";
 import { Brand } from "../shared/ui";
 import { useRoot } from "../stores/root";
 import { getNavigation } from "./navigation";
+import { pageLabel } from "../shared/page-labels";
 import { ChangePasswordModal, ProfileModal } from "./ProfileModal";
 const { Header, Sider, Content } = Layout;
 const standaloneListPaths = new Set([
@@ -101,8 +102,9 @@ export const AppLayout = observer(function AppLayout() {
       .find((item) => item.key === location.pathname.replace(/\/$/, "")) ??
     (
       {
-        "/invoices": { label: t("发票管理") },
-        "/materials": { label: t("资料管理") },
+        "/invoices": { label: t(pageLabel(root, "invoices")) },
+        "/materials": { label: t(pageLabel(root, "materials")) },
+        "/incomes": { label: t(pageLabel(root, "incomes")) },
       } as Record<string, { label: string; parent?: string }>
     )[location.pathname];
   return (

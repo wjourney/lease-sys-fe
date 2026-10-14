@@ -1,4 +1,4 @@
-import { App, Button, Tooltip, type ButtonProps } from "antd";
+import { Alert, App, Button, Tooltip, type ButtonProps } from "antd";
 import { useState } from "react";
 import { ActionForm, type ActionFormProps } from "../forms/ActionForm";
 import { financialFields } from "../resource-detail/financial-fields";
@@ -88,6 +88,16 @@ export function RegisterReceipt({
         ),
       },
       voucher: true,
+      children: (
+        <Alert
+          className="mb-4"
+          type="info"
+          showIcon
+          message={t(
+            "核对实际到账后再登记，提交后收款直接入账。每张账单须一次付清剩余金额。",
+          )}
+        />
+      ),
       onSubmit: async (values, file) => {
         const allocations = available.map((b) => ({
           billId: b.id,

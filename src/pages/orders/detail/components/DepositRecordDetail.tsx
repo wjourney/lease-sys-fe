@@ -113,11 +113,14 @@ export const DepositRecordDetail = observer(function DepositRecordDetail({
           </div>
         ))}
       </dl>
-      {record.receipt && record.status === "PENDING" && detail.parentId && (
-        <Link to={`/incomes/${detail.parentId}`}>
-          {t("前往账单核对历史收款")}
-        </Link>
-      )}
+      {record.receipt &&
+        record.status === "PENDING" &&
+        detail.parentId &&
+        root.canAccessPage("incomes") && (
+          <Link to={`/incomes/${detail.parentId}`}>
+            {t("前往账单核对历史收款")}
+          </Link>
+        )}
     </>
   );
 });

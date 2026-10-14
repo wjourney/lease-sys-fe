@@ -4,6 +4,7 @@ import { t } from "../../../../shared/i18n";
 import { OrderBills } from "./OrderBills";
 import { OrderDepositSummary } from "./OrderDepositSummary";
 import { OrderCommissions } from "./OrderCommissions";
+import { orderDepositLabel } from "../../../../shared/page-labels";
 export function getOrderTabs(
   ctx: DetailContextValue,
 ): NonNullable<TabsProps["items"]> {
@@ -14,11 +15,15 @@ export function getOrderTabs(
       label: t("收款与账单"),
       children: ctx.root.canRead("incomes") ? <OrderBills /> : denied,
     },
-    { key: "deposit", label: t("押金结算"), children: <OrderDepositSummary /> },
+    {
+      key: "deposit",
+      label: t(orderDepositLabel(ctx.root)),
+      children: <OrderDepositSummary />,
+    },
     {
       key: "commissions",
       label: t("订单佣金"),
-      children: ctx.root.canRead("commissions") ? <OrderCommissions /> : denied,
+      children: ctx.root.viewOrderCommissions ? <OrderCommissions /> : denied,
     },
   ];
 }

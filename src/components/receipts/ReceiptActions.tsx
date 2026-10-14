@@ -219,7 +219,7 @@ export const ReceiptDrawer = observer(function ReceiptDrawer({
               <div>
                 <dt>{t("应收账单")}</dt>
                 <dd>{row.billNo || "—"}</dd>
-                {row.parentId && (
+                {row.parentId && root.canAccessPage("incomes") && (
                   <Link to={`/incomes/${row.parentId}`} onClick={onClose}>
                     {t("查看账单")}
                   </Link>
@@ -278,7 +278,7 @@ export const ReceiptDrawer = observer(function ReceiptDrawer({
           >
             <div className="receipt-detail-voucher-heading">
               <h3 id="receipt-voucher-heading">{t("收款凭证")}</h3>
-              {root.canRead("invoices") &&
+              {root.canAccessPage("invoices") &&
                 ["CONFIRMED", "REVERSED"].includes(row.status) && (
                   <Link to={`/invoices?incomeId=${row.id}`} onClick={onClose}>
                     {t("查看收据")}

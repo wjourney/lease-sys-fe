@@ -145,12 +145,14 @@ export function OrderCommissions() {
                   {t("登记付款")}
                 </Button>
               )}
-              <Button
-                size="small"
-                onClick={() => navigate(`/commissions/${item.id}`)}
-              >
-                {t("查看记录")}
-              </Button>
+              {root.canRead("commissions") && (
+                <Button
+                  size="small"
+                  onClick={() => navigate(`/commissions/${item.id}`)}
+                >
+                  {t("查看记录")}
+                </Button>
+              )}
               {root.manageOrders &&
                 item.status !== "VOID" &&
                 Number(item.paidAmount) === 0 &&

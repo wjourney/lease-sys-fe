@@ -1,5 +1,15 @@
 import { UploadOutlined } from "@ant-design/icons";
-import { App, Button, Card, Form, Input, Result, Spin, Upload } from "antd";
+import {
+  Alert,
+  App,
+  Button,
+  Card,
+  Form,
+  Input,
+  Result,
+  Spin,
+  Upload,
+} from "antd";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../../shared/api";
@@ -18,11 +28,13 @@ export default observer(function WebsiteSettings() {
   const [preview, setPreview] = useState<string>();
   const [removeLogo, setRemoveLogo] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [loadError, setLoadError] = useState("");
   const allowed = root.canWrite("settings");
   useEffect(() => {
     if (!allowed) return;
     let active = true;
     setLoading(true);
+    setLoadError("");
     api
       .get("/settings/website")
       .then(({ data }) => {
@@ -33,7 +45,11 @@ export default observer(function WebsiteSettings() {
       })
       .catch((error) => {
         if (!active) return;
-        message.error(t(errorMessage(error)));
+        setLoadError(
+          error.response?.data?.message === "无效记录 ID"
+            ? "网站设置服务尚未更新，请联系管理员更新服务后重试"
+            : errorMessage(error),
+        );
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -41,7 +57,7 @@ export default observer(function WebsiteSettings() {
     return () => {
       active = false;
     };
-  }, [allowed, retry, form, message]);
+  }, [allowed, retry, form]);
   useEffect(() => {
     if (!file) {
       setPreview(undefined);
@@ -75,7 +91,7 @@ export default observer(function WebsiteSettings() {
       form.setFieldsValue(next);
       setFile(undefined);
       setRemoveLogo(false);
-      message.success(t("公司信息已保存"));
+      message.success(t("网站设置已保存"));
     } catch (error) {
       message.error(t(errorMessage(error)));
     } finally {
@@ -83,11 +99,11 @@ export default observer(function WebsiteSettings() {
     }
   }
   if (!allowed)
-    return <Result status="403" title={t("当前账号无权修改公司信息")} />;
+    return <Result status="403" title={t("当前账号无权修改网站设置")} />;
   const logo = preview || (!removeLogo ? saved?.logoUrl : null);
   return (
     <Card
-      title={t("公司信息")}
+      title={t("网站设置")}
       className="mx-auto max-w-[1000px]"
       extra={
         <Button
@@ -101,6 +117,14 @@ export default observer(function WebsiteSettings() {
       }
     >
       <Spin spinning={loading}>
+        {loadError && (
+          <Alert
+            type="error"
+            showIcon
+            message={t(loadError)}
+            className="mb-5"
+          />
+        )}
         <Form
           form={form}
           layout="vertical"

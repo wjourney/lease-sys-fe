@@ -75,7 +75,7 @@ const orderErrorHints: Record<string, string> = {
   重复提交编号冲突: "本次提交内容已变化，请重新打开操作窗口后提交。",
   "网站 Logo 仅支持 2MB 以内的 PNG、JPG、WebP 图片":
     "请上传 2MB 以内的 PNG、JPG 或 WebP 图片。",
-  网站配置格式无效: "公司信息未能提交，请刷新后重试。",
+  网站配置格式无效: "网站设置未能提交，请刷新后重试。",
   "请勿同时上传和移除网站 Logo": "请重新选择要保留的网站 Logo 后保存。",
   "已有单位使用的类型不能删除，请保留类型":
     "这个类型已有单位使用，请保留；可以修改名称和参考范围。",
@@ -131,7 +131,7 @@ const orderErrorHints: Record<string, string> = {
     "银行账户创建冲突，请刷新后查看已有账户。",
   "平台账户只允许编辑，不能删除": "银行账户只允许编辑，不能删除。",
   请先在系统设置中配置唯一且有效的平台账户:
-    "请先在公司设置中配置唯一且有效的银行账户。",
+    "请先在系统设置中配置唯一且有效的银行账户。",
 };
 export function errorMessage(error: unknown): string {
   if (typeof error === "string") {
